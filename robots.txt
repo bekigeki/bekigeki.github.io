@@ -1,0 +1,1 @@
+Sitemap: git@github.com:bekigeki/bekigeki.github.io/sitemap.xml
