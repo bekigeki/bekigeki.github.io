@@ -6,8 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Florian Bähr und Toni Wöhrl">
+<meta name="dcterms.date" content="2023-03-09">
 
-<title>BeKiGeKi - About</title>
+<title>BeKiGeKi - Teilnehmer</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -92,7 +94,7 @@ ul.task-list li input[type="checkbox"] {
     </nav>
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title">About</h1>
+      <h1 class="quarto-secondary-nav-title">Teilnehmer</h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -135,7 +137,7 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./about.html" class="sidebar-item-text sidebar-link active">About</a>
+  <a href="./about.html" class="sidebar-item-text sidebar-link">About</a>
   </div>
 </li>
       </ul>
@@ -147,30 +149,199 @@ ul.task-list li input[type="checkbox"] {
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar"><div class="quarto-margin-header"><div class="margin-header-item">
 <p><img src="./logo_bekigeki.png" class="img-fluid"></p>
 </div></div>
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#entwicklung-der-teilnehmerzahlen" id="toc-entwicklung-der-teilnehmerzahlen" class="nav-link active" data-scroll-target="#entwicklung-der-teilnehmerzahlen">Entwicklung der Teilnehmerzahlen</a>
+  <ul class="collapse">
+  <li><a href="#schulen" id="toc-schulen" class="nav-link" data-scroll-target="#schulen">Schulen</a></li>
+  <li><a href="#schülerinnen-und-schüler" id="toc-schülerinnen-und-schüler" class="nav-link" data-scroll-target="#schülerinnen-und-schüler">Schülerinnen und Schüler</a></li>
+  </ul></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">About</h1>
+<h1 class="title d-none d-lg-block">Teilnehmer</h1>
 </div>
 
 
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Florian Bähr und Toni Wöhrl </p>
+          </div>
+  </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 9, 2023</p>
+    </div>
+  </div>
     
   </div>
   
 
 </header>
 
-<p>Projekt seit…</p>
+<section id="setup" class="level1 hidden unlisted">
+<h1 class="hidden unlisted">Setup</h1>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+✔ ggplot2 3.3.6      ✔ purrr   1.0.1 
+✔ tibble  3.1.8      ✔ dplyr   1.0.10
+✔ tidyr   1.2.1      ✔ stringr 1.5.0 
+✔ readr   2.1.2      ✔ forcats 0.5.2 
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+
+Attaching package: 'kableExtra'
 
 
+The following object is masked from 'package:dplyr':
+
+    group_rows
+
+
+Linking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE</code></pre>
+</div>
+</div>
+</section>
+<section id="daten" class="level1 hidden unlisted">
+<h1 class="hidden unlisted">Daten</h1>
+<section id="schuladressen" class="level2">
+<h2 class="anchored" data-anchor-id="schuladressen">Schuladressen</h2>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code> Schulnummer          Latitude          Longitude         Gemeinden.Kennziffer
+ Length:973         Length:973         Length:973         Length:973          
+ Class :character   Class :character   Class :character   Class :character    
+ Mode  :character   Mode  :character   Mode  :character   Mode  :character    
+  Schulname         Grundschulen           PLZ             Ort_parsed       
+ Length:973         Length:973         Length:973         Length:973        
+ Class :character   Class :character   Class :character   Class :character  
+ Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+   Strasse         
+ Length:973        
+ Class :character  
+ Mode  :character  </code></pre>
+</div>
+</div>
+</section>
+<section id="politische-grenzen" class="level2">
+<h2 class="anchored" data-anchor-id="politische-grenzen">Politische Grenzen</h2>
+<section id="kreise" class="level3">
+<h3 class="anchored" data-anchor-id="kreise">Kreise</h3>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `VG5000_KRS' from data source 
+  `/Users/tw/Desktop/website/bekigeki.github.io/data/sg.geodatenzentrum.de/2023-01-24/vg5000_12-31.utm32s.shape.ebenen/vg5000_ebenen_1231/VG5000_KRS.shp' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 400 features and 24 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: 280353.1 ymin: 5235878 xmax: 921261.6 ymax: 6101302
+Projected CRS: ETRS89 / UTM zone 32N</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="teilnehmer_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="bekigeki" class="level2">
+<h2 class="anchored" data-anchor-id="bekigeki">BeKiGeki</h2>
+<section id="section" class="level3">
+<h3 class="anchored" data-anchor-id="section">2022</h3>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "Sex"       "height"    "mass"      "Sport"     "Club"      "club_1"   
+ [7] "club_2"    "club_3"    "club_week" "class"     "Testdate"  "School"   
+[13] "Name"      "Location"  "Filename"  "Board"     "Admin"     "cohort"   
+[19] "Inclusion" "S20"       "BPT"       "SLJ"       "OLB"       "Star"     
+[25] "Run"       "note"      "Birthdate" "Child"     "District" </code></pre>
+</div>
+</div>
+</section>
+<section id="vor-2022" class="level3">
+<h3 class="anchored" data-anchor-id="vor-2022">Vor 2022</h3>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "Sex"       "height"    "mass"      "Sport"     "Club"      "club_1"   
+ [7] "club_2"    "club_3"    "club_week" "class"     "Testdate"  "School"   
+[13] "Name"      "Location"  "Board"     "Admin"     "cohort"    "Inclusion"
+[19] "S20"       "BPT"       "SLJ"       "OLB"       "Star"      "Run"      
+[25] "note"      "Birthdate" "District" </code></pre>
+</div>
+</div>
+</section>
+<section id="section-1" class="level3">
+<h3 class="anchored" data-anchor-id="section-1">2017 - 2022</h3>
+<div class="cell">
+
+</div>
+</section>
+</section>
+<section id="merge-tables" class="level2">
+<h2 class="anchored" data-anchor-id="merge-tables">Merge tables</h2>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+</div>
+<section id="finde-unmerged-data" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="finde-unmerged-data">Finde unmerged data</h3>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>character(0)</code></pre>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="entwicklung-der-teilnehmerzahlen" class="level1">
+<h1>Entwicklung der Teilnehmerzahlen</h1>
+<section id="teilnehmende-schulen" class="level2 hidden unlisted">
+<h2 class="hidden unlisted anchored" data-anchor-id="teilnehmende-schulen">teilnehmende Schulen</h2>
+<div class="cell">
+
+</div>
+<p>437 unterschiedliche Schulen insgesamt im Datensatz (Stand 2023-03-09)</p>
+</section>
+<section id="schulen" class="level2">
+<h2 class="anchored" data-anchor-id="schulen">Schulen</h2>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="teilnehmer_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="teilnehmer_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="schülerinnen-und-schüler" class="level2">
+<h2 class="anchored" data-anchor-id="schülerinnen-und-schüler">Schülerinnen und Schüler</h2>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="teilnehmer_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+
+
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
