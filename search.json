@@ -35,13 +35,6 @@
     "text": "Merge tables\n\n\n[1] 0\n\n\n\nFinde unmerged data\n\n\ncharacter(0)"
   },
   {
-    "objectID": "teilnehmer.html#schulen",
-    "href": "teilnehmer.html#schulen",
-    "title": "Teilnehmer",
-    "section": "Schulen",
-    "text": "Schulen\n\n\nWarning: Duplicated aesthetics after name standardisation: size\nDuplicated aesthetics after name standardisation: size\n\n\nWarning in prettyNum(.Internal(format(x, trim, digits, nsmall, width, 3L, :\n'big.mark' and 'decimal.mark' are both '.', which could be confusing\n\nWarning in prettyNum(.Internal(format(x, trim, digits, nsmall, width, 3L, :\n'big.mark' and 'decimal.mark' are both '.', which could be confusing"
-  },
-  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "Überblick",
