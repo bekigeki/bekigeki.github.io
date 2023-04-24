@@ -11,7 +11,14 @@
     "href": "002.html",
     "title": "Versuch einer Klassifikation (in Bearbeitung)",
     "section": "",
-    "text": "d <- readxl::read_excel(\"./data/bekigeki_Urdaten_bis_2022-2023-04-24.xlsx\")"
+    "text": "knitr::opts_chunk$set(echo=FALSE,cache=TRUE)"
+  },
+  {
+    "objectID": "002.html#long-data",
+    "href": "002.html#long-data",
+    "title": "Versuch einer Klassifikation (in Bearbeitung)",
+    "section": "Long data",
+    "text": "Long data\n\n\nWarning: Using an external vector in selections was deprecated in tidyselect 1.1.0.\nℹ Please use `all_of()` or `any_of()` instead.\n  # Was:\n  data %>% select(Component)\n\n  # Now:\n  data %>% select(all_of(Component))\n\nSee <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.\n\n\n`summarise()` has grouped output by 'Child'. You can override using the\n`.groups` argument.\n`summarise()` has grouped output by 'Norm', 'Result'. You can override using\nthe `.groups` argument.\n\n\n                      V1   V2   V3   V4   V5   V6   V7   V8   V9  V10  V11  V12\nResult                 F    F    F    F    F    F    N    N    N    N    N    N\ncohort              2017 2018 2019 2020 2021 2022 2017 2018 2019 2020 2021 2022\nFitness_q_All        255  857 1129  453 1057 2499 1096 3689 4312 1487 3854 8228\nFitness_q_Cohort     292 1063 1296  443 1040 2265 1061 3571 4163 1483 3821 8349\nFitness_q_Cohort_T6  292 1063 1296  443 1040 2265 1088 3638 4266 1513 3875 8527\n                     V13  V14  V15  V16  V17  V18  V19  V20  V21\nResult                 T    T    T    T    T    T <NA> <NA> <NA>\ncohort              2017 2018 2019 2020 2021 2022 2017 2021 2022\nFitness_q_All        324 1074 1179  406  993 2010   38    2   23\nFitness_q_Cohort     322  986 1161  420 1043 2123   38    2   23\nFitness_q_Cohort_T6  295  919 1058  390  989 1945   38    2   23\n\n\n\n\n`summarise()` has grouped output by 'cohort', 'District', 'School', 'Name',\n'Sex', 'Club'. You can override using the `.groups` argument.\n\n\n\nTables\n\nFilter definitions\n\n\n\n\n\n\nShared HTML Table\n\n\n\nAttaching package: 'jsonlite'\n\n\nThe following object is masked from 'package:purrr':\n\n    flatten"
   },
   {
     "objectID": "index.html",
