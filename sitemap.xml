@@ -2,18 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>git@github.com:bekigeki/bekigeki.github.io/001.html</loc>
-    <lastmod>2023-04-25T11:19:17.796Z</lastmod>
+    <lastmod>2023-04-25T22:50:24.318Z</lastmod>
+  </url>
+  <url>
+    <loc>git@github.com:bekigeki/bekigeki.github.io/003.html</loc>
+    <lastmod>2023-04-25T22:50:26.405Z</lastmod>
   </url>
   <url>
     <loc>git@github.com:bekigeki/bekigeki.github.io/002.html</loc>
-    <lastmod>2023-04-25T11:19:29.426Z</lastmod>
+    <lastmod>2023-04-25T22:50:37.999Z</lastmod>
   </url>
   <url>
     <loc>git@github.com:bekigeki/bekigeki.github.io/index.html</loc>
-    <lastmod>2023-04-25T11:19:32.687Z</lastmod>
+    <lastmod>2023-04-25T22:50:41.300Z</lastmod>
   </url>
   <url>
     <loc>git@github.com:bekigeki/bekigeki.github.io/about.html</loc>
-    <lastmod>2023-04-25T11:19:32.989Z</lastmod>
+    <lastmod>2023-04-25T22:50:41.626Z</lastmod>
   </url>
 </urlset>
