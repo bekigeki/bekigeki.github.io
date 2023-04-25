@@ -11,7 +11,7 @@
     "href": "002.html#long-data",
     "title": "Versuch einer Klassifikation (in Bearbeitung)",
     "section": "Long data",
-    "text": "Long data\n\n\nWarning: Using an external vector in selections was deprecated in tidyselect 1.1.0.\nℹ Please use `all_of()` or `any_of()` instead.\n  # Was:\n  data %>% select(Component)\n\n  # Now:\n  data %>% select(all_of(Component))\n\nSee <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.\n\n\n`summarise()` has grouped output by 'Child'. You can override using the\n`.groups` argument.\n`summarise()` has grouped output by 'Norm', 'Result'. You can override using\nthe `.groups` argument.\n\n\n\n\n`summarise()` has grouped output by 'cohort', 'District', 'School', 'Name',\n'Sex', 'Club'. You can override using the `.groups` argument.\n\n\n\nTables\n\nFilter definitions\n\n\n\n\n\n\nShared HTML Table"
+    "text": "Long data\n\n\nWarning: Using an external vector in selections was deprecated in tidyselect 1.1.0.\nℹ Please use `all_of()` or `any_of()` instead.\n  # Was:\n  data %>% select(Component)\n\n  # Now:\n  data %>% select(all_of(Component))\n\nSee <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.\n\n\n`summarise()` has grouped output by 'Child'. You can override using the\n`.groups` argument.\n`summarise()` has grouped output by 'Norm', 'Result'. You can override using\nthe `.groups` argument.\n\n\n\n\n`summarise()` has grouped output by 'cohort', 'District', 'School', 'Name',\n'Sex', 'Club'. You can override using the `.groups` argument.\n\n\n\nTables\n\nFilter definitions\n\n\n\n\n\n\nShared HTML Table\n\n\n\nAttaching package: 'jsonlite'\n\n\nThe following object is masked from 'package:purrr':\n\n    flatten"
   },
   {
     "objectID": "index.html",
