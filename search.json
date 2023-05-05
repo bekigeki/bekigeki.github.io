@@ -4,14 +4,14 @@
     "href": "001.html",
     "title": "Teilnehmer",
     "section": "",
-    "text": "Updates\n\n2023-04-24: Aktualisierung der Abbildung nach Eintreffen weiterer Datensätze\n2023-03-09: Erstellen der Seite"
+    "text": "Updates\n\n2023-05-05: Aktualisierung der Abbildung nach Eintreffen weiterer Datensätze, Ausschluss von Datensätzen die kein einziges Motorik-Testergebnis enthalten (trotz Vorhandensein von z.B. Geschlechts- oder Geburtstagsangabe)\n2023-04-24: Aktualisierung der Abbildung nach Eintreffen weiterer Datensätze\n2023-03-09: Erstellen der Seite"
   },
   {
     "objectID": "003.html",
     "href": "003.html",
     "title": "Veranstaltungen im Rahmen des Projektes (in Bearbeitung)",
     "section": "",
-    "text": "Setup and data\n\n\n── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──\n✔ ggplot2 3.3.6      ✔ purrr   1.0.1 \n✔ tibble  3.1.8      ✔ dplyr   1.0.10\n✔ tidyr   1.2.1      ✔ stringr 1.5.0 \n✔ readr   2.1.2      ✔ forcats 0.5.2 \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\n\nAttaching package: 'kableExtra'\n\n\nThe following object is masked from 'package:dplyr':\n\n    group_rows\n\n\nLinking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE\n\n\n\n\n\n\n\n\n\n\nHistorie"
+    "text": "Setup and data\n\n\n── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──\n✔ ggplot2 3.3.6      ✔ purrr   1.0.1 \n✔ tibble  3.1.8      ✔ dplyr   1.0.10\n✔ tidyr   1.2.1      ✔ stringr 1.5.0 \n✔ readr   2.1.2      ✔ forcats 0.5.2 \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\n\nAttaching package: 'kableExtra'\n\n\nThe following object is masked from 'package:dplyr':\n\n    group_rows\n\n\nLinking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE\n\n\n\n\n\n\n\n\n\n\nHistorie\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nUpdates\n\n2023-05-03: COVID-19-Pandemie Annnotation in Balkendiagramm\n2023-04-25: Erstellen der Seite\n\n\n\n\n\nZitatMit BibTeX zitieren:@online{wöhrl2023,\n  author = {Toni Wöhrl and Florian Bähr},\n  editor = {},\n  title = {Veranstaltungen im Rahmen des Projektes (in Bearbeitung)},\n  date = {2023-04-25},\n  url = {git@github.com:bekigeki/bekigeki.github.io/003.html},\n  langid = {de}\n}\nBitte zitieren Sie diese Arbeit als:\nToni Wöhrl, and Florian Bähr. 2023. “Veranstaltungen im Rahmen des\nProjektes (in Bearbeitung).” April 25, 2023. git@github.com:bekigeki/bekigeki.github.io/003.html."
   },
   {
     "objectID": "002.html#long-data",
