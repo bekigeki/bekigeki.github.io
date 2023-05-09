@@ -1,0 +1,121 @@
+---
+title: "Überblick"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+```
+
+# Setup {.hidden .unlisted}
+
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(kableExtra)
+library(readxl)
+library(sf)
+library(leaflet)
+library(leaflet.extras)
+library(leafpop)
+library(htmlwidgets)
+library(webshot)
+library(readxl)
+```
+
+
+
+# Daten {.hidden .unlisted}
+
+## Schuldaten
+
+```{r}
+d <- read_excel("./data/bekigeki_Urdaten_bis_2022-2023-05-05.xlsx")
+gs <- read_csv("./data/schools-grundschulen-TW-2023-05-05.csv")
+```
+
+## Politische Grenzen
+
+```{r}
+# Kreise Deutschlandweit
+kreise <- sf::st_read("./data/sg.geodatenzentrum.de/2023-01-24/vg5000_12-31.utm32s.shape.ebenen/vg5000_ebenen_1231/VG5000_KRS.shp")
+
+# Kreise Thueringen
+kreise_th <- subset(kreise, grepl("^16",as.character(kreise$ARS)))
+plot(kreise_th$geometry)
+kreise_th_t<- st_transform(kreise_th$geometry, crs = "+proj=longlat +datum=WGS84")
+
+GrundschulCol <- colorBin(bins = 2,"Reds", domain = 0:1)
+
+years <- unique(d$cohort)
+
+
+ts_school <- d |> 
+  group_by(Name,School,lat,lon) |> 
+  dplyr::summarize(Schülerzahl = n(),.groups="drop")|> 
+  ungroup()|>
+  rename(
+         "Schulnummer" = "School",
+         "Schulname" = "Name")
+
+# Nichtteilnehmer
+nt<-anti_join(gs,ts_school,by.y = "School",by.x="School")|>
+  rename(
+         "Schulnummer" = "School",
+         "Schulname" = "Name")
+```
+
+
+# Teilnehmerstandorte (blaue Punkte) 
+
+Die blauen Punkte auf der Karte symbolisieren die Standorte der Schulen, die mindestens einmal in den Jahren von 2017 bis 2023 am Sport-Motoriktest im Rahmen des BeKiGeKi-Programms teilgenommen haben. Die Schulnummern und -namen basieren auf den öffentlichen Information der Website https://www.schulportal-thueringen.de/schools (Stand 24. April 2023). 
+
+```{r}
+
+
+#dplyr::filter(Jahr=="2022")|>
+leaflet()%>%
+  addProviderTiles(providers$OpenTopoMap,
+                   options = providerTileOptions(opacity=.5)) %>%
+  addPolygons(data = kreise_th_t,
+              weight = 1)%>%
+  addHeatmap(data = gs,
+                    lng=~as.numeric(lon),
+                    lat=~as.numeric(lat),max=10,radius=15,blur=10)%>%
+  
+
+   addCircleMarkers(data=ts_school,
+                    lng=~as.numeric(lon),
+                    lat=~as.numeric(lat),
+                    group = "name",
+                  
+                    popup=popupTable(ts_school,row.numbers=FALSE,
+                                     feature.id=FALSE,
+                                     zcol=c("Schulname","Schulnummer")),
+        
+                 radius = 3,
+              #   color=~GrundschulCol(Grundschulen),
+                 stroke = FALSE, 
+                 fillOpacity = 1
+)  %>%
+addCircleMarkers(data=nt,
+                   color="white",
+                    lng=~as.numeric(lon),
+                    lat=~as.numeric(lat),
+                    group = "name",
+                  
+                    popup=popupTable(nt,row.numbers=FALSE,
+                                     feature.id=FALSE,
+                                     zcol=c("Schulname","Schulnummer")),
+        
+                 radius = 1.7,
+              #   color=~GrundschulCol(Grundschulen),
+                 stroke = FALSE, 
+                 fillOpacity = 1
+)
+
+```
+
+

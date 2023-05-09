@@ -1,0 +1,422 @@
+---
+title: "Schuladressen Thüringen"
+date: "2023-04-23 (updated: `r Sys.Date()`)"
+editor: visual
+editor_options: 
+  chunk_output_type: console
+format:
+  html:
+    toc: true
+    html-math-method: katex
+---
+
+# Log
+
+-   2023-04-23: TW: merge Schulnummer with inkar Gemeindeschlüssel
+    -   Quellen:
+        -   https://www.schulportal-thueringen.de/schools scheint aktueller zu sein als https://www.schulstatistik-thueringen.de/?link=Themenverzeichnis%7EEckdaten
+        -   https://www.inkar.de/documents/Referenz%20Gemeinden,%20Kreise,%20NUTS.xlsx
+
+# Setup
+
+```{r}
+library(readxl)
+library(dplyr)
+library(reactable)
+```
+
+# School data
+
+```{r}
+schools <- read_excel(
+  "exportSchulportraets.xls",skip=0)
+
+# schools <- read_excel(
+#  "../../schulstatistik-thueringen.de/2023-01-05/Schuladressen_TH_0UY.xlsx",skip=13)
+str(schools)
+```
+
+## Explore
+
+```{r}
+
+schools |>
+ # group_by(Ort)|>
+ # group_by(Schulart)|>
+  group_by(Schulamt)|>
+  summarise()|>
+  reactable(filterable = TRUE,pagination = FALSE)
+# remove Musterschule
+schools <- schools|>
+  filter(Schulnummer!=11111)
+```
+
+# *Gemeinde Kennziffer* Data
+
+```{r}
+#https://www.inkar.de/documents/Referenz%20Gemeinden,%20Kreise,%20NUTS.xlsx
+gemeinden <- read_excel("../../bbr-server.de/2023-03-30/Referenz Gemeinden, Kreise, NUTS.xlsx",skip=1)
+```
+
+## Subset TH
+
+```{r}
+gemeinden_TH <- subset(gemeinden,
+                       # Thueringen beginnt mit 16
+                       grepl("^16",as.character(gemeinden$`Gemeinden Kennziffer`)),
+               #   select=c("Gemeinden Name",
+                #           "Gemeinden Kennziffer")
+                  )
+
+
+```
+
+### Tidy *Gemeinden Name*
+
+```{r}
+gemeinden_TH$`Gemeinden Name 2` <- gsub(", Kurort","",gsub(
+  ", Stadt",
+  "",
+  gemeinden_TH$`Gemeinden Name`))
+
+
+schools$Ort <- sub("Mühlhausen.*$","Mühlhausen/Thüringen",schools$Ort)
+schools$Ort <- sub("Bad Frankenhausen.*$","Bad Frankenhausen/Kyffhäuser",schools$Ort)
+schools$Ort <- sub("Frankenheim.*$","Frankenheim/Rhön",schools$Ort)
+schools$Ort <- gsub("Erfurt-.*","Erfurt",schools$Ort)
+
+
+#gemeinden_TH$`Gemeinden Name 2` <- sub(
+#  "^((\\w+ *\\-*\\w*)*)(/\\w*)*(,* */* \\w+)*",
+ # "\\1",
+#  gemeinden_TH$`Gemeinden Name`)
+```
+
+### Duplicate Names?
+
+```{r}
+# Variante 1
+du1 <- duplicated(gemeinden_TH[,c("Gemeinden Name 2")]) # kennziffer: 3
+gemeinden_TH[du1,]
+
+# Variante 2
+du2 <- gemeinden_TH %>% 
+  group_by(`Gemeinden Name 2`) %>% 
+  mutate(dupe = n()>1)
+
+gemeinden_TH[du2$dupe,]
+```
+
+-   "Elxleben" "Eichenberg" "Lehesten" "Hartmannsdorf"
+
+### Remove Duplicates
+
+```{r}
+gemeinden_TH_clean <- gemeinden_TH[!du2$dupe,]
+```
+
+# Join *schools_1* with *gemeinden_TH_clean* via Names
+
+```{r}
+j1 <- schools %>% left_join(gemeinden_TH_clean,
+                        by = c("Ort"="Gemeinden Name 2"))
+```
+
+## Find empty *Gemeinden Kennziffer*
+
+```{r}
+e1 <- subset(j1,is.na(j1$`Gemeinden Kennziffer`),
+            select = c("Name","Schulnummer","Ort"))
+e1 |> reactable(pagination=FALSE)
+e1$Schulnummer
+```
+
+## Assign *Gemeinden Kennziffer manually*
+
+```{r}
+sn <- list(
+  # staatl. Grundschulen
+  c("11349", "16063003"), # Moorgrund (Gumpelstadt) Bad Salzungen
+  c("11498", "16063006"), # Berka vor dem Hainich
+  c("12807", "16067065"), # Tambach-Dietharz
+  c("14492", "16073046"), # Lehesten, Stadt
+  c("15004", "16064077"), # Nottertal-Heilinger Höhen (Schlotheim)
+  c("22209", "16067065"), # Tambach-Dietharz
+  c("24661", "16064077"), # Nottertal Heilinger Höhen Schlotheim
+  c("25769", "16070013"), # Elxleben / Ilm-Kreis
+  c("50614", "16064077") # Schlotheim
+ 
+)
+
+# Select Rows by list of column Values
+j1[j1$Schulnummer %in% sapply(sn,"[[",1),"Gemeinden Kennziffer"] <- as.numeric(sapply(sn,"[[",2))
+
+```
+
+## Grundschulen: Welche Schulen haben Grundschulen
+
+```{r}
+# daten von Excel-Maske (Florian)
+gs<-read.csv(file= "../../schulstatistik-thueringen.de/2023-01-05/schulnummern-grundschulen-2023-01-18.csv",sep=";") |>
+  #  remove duplicate Staatliche Grundschule Hüpstedt, 
+  #  correct number: 45420  Staatliche Gemeinschaftsschule Hüpstedt "Dünwaldschule"
+  filter(Schulnummer!=14879) |>
+  # Ilmenau-Kolleg 2021 geschlossen und keine Grundschule
+  # https://de.wikipedia.org/wiki/Ilmenau-Kolleg
+  filter(Schulnummer!=40625) 
+
+
+# schulportal-thueringen.de
+j1$Grundschulen <- 0
+j1$Grundschulen[match(as.character(gs$Schulnummer), 
+                      as.character(j1$Schulnummer), nomatch=0)] <- 1
+j1 |> group_by(Schulart) |>
+  summarise(n = n()) |>
+  arrange(-n)
+
+
+# check matching
+
+ff<-dplyr::filter(j1,Schulnummer %in% gs$Schulnummer)
+library(stevemisc)
+# unmatched schools
+j1_un <- filter(gs,Schulnummer %nin% ff$Schulnummer) #|>
+ # select(Schulnummer,Schulname)
+j1_un |> reactable(pagination=FALSE)
+
+```
+
+# Geocode
+
+```{r,eval=FALSE}
+# Adress in one column
+ j1$Adresse <- paste(j1$Strasse,", ", gsub("D-","",j1$Plz), " ",j1$Ort,sep="")
+
+arcgis <- j1 %>%
+  tidygeocoder::geocode(address = Adresse, 
+          method = 'arcgis', 
+          lat = latitude , 
+          long = longitude,
+          unique_only = TRUE)
+d_arcgis <- merge(arcgis,j1,by.x="address",by.y="Adresse",no.dups=TRUE)
+```
+
+## How many where not geococed?
+
+```{r}
+nrow(arcgis) - nrow(j1) # 93
+sum(is.na(arcgis$latitude)) # 0
+```
+
+-   mhh, Adress-douplicates?
+
+## doppelte Addressnamen in Schul-Data-frame?
+
+```{r}
+du1 <- duplicated(j1[,c("Adresse")]) # kennziffer: 3
+j1[du1,"Adresse"]
+```
+
+-   n = 93, correct, corresponds to "how many are not geocoded"
+
+## Schulcluster
+
+```{r}
+j1 |> 
+  group_by(Adresse)|>
+  summarize(n = n())|> 
+  ungroup()|>
+  group_by(n)|>
+  summarise(N = n())|> 
+  ungroup()
+
+```
+
+-   78 x 2-Schulcluster eine Adresse
+-   6 x 3-Schulcluster
+-   1 x 4-Schulcluster
+-   78 + 6 \* 2 + 3 = 93
+-   OK, 93 matches mit nrow(arcgis) - nrow(d)
+
+# check on map and compare methods
+
+```{r}
+library(leaflet)
+library(leaflet.extras)
+library(leafpop)
+leaflet(d_arcgis)%>%
+  addProviderTiles(providers$OpenTopoMap,
+                   options = providerTileOptions(opacity=.2)) %>%
+  # arcgis (rote Punkte)
+  addCircleMarkers(lng=~longitude,
+                   lat=~latitude,
+                   popup=popupTable(d_arcgis),
+                   radius = 1.5,
+                   color="red",
+                   stroke = FALSE,
+                   fillOpacity = 1)
+
+d_geo <- d_arcgis |>
+  rename("lat" = "latitude",
+         "lon" = "longitude")
+d_geo[d_geo$Schulnummer == 16054,"lat"] <- 50.5655934
+d_geo[d_geo$Schulnummer == 16054,"lon"] <- 11.453802906601
+
+leaflet(d_geo)%>%
+  addProviderTiles(providers$OpenTopoMap,
+                   options = providerTileOptions(opacity=.2)) %>%
+  # arcgis (rote Punkte)
+  addCircleMarkers(lng=~lon,
+                   lat=~lat,
+                   popup=popupTable(d_arcgis),
+                   radius = 1.5,
+                   color="red",
+                   stroke = FALSE,
+                   fillOpacity = 1)
+```
+
+-   16054 in Österreich
+
+## TODO check this programmatically for arcgis method
+
+-   Spatial manipulation with sf:: CHEAT SHEET
+-   inspired by https://gis.stackexchange.com/a/110246
+-   https://www.earthdatascience.org/courses/earth-analytics/spatial-data-r/reproject-vector-data/
+
+```{r,eval=FALSe}
+
+
+# import official shape file
+th<-sf::st_read("./data/VG5000_LAN.shp",
+                  geometry_column = "geometry")|>
+  # only Thüringen
+  subset(startsWith(as.character(AGS),"16")) %>% 
+  st_as_sf()
+
+# transform crs from School dataframe
+p <- d_arcgis[,c("lng_arcgis","lat_arcgis")] %>% 
+  st_as_sf(coords = c("lng_arcgis", "lat_arcgis"))%>% 
+  st_set_crs("+proj=longlat +datum=WGS84 +no_defs")%>% 
+  # same as th shape data
+  st_transform(crs(th))
+
+plot(st_geometry(th))
+plot(p,add=TRUE)
+# get schools outside the TH shape
+d_arcgis[unlist(st_disjoint(th,p)),c("Schulnummer","Adresse")]
+
+
+```
+
+-   OK, the same schools 48 16054 Am Löhmberg 23a, 07338 Leutenberg 784 16328 Schulstraße 26, 98639 Walldorf
+
+## TODO correct wrongly geocoded schools
+
+```{r}
+d_geo <- d_arcgis |>
+  rename("lat" = "lat_arcgis",
+         "lon" = "lng_arcgis")
+d_geo[d_geo$Schulnummer == 16054,"lat"] <- 50.5655934
+d_geo[d_geo$Schulnummer == 16054,"lon"] <- 11.453802906601
+
+
+d_geo[d_geo$Schulnummer == 16328,"lat"] <- 50.6111914
+d_geo[d_geo$Schulnummer == 16328,"lon"] <- 10.3863059
+
+```
+
+## TODO check again on map, hightlight Grundschulen
+
+```{r}
+GrundschulCol <- colorBin(bins = 2,"Reds", domain = 0:1)
+leaflet(d_geo)%>%
+  addProviderTiles(providers$Stamen.Toner,
+                   options = providerTileOptions(opacity=.2)) %>%
+   addHeatmap(lng=~lon,lat=~lat,max=10,radius=20,blur=10)  %>%
+   addCircleMarkers(lng=~lon,
+                 lat=~lat,
+                 popup=popupTable(d_geo),
+                 radius = 3,
+                 color=~GrundschulCol(Grundschulen),
+                 stroke = FALSE, 
+                 fillOpacity = 1
+) 
+```
+
+-   looks good
+
+# Kreise von inkar
+
+```{r,eval=FALSe}
+#library(dplyr)
+ inkar_th <-read.csv(file = "../../bbr-server.de/2023-01-11/inkar_2021.csv",
+              sep=";",
+              dec=",") |>
+  mutate(Kennziffer = as.character(Kennziffer))%>%
+  dplyr::filter(startsWith(Kennziffer,"16"))
+
+inkar_th5 <- inkar_th |> 
+  filter(nchar(as.character(Kennziffer))==5)|>
+  group_by(Kennziffer,Name)|>
+  summarise()|>
+  mutate(Kennziffer = as.character(Kennziffer))|>
+  rename(Kreis = Name)
+
+d_geo$`Kreise Kennziffer` <- substr(as.character(d_geo$`Gemeinden Kennziffer`),1,5)
+
+d_geo_inkar<-merge(inkar_th5,d_geo,by.y="Kreise Kennziffer",by.x="Kennziffer")
+
+# Eisenach gehört seit 1.1.2022 zu Wartburgkreis!
+# evtl. in Zukunft zusammenfuehren, Problem is aber, dass Inkar und Bundesstatistik
+# dies evtl. nicht rückwirkend berücksichtigen?!
+# https://www.eisenach.de/rathaus/fusion-der-stadt-eisenach/
+```
+
+# Export relevant data
+
+```{r}
+colnames(d_geo_inkar)
+cols <- c("Name",
+          "Schulnummer",
+          "Gemeinden Kennziffer",
+          "lat",
+          "lon",
+          "Plz",
+          "Ort",
+          "Strasse",
+          "Gemeinden Name",
+          "Kreis",
+          "Schulamt",
+          "Grundschulen",
+          "Telefon",
+          "Zentrale Orte (ja/nein) Name",
+          "Zentralörtliche Einstufungg (zusammengefasst) Name",
+          "Großstadtregionen Name",
+          "Großstadtregionaler Einzugsbereich Name",
+          "Stadt- und Gemeindetyp Name" ,
+          "Regionalstatistischer Raumtyp 2 (RegioStaR2) Kennziffer",
+          "Raumtyp Bezug: Lage (Gemeindeverbände) Name",
+          "Wachsen-Schrumpfen (Gemeinden) Name" )
+
+d_geo_inkar |> group_by(Name)|>summarise(n = n())|>
+  arrange(n)
+
+write.csv(x= subset(d_geo_inkar,select = cols),
+          file= paste0("schuladressen-TH-",Sys.Date(),".csv"),
+          row.names = FALSE)
+```
+
+## Subset Grundschulen
+
+```{r}
+# staatl. Grundschulen: Schulnummer beginnt mit 1
+#schools_1 <- subset(schools, grepl("^1",as.character(schools$Schulnummer)))
+schools_1 <- subset(schools, grepl("^[1-9]",as.character(schools$Schulnummer)))
+```
+
+# Session
+
+```{r}
+sessionInfo()
+
+```

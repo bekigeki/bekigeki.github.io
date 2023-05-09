@@ -1,0 +1,614 @@
+---
+title: "Versuch einer Klassifikation (in Bearbeitung)"
+subtitle: Stand 2023-05-05
+lang: de
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, echo=FALSE,results=FALSE}
+knitr::opts_chunk$set(echo=FALSE,cache=FALSE,results=FALSE)
+```
+
+
+# Setup and data {.hidden .unlisted}
+
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(kableExtra)
+library(readxl)
+library(sf)
+library(leaflet)
+library(leaflet.extras)
+library(leafpop)
+library(htmlwidgets)
+library(webshot)
+library(readxl)
+library(reactable)
+d <- readxl::read_excel("./data/bekigeki_Urdaten_bis_2022-2023-05-05.xlsx") 
+```
+
+## Long data
+```{r}
+Component <- c("Star","Run","S20","BPT","SLJ","OLB")
+
+d_long <- d |> 
+  pivot_longer(cols=Component,
+               names_to = "Component",
+               values_to = "score")|>
+  mutate(score = as.numeric(score),
+        # change 0 values to NA
+        score = ifelse(score==0,NA,score))|>
+  dplyr::select(-dateiname) |>
+  # zScore based on all years
+  group_by(Sex, Component) |> 
+  mutate(zScore_All  = scale(score),
+         q_Upper_All = quantile(score,.80,na.rm=TRUE),
+         q_Lower_All = quantile(score,.20,na.rm=TRUE))|>  
+  # zScore per Year
+  group_by(Sex, Component, cohort) |> 
+  mutate(zScore_Cohort  = scale(score),
+         q_Upper_Cohort = quantile(score,.80,na.rm=TRUE),
+         q_Lower_Cohort = quantile(score,.20,na.rm=TRUE))# |> 
+  
+ 
+
+d_summary <- d_long |> 
+  group_by(Child,Sex) |>
+  summarise(
+    # count upper quantiles
+    qLowerAll = 
+      sum((score <= q_Lower_All & (Component!="S20" | Component != "Star")) | 
+            (score >= q_Upper_All & (Component=="S20" | Component == "Star")),na.rm=TRUE),
+    qUpperAll = 
+      sum((score >= q_Upper_All & (Component!="S20" | Component != "Star")) |
+            (score <= q_Lower_All & (Component=="S20" | Component == "Star")),na.rm=TRUE),
+    qLowerCohort = 
+      sum((score <= q_Lower_Cohort & (Component!="S20" | Component != "Star")) |
+            (score >= q_Upper_Cohort & (Component=="S20" | Component == "Star")),na.rm=TRUE),
+    qUpperCohort = 
+      sum((score >= q_Upper_Cohort & (Component!="S20" | Component != "Star")) |
+            (score <= q_Lower_Cohort & (Component=="S20" | Component == "Star")),na.rm=TRUE),
+    qAll = qUpperAll - qLowerAll,
+    qCohort = qUpperCohort - qLowerCohort,
+    Absence = sum(is.na(zScore_All)))|>
+  dplyr::filter(Sex == "m" | Sex == "w")|>
+  mutate(
+    Fitness_q_All = ifelse(Absence<4,
+                           ifelse(qAll <=-2,"F",
+                                  ifelse(qAll>=2,"T",
+                                         ifelse(qAll<2 & qAll>-2,"N",NA))),NA),
+    Fitness_q_Cohort = ifelse(Absence<4,
+                              ifelse(qCohort <=-2,"F",
+                                     ifelse(qCohort>=2,"T",
+                                            ifelse(-qCohort<2 & qCohort>-2,"N",NA))),NA),
+    Fitness_q_Cohort_T6 = ifelse(Absence<4,
+                                 ifelse(qCohort <=-2,"F",
+                                        ifelse(qCohort>=2 & Absence ==0 ,"T",
+                                               ifelse((-qCohort<2 & qCohort>-2) | qCohort>=2 & Absence !=0,"N",NA))),NA))
+
+
+r1 <- d_summary |> 
+  merge(d[,c("Child","cohort")])|> 
+  pivot_longer(cols = c(
+                        Fitness_q_All,
+                        Fitness_q_Cohort,
+                        Fitness_q_Cohort_T6),
+               names_to = "Norm",values_to = "Result")|>
+  group_by(Norm,Result,cohort)|>
+  summarize(Number = n())|>
+  pivot_wider(names_from=Norm,values_from = c(Number))|>
+  t() |> as.data.frame()
+r1
+
+
+
+
+d_wide <- d_long |>
+#  rename(District = Kreis)|>
+  pivot_wider(id_cols = c(Child,Sex,cohort,
+                          School,Name,District,
+                          lat,lon,
+                          AGS,
+                          Sport,Club,
+                          club_1,club_2,club_3,
+                          Inclusion),
+              names_from = Component,
+              values_from = c("score")) |>
+  merge(d_summary) 
+```
+
+```{r}
+ 
+t1 <- d_wide |> 
+  filter(!is.na(Sport))|>
+  filter(!is.na(Club))|>
+  group_by(cohort,District,School,Name,Sex,Club,Sport) |>
+  summarise(Gesamtzahl = n(),
+            `auswertbar` = sum(
+              (Sex=="m" | Sex == "w") & 
+                Absence < 4 & 
+                !is.na(Sport) &
+                !is.na(Club) & 
+                !is.na(Fitness_q_Cohort)),
+            T = sum(Fitness_q_Cohort =="T",na.rm=TRUE),
+            F = sum(Fitness_q_Cohort =="F",na.rm=TRUE),
+            N = sum(Fitness_q_Cohort =="N",na.rm=TRUE)
+            ) |>
+  mutate(T_rel = round(T/auswertbar*100),
+         F_rel = round(F/auswertbar*100),
+         N_rel = round(N/auswertbar*100)
+         # check_rel = T_rel + F_rel + N_rel,
+         # check = T + F + N - auswertbar
+         )|>
+  ungroup()
+with_tooltip2 <- function(value, tooltip) {
+  tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
+            title = tooltip,value)
+}
+
+library(tippy)
+with_tooltip <- function(value, tooltip, ...) {
+  div(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
+      tippy(value, tooltip, ...))
+}
+```
+
+### Tables
+
+#### Filter definitions
+```{r}
+# Render a bar chart in the background of the cell
+bar_style <- function(width = 1, fill = "#e6e6e6", height = "75%",
+                      align = c("left", "right"), color = NULL) {
+  align <- match.arg(align)
+  if (align == "left") {
+    position <- paste0(width * 100, "%")
+    image <- sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", fill, position)
+  } else {
+    position <- paste0(100 - width * 100, "%")
+    image <- sprintf("linear-gradient(90deg, transparent %1$s, %2$s %1$s)", position, fill)
+  }
+  list(
+    backgroundImage = image,
+    backgroundSize = paste("100%", height),
+    backgroundRepeat = "no-repeat",
+    backgroundPosition = "center",
+    color = color
+  )
+}
+
+bar_chart <- function(label, width = "100%", height = "1rem", fill = "#00bfc4", background = NULL) {
+  bar <- div(style = list(background = fill, width = width, height = height))
+  chart <- div(style = list(height = height,flexGrow = 1, marginLeft = "0rem",marginRight = "0.5rem", background = background), bar)
+ # div(style = list(display = "flex", alignItems = "left"), label, chart)
+div(div(style = list(display = "flex", 
+                 align = "right"), paste0(label," %")),div(style = list(display = "flex", 
+                 alignItems = "center"),chart))
+
+}
+# Source: https://glin.github.io/reactable/articles/custom-filtering.html
+# 2022-03-23
+# Custom range input filter with label and value
+rangeFilter1 <- function(tableId, columnId, label, min, max, value = NULL, step = NULL, width = "200px") {
+  value <- if (!is.null(value)) value else min
+  inputId <- sprintf("filter_%s_%s", tableId, columnId)
+  valueId <- sprintf("filter_%s_%s__value", tableId, columnId)
+  oninput <- paste(
+    sprintf("document.getElementById('%s').textContent = this.value;", valueId),
+    sprintf("Reactable.setFilter('%s', '%s', this.value)", tableId, columnId)
+  )
+  
+  div(
+    tags$label(`for` = inputId, label),
+    div(
+      style = sprintf("display: flex; align-items: center; width: %s", validateCssUnit(width)),
+      tags$input(
+        id = inputId,
+        type = "range",
+        min = min,
+        max = max,
+        step = step,
+        value = value,
+        oninput = oninput,
+        onchange = oninput, # For IE11 support
+        style = "width: 100%;"
+      ),
+      span(id = valueId, style = "margin-left: 8px;", value)
+    )
+  )
+}
+
+# Source: https://glin.github.io/reactable/articles/custom-filtering.html
+rangeFilter2 <- function(values, name) {
+        tags$select(
+          # Set to undefined to clear the filter
+          onchange = sprintf("Reactable.setFilter('cars-select', '%s', event.target.value || undefined)", name),
+          # "All" has an empty value to clear the filter, and is the default option
+          tags$option(value = "", "Alle"),
+          lapply(unique(values), tags$option),
+          "aria-label" = sprintf("Filter %s", name),
+          style = "width: 100%; height: 28px;"
+        )
+}
+
+# Custom range input filter with label and value
+rangeFilter <- function(tableId, columnId, label, min, max, value = NULL, step = NULL, width = "200px") {
+  value <- if (!is.null(value)) value else min
+  inputId <- sprintf("filter_%s_%s", tableId, columnId)
+  valueId <- sprintf("filter_%s_%s__value", tableId, columnId)
+  oninput <- paste(
+    sprintf("document.getElementById('%s').textContent = this.value;", valueId),
+    sprintf("Reactable.setFilter('%s', '%s', this.value)", tableId, columnId)
+  )
+  
+  div(
+    tags$label(`for` = inputId, label),
+    div(
+      style = sprintf("display: flex; align-items: center; width: %s", validateCssUnit(width)),
+      tags$input(
+        id = inputId,
+        type = "range",
+        min = min,
+        max = max,
+        step = step,
+        value = value,
+        oninput = oninput,
+        onchange = oninput, # For IE11 support
+        style = "width: 100%;"
+      ),
+      span(id = valueId, style = "margin-left: 8px;", value)
+    )
+  )
+}
+
+# Filter method that filters numeric columns by minimum value
+filterMinValue <- JS("function(rows, columnId, filterValue) {
+  return rows.filter(function(row) {
+    return row.values[columnId] >= filterValue
+  })
+}")
+# Filter method that filters numeric columns by minimum value
+filterMinValue <- JS("function(rows, columnId, filterValue) {
+  return rows.filter(function(row) {
+    return row.values[columnId] >= filterValue
+  })
+}")
+
+# Source: https://github.com/glin/reactable/blob/HEAD/vignettes/popular-movies/popular-movies.Rmd
+# 2023-03-23
+select_filter <- function(id, label, shared_data, group, choices = NULL,
+                          width = "100%", class = "filter-input") {
+  values <- shared_data$data()[[group]]
+  keys <- shared_data$key()
+  if (is.list(values)) {
+    # Multiple values per row
+    flat_keys <- unlist(mapply(rep, keys, sapply(values, length)))
+    keys_by_value <- split(flat_keys, unlist(values), drop = TRUE)
+    choices <- if (is.null(choices)) sort(unique(unlist(values))) else choices
+  } else {
+    # Single value per row
+    keys_by_value <- split(seq_along(keys), values, drop = TRUE)
+    choices <- if (is.null(choices)) sort(unique(values)) else choices
+  }
+
+  script <- sprintf("
+    window['__ct__%s'] = (function() {
+      const handle = new window.crosstalk.FilterHandle('%s')
+      const keys = %s
+      return {
+        filter: function(value) {
+          if (!value) {
+            handle.clear()
+          } else {
+            handle.set(keys[value])
+          }
+        }
+      }
+    })()
+  ", id, shared_data$groupName(), toJSON(keys_by_value))
+
+  div(
+    class = class,
+    tags$label(`for` = id, label),
+    tags$select(
+      id = id,
+      onchange = sprintf("window['__ct__%s'].filter(this.value)", id),
+      style = sprintf("width: %s", validateCssUnit(width)),
+      tags$option(value = "", "Alle"),
+      lapply(choices, function(value) tags$option(value = value, value))
+    ),
+    tags$script(HTML(script))
+  )
+}
+
+# https://glin.github.io/reactable/articles/custom-filtering.html
+# 2023-02-23
+# Creates a data list column filter for a table with the given ID
+dataListFilter <- function(tableId, style = "width: 100%; height: 28px;") {
+  function(values, name) {
+    dataListId <- sprintf("%s-%s-list", tableId, name)
+    tagList(
+      tags$input(
+        type = "text",
+        list = dataListId,
+        oninput = sprintf("Reactable.setFilter('%s', '%s', event.target.value || undefined)", tableId, name),
+        "aria-label" = sprintf("Filter %s", name),
+        style = style
+      ),
+      tags$datalist(
+        id = dataListId,
+        lapply(unique(values), function(value) tags$option(value = value))
+      )
+    )
+  }
+}
+
+```
+
+### Shared HTML Table
+```{r}
+library(crosstalk)
+# shared table
+t2 <- t1 |> select(-Gesamtzahl,-T_rel,-F_rel,-N_rel)
+shared_data <- SharedData$new(t2)
+
+# styles
+sticky_style <- list(backgroundColor = "#f7f7f7")
+sticky_style_r <- list(borderTop = "0px solid #eee",borderLeft = "0px solid #eee",borderRight = "0px solid #eee")
+
+rotate_header_style<- list(
+          `white-space` = "nowrap",
+          `transform-origin` = "0% 50%",
+           transform = "rotate(-90deg)",
+          `margin-top` = "10px",
+          `margin-bottom` = "10px",
+           borderColor = "#ffffff"
+        )
+small_header_style <- list(`font-size` =  "10px")
+sticky_style_l <- list(borderLeft = "0px solid #eee")
+
+library(htmltools)
+# reactable
+tbl<-reactable(
+  shared_data,
+  defaultColDef = colDef(
+  #  headerStyle = sticky_style_r,
+    align = "right",
+    footerStyle = list(fontWeight = "bold"),
+    #   maxWidth = 120,
+    vAlign="top"),
+  searchable = TRUE,
+  resizable = TRUE,
+  wrap = TRUE,
+  pagination=TRUE,
+  # paginationType = "jump", 
+  defaultPageSize = 10,
+  showSortable = TRUE,
+  bordered = FALSE,
+  compact=TRUE,
+  # details = function(index) {
+  #t1$Name[index]},
+  #  onClick = "select",
+  height = 800,
+  #  width=600,
+  # defaultPageSize = 20,
+  striped = TRUE,
+  #elementId = "cars-vis-table",
+  elementId = "cars-grouping-table",
+  highlight = TRUE,
+  
+  filterable = FALSE,
+  groupBy = c("cohort"),
+  columns = list(
+    Sport = colDef(name = "Sport-AG",
+                   align="left",
+                   width=70,
+                   headerStyle = small_header_style,
+                   filterable = FALSE),
+    cohort = colDef(name = "Jahr",
+                    align="left",
+                    minWidth=60,
+                    headerStyle = small_header_style,
+                    filterable = FALSE),
+    Sex = colDef(name="Geschlecht",
+                 align="left",
+                 width=70,
+                 sortable = FALSE,
+                 #  width = 50,
+                      headerStyle = small_header_style,
+                 filterable=FALSE),
+    Club = colDef(name="Verein",
+                  sortable = FALSE,
+                  filterable=FALSE,
+                  width=60,
+                      headerStyle = small_header_style,
+                  align="left"),
+    Name = colDef(name = "Schule",
+                  sortable = TRUE,
+                  show=TRUE,
+                  minWidth = 100,
+                  align="left",
+                  headerStyle = small_header_style,
+                  #style = "font-weight: 100",
+                  # Show species under character names
+                  cell = function(value, index) {
+                    School<- t1$School[index]
+                    School <- if (!is.na(School)) School else "Unknown"
+                    div(
+                      div(style = "font-weight: 100", value),
+                      div(style = "font-size: 0.75rem", School)
+                    )
+                  }),
+    School = colDef(show=FALSE,
+                    minWidth = 100,
+                    headerStyle = small_header_style,
+                    sortable = TRUE), #Schulnummer
+    #  School = colDef(show=FALSE),
+    District = colDef(name="Kreis",
+                      minWidth = 80,
+                      headerStyle = small_header_style,
+                      show=TRUE,align="left",sortable = TRUE),
+    # Gesamtzahl= colDef(name="N",
+    #                    width=90,
+    #                    align = "right",
+    #           aggregate = "sum",
+    #           html=TRUE,
+    #         
+    #        #   footer = function(values) 
+    #         #    sprintf("&#x2211; %.0f", 
+    #          #           #sum(shared_data$Gesamtzahl)
+    #           #           sum(values)
+    #                     
+    #            #         )
+    #               footer = JS("function(colInfo) {
+    #     var total = 0
+    #     colInfo.data.forEach(function(row) {
+    #       total += row['Gesamtzahl']
+    #     })
+    #     return '&#x2211; ' + total.toFixed(0)
+    #   }")
+    #           ),
+    auswertbar= colDef(name="N<sub>a</sub>",
+                       html=TRUE,
+                       width=90,
+                       headerStyle = small_header_style,
+                       header = with_tooltip("Gesamtzahl <div style=\"font-size: 10px; font-weight:normal\"> (Anzahl auswertbar)</div>","vollständig auswertbare Datensätze für diese Darstellungsform (Teilnahme an mind. 4 Testaufgaben, Information zu Geschlecht, Verein UND Sport-AG vorhanden)"),
+                       align = "right",
+                       sticky = "right",
+                       aggregate = "sum",
+                       #   footer = function(values) 
+                       #    sprintf("&#x2211; %.0f", sum(values))
+                       #https://github.com/glin/reactable/issues/78
+                       footer = JS("function(colInfo) {
+        var total = 0
+        colInfo.data.forEach(function(row) {
+          total += row['auswertbar']
+        })
+        return '&#x2211; ' + total.toFixed(0)
+      }")
+    ),
+    T= colDef(align = "right",
+              name="positiv",
+              html=TRUE,
+              width=80,
+              headerStyle = small_header_style,
+              header = with_tooltip("positiv <div style=\"font-size: 10px; font-weight:normal\"> (Anzahl)</div>","'Potentielle Talente:' Anzahl an Schülerinnen und Schülern, die an mindestens vier Motorik-Tests teilnahmen UND mindestens zweimal öfter Testergebnisse im oberen Quintil als im unteren Quintil in Bezug auf die Gesamtstichprobe aus Thüringen für das jeweilige Jahr und Geschlecht erzielten."),
+              aggregate = "sum",
+              #  footer = function(values) 
+              #     sprintf("%.0f", sum(values))
+              footer = JS("function(colInfo) {
+        var total = 0
+        colInfo.data.forEach(function(row) {
+          total += row['T']
+        })
+        return '&#x2211; ' + total.toFixed(0)
+      }")
+    ),
+    F= colDef(align = "right",
+              name="negativ",
+              html=TRUE,
+              headerStyle = small_header_style,
+              header = with_tooltip("negativ <div style=\"font-size: 10px; font-weight:normal\"> (Anzahl)</div>","'Eventueller Förderbedarf:' Anzahl an Schülerinnen und Schülern, die an mindestens vier Motorik-Tests teilnahmen UND die mindestens zweimal öfter Testergebnisse im unteren Quintil als im oberen Quintil in Bezug auf die Gesamtstichprobe aus Thüringen für das jeweilige Jahr und Geschlecht erzielten."),
+              width=60,
+              aggregate = "sum",
+              #  footer = function(values) 
+              #     sprintf("%.0f", sum(values))
+              footer = JS("function(colInfo) {
+        var total = 0
+        colInfo.data.forEach(function(row) {
+          total += row['F']
+        })
+        return '&#x2211; ' + total.toFixed(0)
+      }")
+    ),
+    N= colDef(align = "right",
+              name="unauffällig",
+              html=TRUE,
+              headerStyle = small_header_style,
+              sticky = "right",
+             
+              header = with_tooltip("unauffällig <div style=\"font-size: 10px; font-weight:normal\"> (Anzahl)</div>","'Erwartungsgemäß:' Anzahl an Schülerinnen und Schülern, die an mindestens vier Motorik-Tests teilnahmen UND für die NICHT die anderen beiden Bedingungen zutreffen (siehe Tooltips)."),
+              width=70,
+              aggregate = "sum",
+              #  footer = function(values) 
+              #     sprintf("%.0f", sum(values))
+              footer = JS("function(colInfo) {
+        var total = 0
+        colInfo.data.forEach(function(row) {
+          total += row['N']
+        })
+        return '&#x2211; ' + total.toFixed(0)
+      }")
+            )),
+columnGroups = list(
+  colGroup(
+  name = "motorisch auffällig", 
+  sticky = "right",
+           columns = c(
+                       "T","F"))
+  # colGroup(name = "Gesamtzahl", 
+  #          sticky="left",
+  #          columns = c("Gesamtzahl", 
+  #                      "auswertbar"))
+  
+ ))
+ 
+
+library(jsonlite)
+```
+
+# Interaktive Tabelle
+
+- in Bearbeitung, Erläuterung erfolgt in Kürze
+
+
+```{r, results=TRUE}
+# browsable shared table
+browsable(
+  div("Filter: ",
+ # class = "movies",
+  style="font-weight: bold",
+  div(#style="display: flex",
+    style="font-weight: normal; display: grid; grid-template-columns: 1fr 3fr 1fr 1fr; gap: 10px;",
+    class = "filters",
+  #  search_filter("filter_title", "Search titles", shared_movies, "title"),
+    select_filter("filter_cohort", "Jahr", shared_data, "cohort"),
+    select_filter("filter_genres", "Kreis", shared_data, "District"),
+  select_filter("filter_sex", "Geschlecht", shared_data, "Sex"),
+  br(),
+  select_filter("filter_sport", "Sport-AG", shared_data, "Sport"),
+   select_filter("filter_club", "Vereinsmitgliedschaft", shared_data, "Club")
+  ),
+br(),
+  tagList(
+    div(tags$label("Gruppierung", `for` = "cars-grouping-select")),
+    tags$select(
+      id = "cars-grouping-select",
+    onchange = "Reactable.setGroupBy('cars-grouping-table', this.value ? [this.value] : [])",
+  # onchange = "Reactable.setGroupBy('cars-grouping-table', ['cohort', 'District'])"
+      tags$option("Keine", value = ""),
+      tags$option("Jahr", value = "cohort"),
+       tags$option("Kreis", value = "District"),
+       tags$option("Geschlecht", value = "Sex"),
+       tags$option("Schule", value = "Name"),
+  tags$option("Sport-AG", value = "Sport"),
+      tags$option("Vereinsmitgliedschaft", value = "Club"),
+      #lapply(c( "Kreis", "Sex","Name"), tags$option)
+    ),
+    
+  
+ #   tags$hr("aria-hidden" = "true"),
+#tags$hr(),
+div(style="font-weight: normal;font-size: 0.6em",
+  tbl))
+))
+```
+
+
+# Updates 
++ 2023-04-25: Anpassung Spalten der Tabelle (Entfernen der Barcharts Prozentangaben)
++ 2023-04-24: Erstellen der Seite

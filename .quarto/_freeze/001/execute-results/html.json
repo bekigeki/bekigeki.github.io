@@ -1,0 +1,16 @@
+{
+  "hash": "14bcf3db237e2a9de7a2bc413724bd29",
+  "result": {
+    "markdown": "---\ntitle: \"Teilnehmer\"\ndate: \"Stand: 2024-05-05\"\neditor_options: \n  chunk_output_type: console\n---\n\n\n\n\n\n\n\n# Entwicklung der erfassten Teilnehmerzahlen pro Schuljahresdurchlauf (Stand Mai 2023)\n\n\n\n::: {.cell}\n\n:::\n\n\n\n- 436 unterschiedliche Schulen insgesamt im Datensatz (Stand 2023-05-09)\n\n- Wiederholer (\"Sitzenbleiber\") nicht erfasst\n\n\n\n::: {.cell}\n::: {.cell-output-display}\n![](001_files/figure-html/unnamed-chunk-2-1.png){width=672}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](001_files/figure-html/unnamed-chunk-3-1.png){width=672}\n:::\n:::\n\n::: {.cell}\n\n:::\n\n\n\n# Updates \n+ 2023-05-05: Aktualisierung der Abbildung nach Eintreffen weiterer Datensätze, Ausschluss von Datensätzen die kein einziges Motorik-Testergebnis enthalten (trotz Vorhandensein von z.B. Geschlechts- oder Geburtstagsangabe)\n+ 2023-04-24: Aktualisierung der Abbildung nach Eintreffen weiterer Datensätze\n+ 2023-03-09: Erstellen der Seite\n\n",
+    "supporting": [
+      "001_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
