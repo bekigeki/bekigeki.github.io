@@ -3,7 +3,7 @@
     "path": "~/Desktop/website/bekigeki.github.io/.gitignore",
     "project_path": ".gitignore",
     "type": "gitignore",
-    "hash": "0",
+    "hash": "2962829840",
     "contents": "",
     "dirty": false,
     "created": 1683636702513.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "0,9",
+        "cursorPosition": "1,6",
         "scrollLine": "0"
     },
     "folds": "",
-    "lastKnownWriteTime": 1683637077,
+    "lastKnownWriteTime": 1683638435,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1683637077468,
+    "last_content_update": 1683638435676,
     "read_only": false,
     "read_only_alternatives": []
 }
