@@ -32,7 +32,7 @@
     "href": "index.html",
     "title": "Überblick",
     "section": "",
-    "text": "── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──\n✔ ggplot2 3.3.6      ✔ purrr   1.0.1 \n✔ tibble  3.1.8      ✔ dplyr   1.0.10\n✔ tidyr   1.2.1      ✔ stringr 1.5.0 \n✔ readr   2.1.2      ✔ forcats 0.5.2 \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\n\nAttaching package: 'kableExtra'\n\n\nThe following object is masked from 'package:dplyr':\n\n    group_rows\n\n\nLinking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE"
+    "text": "Die Punkte auf der Karte zeigen die Standorte der Schulen mit Grundschulklassen in Thüringen. Die blauen verdeutlichen die Schulen, die mindestens einmal in den Jahren von 2017 bis 2023 am Bewegungscheck des Programms “BEWEGTE KINDER = GESÜNDERE KINDER” (BeKiGeKi) der dritten Klassen in Thüringen teilnahmen.\n\n\n\n\n\n\n\n\n\n\nDatengrundlage\n\n\nSchuladressen, -nummern und -namen: https://www.schulportal-thueringen.de/schools (Stand 24. April 2023\nGeocoding: Cambon J, Hernangómez D, Belanger C, Possenriede D (2021). tidygeocoder: An R package for geocoding. Journal of Open Source Software, 6(65), 3544, https://doi.org/10.21105/joss.03544 (R package version 1.0.5 with ArcGIS Method)\nMessdaten im Excelformat von den Schulen, die am Programm “BEWEGTE KINDER=GESÜNDERE KINDER” (BeKiGeKi) teilnahmen\n\nAktualisierungen\n\n\n2023-05-10: Abschnitt Datengrundlage hinzugefügt\n2023-04-24: Erstellen der Seite"
   },
   {
     "objectID": "index.html#schuldaten",
