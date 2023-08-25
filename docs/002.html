@@ -894,52 +894,7 @@ Fitness_q_Cohort_T6  425 1318 1554  553 1490 2927   38    2   23</code></pre>
 <ul>
 <li>in Bearbeitung, Erläuterung erfolgt in Kürze</li>
 </ul>
-<div class="cell" data-hash="002_cache/html/unnamed-chunk-7_1a604f2bbdc1995e38695b3570083a89">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># browsable shared table</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">browsable</span>(</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">div</span>(<span class="st">"Filter: "</span>,</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a> <span class="co"># class = "movies",</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">style=</span><span class="st">"font-weight: bold"</span>,</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">div</span>(<span class="co">#style="display: flex",</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">style=</span><span class="st">"font-weight: normal; display: grid; grid-template-columns: 1fr 3fr 1fr 1fr; gap: 10px;"</span>,</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">class =</span> <span class="st">"filters"</span>,</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">#  search_filter("filter_title", "Search titles", shared_movies, "title"),</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select_filter</span>(<span class="st">"filter_cohort"</span>, <span class="st">"Jahr"</span>, shared_data, <span class="st">"cohort"</span>),</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select_filter</span>(<span class="st">"filter_genres"</span>, <span class="st">"Kreis"</span>, shared_data, <span class="st">"District"</span>),</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_filter</span>(<span class="st">"filter_sex"</span>, <span class="st">"Geschlecht"</span>, shared_data, <span class="st">"Sex"</span>),</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">br</span>(),</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select_filter</span>(<span class="st">"filter_sport"</span>, <span class="st">"Sport-AG"</span>, shared_data, <span class="st">"Sport"</span>),</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select_filter</span>(<span class="st">"filter_club"</span>, <span class="st">"Vereinsmitgliedschaft"</span>, shared_data, <span class="st">"Club"</span>)</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="fu">br</span>(),</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tagList</span>(</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">div</span>(tags<span class="sc">$</span><span class="fu">label</span>(<span class="st">"Gruppierung"</span>, <span class="st">`</span><span class="at">for</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"cars-grouping-select"</span>)),</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    tags<span class="sc">$</span><span class="fu">select</span>(</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">id =</span> <span class="st">"cars-grouping-select"</span>,</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">onchange =</span> <span class="st">"Reactable.setGroupBy('cars-grouping-table', this.value ? [this.value] : [])"</span>,</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># onchange = "Reactable.setGroupBy('cars-grouping-table', ['cohort', 'District'])"</span></span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>      tags<span class="sc">$</span><span class="fu">option</span>(<span class="st">"Keine"</span>, <span class="at">value =</span> <span class="st">""</span>),</span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>      tags<span class="sc">$</span><span class="fu">option</span>(<span class="st">"Jahr"</span>, <span class="at">value =</span> <span class="st">"cohort"</span>),</span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>       tags<span class="sc">$</span><span class="fu">option</span>(<span class="st">"Kreis"</span>, <span class="at">value =</span> <span class="st">"District"</span>),</span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>       tags<span class="sc">$</span><span class="fu">option</span>(<span class="st">"Geschlecht"</span>, <span class="at">value =</span> <span class="st">"Sex"</span>),</span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>       tags<span class="sc">$</span><span class="fu">option</span>(<span class="st">"Schule"</span>, <span class="at">value =</span> <span class="st">"Name"</span>),</span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>  tags<span class="sc">$</span><span class="fu">option</span>(<span class="st">"Sport-AG"</span>, <span class="at">value =</span> <span class="st">"Sport"</span>),</span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>      tags<span class="sc">$</span><span class="fu">option</span>(<span class="st">"Vereinsmitgliedschaft"</span>, <span class="at">value =</span> <span class="st">"Club"</span>)</span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>      <span class="co">#lapply(c( "Kreis", "Sex","Name"), tags$option)</span></span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a> tags<span class="sc">$</span><span class="fu">button</span>(<span class="st">"Download als CSV"</span>, <span class="at">onclick =</span> <span class="st">"Reactable.downloadDataCSV('cars-grouping-table', 'BeKiGeKi.csv')"</span>),   </span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a> <span class="co">#   tags$hr("aria-hidden" = "true"),</span></span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a><span class="co">#tags$hr(),</span></span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a><span class="fu">div</span>(<span class="at">style=</span><span class="st">"font-weight: normal;font-size: 0.6em"</span>,</span>
-<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>  tbl)</span>
-<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="002_cache/html/unnamed-chunk-7_73b1183e29fa74a60a4fd34c4567ba9c">
 <div class="cell-output-display no-overflow-x">
 
 <div style="font-weight: bold">
