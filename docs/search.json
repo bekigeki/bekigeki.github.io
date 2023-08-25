@@ -1,33 +1,5 @@
 [
   {
-    "objectID": "001.html",
-    "href": "001.html",
-    "title": "Teilnehmerzahlen",
-    "section": "",
-    "text": "Abbildung 1: Bemerkung: Kinder, die ein Schuljahr in der dritten Klasse wiederholten, könnten möglichwerweiße in Einzelfällen im Folgejahr noch einmal am Bewegungs-Check teilgenommen haben. Da keine eindeutige Kennung pro Kind jahrgangsübergreifend vorliegt, kann demnach auch genaue Aussage zur Gesamtzahl der erfassten unterschiedlichen Kindern getroffen werden (nur zur Anzahl der erfassten Kindern pro Jahr bzw. Gesamtzahl an Bewegungs-Checks.)\n\n\n\n\n\n\n\n\n\n\n\nAktualisierungen\n\n\n2023-05-15: Zusammenfassung, Bemerkung zur Anzahl unterschiedlicher Kinder, Corona-Schutzmaßnahmen, frewillige/verpflichtende Teilnahme\n2023-05-05: Aktualisierung der Abbildung nach Eintreffen weiterer Datensätze, Ausschluss von Datensätzen die kein einziges Motorik-Testergebnis enthalten (trotz Vorhandensein von z.B. Geschlechts- oder Geburtstagsangabe)\n2023-04-24: Aktualisierung der Abbildung nach Eintreffen weiterer Datensätze\n2023-03-09: Erstellen der Seite\n\n\n\nWiederverwendunghttps://creativecommons.org/licenses/by/4.0/deed.deZitatBitte zitieren Sie diese Arbeit als:\nWöhrl, T., & Bähr, F. (2024, March 9). Teilnehmerzahlen. https://bekigeki.github.io/001.html"
-  },
-  {
-    "objectID": "003.html",
-    "href": "003.html",
-    "title": "Sport-Veranstaltungen",
-    "section": "",
-    "text": "(A) Räumliche Verteilung und (B) Anzahl der Sport-Veranstaltungen seit dem Jahr 2018\n\n\n\n\n\n\n\n\n\n\n\n\n\nAktualisierungen\n\n\n2023-05-09: Entfernung BibTeX-Zitation, Figure-Caption an Rand, License\n2023-05-08: Zusammenfassung, Umstrukturierung\n2023-05-03: COVID-19-Pandemie Annnotation in Balkendiagramm\n2023-04-25: Erstellen der Seite\n\n\n\nWiederverwendunghttps://creativecommons.org/licenses/by/4.0/deed.deZitatBitte zitieren Sie diese Arbeit als:\nWöhrl, T., & Bähr, F. (2023, April 25).\nSport-Veranstaltungen. https://bekigeki.github.io/003.html"
-  },
-  {
-    "objectID": "002.html",
-    "href": "002.html",
-    "title": "Thüringer Motorik-Klassifikation 2023",
-    "section": "",
-    "text": "── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.2     ✔ readr     2.1.4\n✔ forcats   1.0.0     ✔ stringr   1.5.0\n✔ ggplot2   3.4.2     ✔ tibble    3.2.1\n✔ lubridate 1.9.2     ✔ tidyr     1.3.0\n✔ purrr     1.0.1     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\nAttaching package: 'kableExtra'\n\n\nThe following object is masked from 'package:dplyr':\n\n    group_rows\n\n\nLinking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE\n\n\n\n\n\n\nWarning: Using an external vector in selections was deprecated in tidyselect 1.1.0.\nℹ Please use `all_of()` or `any_of()` instead.\n  # Was:\n  data %&gt;% select(Component)\n\n  # Now:\n  data %&gt;% select(all_of(Component))\n\nSee &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.\n\n\n`summarise()` has grouped output by 'Norm', 'Result'. You can override using\nthe `.groups` argument.\n\n\n\n\n`summarise()` has grouped output by 'cohort', 'District', 'School', 'Name',\n'Sex', 'Club'. You can override using the `.groups` argument.\n\n\n\n\n\n\n\n\n\n\n\n\n\nAttaching package: 'jsonlite'\n\n\nThe following object is masked from 'package:purrr':\n\n    flatten"
-  },
-  {
-    "objectID": "002.html#long-data",
-    "href": "002.html#long-data",
-    "title": "Thüringer Motorik-Klassifikation 2023",
-    "section": "",
-    "text": "Warning: Using an external vector in selections was deprecated in tidyselect 1.1.0.\nℹ Please use `all_of()` or `any_of()` instead.\n  # Was:\n  data %&gt;% select(Component)\n\n  # Now:\n  data %&gt;% select(all_of(Component))\n\nSee &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.\n\n\n`summarise()` has grouped output by 'Norm', 'Result'. You can override using\nthe `.groups` argument.\n\n\n\n\n`summarise()` has grouped output by 'cohort', 'District', 'School', 'Name',\n'Sex', 'Club'. You can override using the `.groups` argument.\n\n\n\n\n\n\n\n\n\n\n\n\n\nAttaching package: 'jsonlite'\n\n\nThe following object is masked from 'package:purrr':\n\n    flatten"
-  },
-  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "Überblick",
@@ -35,24 +7,31 @@
     "text": "Die Punkte auf der Karte zeigen die Standorte der Schulen mit Grundschulklassen in Thüringen. Die blauen verdeutlichen die Schulen, die mindestens einmal in den Jahren von 2017 bis 2023 am Bewegungscheck des Programms “BEWEGTE KINDER = GESÜNDERE KINDER” (BeKiGeKi) der dritten Klassen in Thüringen teilnahmen.\n\n\n\n\n\n\n\n\n\n\nDatengrundlage\n\n\nSchuladressen, -nummern und -namen: https://www.schulportal-thueringen.de/schools (Stand 24. April 2023\nGeocoding: Cambon J, Hernangómez D, Belanger C, Possenriede D (2021). tidygeocoder: An R package for geocoding. Journal of Open Source Software, 6(65), 3544, https://doi.org/10.21105/joss.03544 (R package version 1.0.5 with ArcGIS Method)\nMessdaten im Excelformat von den Schulen, die am Programm “BEWEGTE KINDER=GESÜNDERE KINDER” (BeKiGeKi) teilnahmen\n\nAktualisierungen\n\n\n2023-05-10: Abschnitt Datengrundlage hinzugefügt\n2023-04-24: Erstellen der Seite"
   },
   {
-    "objectID": "index.html#schuldaten",
-    "href": "index.html#schuldaten",
-    "title": "Überblick",
-    "section": "Schuldaten",
-    "text": "Schuldaten\n\n\nRows: 563 Columns: 22\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (17): Name, Location, School.Type, Board, Board.Type, District, Admin, A...\ndbl  (5): School, lat, lon, PLZ, AGS\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message."
-  },
-  {
-    "objectID": "index.html#politische-grenzen",
-    "href": "index.html#politische-grenzen",
-    "title": "Überblick",
-    "section": "Politische Grenzen",
-    "text": "Politische Grenzen\n\n\nReading layer `VG5000_KRS' from data source \n  `/Users/tw/Desktop/website/bekigeki.github.io/data/sg.geodatenzentrum.de/2023-01-24/vg5000_12-31.utm32s.shape.ebenen/vg5000_ebenen_1231/VG5000_KRS.shp' \n  using driver `ESRI Shapefile'\nSimple feature collection with 400 features and 24 fields\nGeometry type: MULTIPOLYGON\nDimension:     XY\nBounding box:  xmin: 280353.1 ymin: 5235878 xmax: 921261.6 ymax: 6101302\nProjected CRS: ETRS89 / UTM zone 32N\n\n\n\n\n\nJoining, by = c(\"lat\", \"lon\")"
-  },
-  {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
+    "objectID": "001.html",
+    "href": "001.html",
+    "title": "Teilnehmerzahlen",
     "section": "",
-    "text": "Projekt seit…"
+    "text": "Abbildung 1: Bemerkung: Kinder, die ein Schuljahr in der dritten Klasse wiederholten, könnten möglichwerweiße in Einzelfällen im Folgejahr noch einmal am Bewegungs-Check teilgenommen haben. Da keine eindeutige Kennung pro Kind jahrgangsübergreifend vorliegt, kann demnach auch genaue Aussage zur Gesamtzahl der erfassten unterschiedlichen Kindern getroffen werden (nur zur Anzahl der erfassten Kindern pro Jahr bzw. Gesamtzahl an Bewegungs-Checks.)\n\n\n\n\n\n\n\n\n\n\n\nAktualisierungen\n\n\n2023-05-15: Zusammenfassung, Bemerkung zur Anzahl unterschiedlicher Kinder, Corona-Schutzmaßnahmen, frewillige/verpflichtende Teilnahme\n2023-05-05: Aktualisierung der Abbildung nach Eintreffen weiterer Datensätze, Ausschluss von Datensätzen die kein einziges Motorik-Testergebnis enthalten (trotz Vorhandensein von z.B. Geschlechts- oder Geburtstagsangabe)\n2023-04-24: Aktualisierung der Abbildung nach Eintreffen weiterer Datensätze\n2023-03-09: Erstellen der Seite\n\n\n\nWiederverwendunghttps://creativecommons.org/licenses/by/4.0/deed.deZitatBitte zitieren Sie diese Arbeit als:\nWöhrl, T., & Bähr, F. (2023, March 9). Teilnehmerzahlen. https://bekigeki.github.io/001.html"
+  },
+  {
+    "objectID": "002.html",
+    "href": "002.html",
+    "title": "Thüringer Motorik-Klassifikation 2023",
+    "section": "",
+    "text": "Warning: Using an external vector in selections was deprecated in tidyselect 1.1.0.\nℹ Please use `all_of()` or `any_of()` instead.\n  # Was:\n  data %&gt;% select(Component)\n\n  # Now:\n  data %&gt;% select(all_of(Component))\n\nSee &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.\n\n\n`summarise()` has grouped output by 'Norm', 'Result'. You can override using\nthe `.groups` argument.\n\n\n\n\n`summarise()` has grouped output by 'cohort', 'District', 'School', 'Name',\n'Sex', 'Club'. You can override using the `.groups` argument."
+  },
+  {
+    "objectID": "002.html#long-data",
+    "href": "002.html#long-data",
+    "title": "Thüringer Motorik-Klassifikation 2023",
+    "section": "",
+    "text": "Warning: Using an external vector in selections was deprecated in tidyselect 1.1.0.\nℹ Please use `all_of()` or `any_of()` instead.\n  # Was:\n  data %&gt;% select(Component)\n\n  # Now:\n  data %&gt;% select(all_of(Component))\n\nSee &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.\n\n\n`summarise()` has grouped output by 'Norm', 'Result'. You can override using\nthe `.groups` argument.\n\n\n\n\n`summarise()` has grouped output by 'cohort', 'District', 'School', 'Name',\n'Sex', 'Club'. You can override using the `.groups` argument."
+  },
+  {
+    "objectID": "003.html",
+    "href": "003.html",
+    "title": "Sport-Veranstaltungen",
+    "section": "",
+    "text": "(A) Räumliche Verteilung und (B) Anzahl der Sport-Veranstaltungen seit dem Jahr 2018\n\n\n\n\n\n\n\n\n\n\n\n\n\nAktualisierungen\n\n\n2023-05-09: Entfernung BibTeX-Zitation, Figure-Caption an Rand, License\n2023-05-08: Zusammenfassung, Umstrukturierung\n2023-05-03: COVID-19-Pandemie Annnotation in Balkendiagramm\n2023-04-25: Erstellen der Seite\n\n\n\nWiederverwendunghttps://creativecommons.org/licenses/by/4.0/deed.deZitatBitte zitieren Sie diese Arbeit als:\nWöhrl, T., & Bähr, F. (2023, April 25).\nSport-Veranstaltungen. https://bekigeki.github.io/003.html"
   }
 ]
