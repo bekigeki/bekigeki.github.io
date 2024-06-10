@@ -32,7 +32,7 @@
     "href": "003.html",
     "title": "Sport-Veranstaltungen",
     "section": "",
-    "text": "(A) Räumliche Verteilung und (B) Anzahl der Sport-Veranstaltungen seit dem Jahr 2018\n\n\n\n\n\n\n\n\n\n\n\n\n\nAktualisierungen\n\n\n2023-05-09: Entfernung BibTeX-Zitation, Figure-Caption an Rand, License\n2023-05-08: Zusammenfassung, Umstrukturierung\n2023-05-03: COVID-19-Pandemie Annnotation in Balkendiagramm\n2023-04-25: Erstellen der Seite\n\n\n\nWiederverwendunghttps://creativecommons.org/licenses/by/4.0/deed.deZitatBitte zitieren Sie diese Arbeit als:\nWöhrl, T., & Bähr, F. (2023, April 25).\nSport-Veranstaltungen. https://bekigeki.github.io/003.html"
+    "text": "(A) Räumliche Verteilung und (B) Anzahl der Sport-Veranstaltungen seit dem Jahr 2018"
   },
   {
     "objectID": "010.html",
@@ -47,5 +47,26 @@
     "title": "Version für Druck im Schuljahr 2023/2024",
     "section": "",
     "text": "Warning: There was 1 warning in `reframe()`.\nℹ In argument: `across()`.\nCaused by warning:\n! Using `across()` without supplying `.cols` was deprecated in dplyr 1.1.0.\nℹ Please supply `.cols` instead."
+  },
+  {
+    "objectID": "003.html#räumliche-verteilung-und-entwicklung-der-veranstaltungen",
+    "href": "003.html#räumliche-verteilung-und-entwicklung-der-veranstaltungen",
+    "title": "Sport-Veranstaltungen",
+    "section": "",
+    "text": "(A) Räumliche Verteilung und (B) Anzahl der Sport-Veranstaltungen seit dem Jahr 2018"
+  },
+  {
+    "objectID": "003.html#talentiaden",
+    "href": "003.html#talentiaden",
+    "title": "Sport-Veranstaltungen",
+    "section": "Talentiaden",
+    "text": "Talentiaden\n\nVeranstaltungsorte\n\n\n\n\n\n\n\n\n\nTeilnehmerzahlen\nEs ist nicht genau bekannt, wieviele Kinder vor dem Schuljahr 2023/2024 zu den Talentiaden eingeladen wurden, da nicht erfasst wurde, wieviele “Wildcards” (Schulen konnten begrenzt entscheiden konnten, welche Kinder zusätzlich an der Talentiade teilnehmen durften) tatsächlich an die Kinder weitergereicht wurden. Seit dem Schuljahr werden keine “Wildcards” mehr ausgegeben, wodurch die Anzahl eingeladener Kinder zu den Talentiadeveranstaltungen erfasst werden kann und den Organsiationsaufwand für die Veranstaltungen berechenbarer macht."
+  },
+  {
+    "objectID": "003.html#tage-des-sports--und-der-gesundheitsförderung",
+    "href": "003.html#tage-des-sports--und-der-gesundheitsförderung",
+    "title": "Sport-Veranstaltungen",
+    "section": "Tage des Sports- und der Gesundheitsförderung",
+    "text": "Tage des Sports- und der Gesundheitsförderung\nDie Tabelle gruppiert die Veranstaltungsorte der “Tage des Sports- und der Gesundheitsförderung” nach Sportbünden. Durch einen Klick mit der Mouse auf einen Sportbund entfaltet sich die Gruppierung mit Informationen zu Ort und Datum. Teilnehmerzahlen zu den Tagen des Sports- und der Gesundheitsförderung werden nicht erfasst."
   }
 ]
