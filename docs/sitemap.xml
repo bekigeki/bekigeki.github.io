@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://bekigeki.github.io/index.html</loc>
-    <lastmod>2024-04-20T23:49:34.169Z</lastmod>
+    <lastmod>2024-06-12T13:56:37.762Z</lastmod>
   </url>
   <url>
     <loc>https://bekigeki.github.io/001.html</loc>
@@ -19,5 +19,9 @@
   <url>
     <loc>https://bekigeki.github.io/010.html</loc>
     <lastmod>2024-04-30T09:46:44.788Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bekigeki.github.io/014.html</loc>
+    <lastmod>2024-06-12T14:12:59.249Z</lastmod>
   </url>
 </urlset>
