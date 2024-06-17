@@ -20,40 +20,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -339,47 +305,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 <p>Die Punkte auf der Karte verdeutlichen Standorte der Schulen mit Grundschulklassen in Thüringen, wobei die blauen Punkte die Schulen kennzeichnen, die mindestens einmal in den Jahren von 2017 bis 2023 am Bewegungscheck des Programms “BEWEGTE KINDER = GESÜNDERE KINDER” (BeKiGeKi) der dritten Klassen in Thüringen teilnahmen. Je größer ein Punkt ist, desto öfter nahm die entsprechende Schule am Bewegungscheck seit 2017 teil.</p>
-<div class="cell" data-hash="index_cache/html/unnamed-chunk-4_7431f47e49ec74c58385a0e6801ae810">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#dplyr::filter(Jahr=="2022")|&gt;</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">leaflet</span>()<span class="sc">%&gt;%</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addProviderTiles</span>(providers<span class="sc">$</span>OpenTopoMap,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">options =</span> <span class="fu">providerTileOptions</span>(<span class="at">opacity=</span>.<span class="dv">5</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addPolygons</span>(<span class="at">data =</span> kreise_th_t,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">weight =</span> <span class="dv">1</span>)<span class="sc">%&gt;%</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addHeatmap</span>(<span class="at">data =</span> gs,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lng=</span><span class="sc">~</span><span class="fu">as.numeric</span>(lon),</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lat=</span><span class="sc">~</span><span class="fu">as.numeric</span>(lat),<span class="at">max=</span><span class="dv">10</span>,<span class="at">radius=</span><span class="dv">15</span>,<span class="at">blur=</span><span class="dv">10</span>)  <span class="sc">%&gt;%</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">addCircleMarkers</span>(<span class="at">data=</span>nt,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>                   <span class="at">color=</span><span class="st">"white"</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lng=</span><span class="sc">~</span><span class="fu">as.numeric</span>(lon),</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lat=</span><span class="sc">~</span><span class="fu">as.numeric</span>(lat),</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>                    <span class="at">group =</span> <span class="st">"name"</span>,</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>                  </span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                    <span class="at">popup=</span><span class="fu">popupTable</span>(nt,<span class="at">row.numbers=</span><span class="cn">FALSE</span>,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">feature.id=</span><span class="cn">FALSE</span>,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">zcol=</span><span class="fu">c</span>(<span class="st">"Schulname"</span>,<span class="st">"Schulnummer"</span>)),</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                 <span class="at">radius =</span> <span class="dv">2</span>,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>              <span class="co">#   color=~GrundschulCol(Grundschulen),</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>                 <span class="at">stroke =</span> <span class="cn">FALSE</span>, </span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>                 <span class="at">fillOpacity =</span> <span class="dv">1</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>   <span class="fu">addCircleMarkers</span>(<span class="at">data=</span>ts_school,</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lng=</span><span class="sc">~</span><span class="fu">as.numeric</span>(lon),</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lat=</span><span class="sc">~</span><span class="fu">as.numeric</span>(lat),</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>                    <span class="at">group =</span> <span class="st">"name"</span>,</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>                  </span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>                    <span class="at">popup=</span><span class="fu">popupTable</span>(ts_school,<span class="at">row.numbers=</span><span class="cn">FALSE</span>,</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">feature.id=</span><span class="cn">FALSE</span>,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">zcol=</span><span class="fu">c</span>(<span class="st">"Schulname"</span>,<span class="st">"Schulnummer"</span>,<span class="st">"Teilnahmen (Anzahl)"</span>)),</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>                 <span class="at">radius =</span> ts_school<span class="sc">$</span><span class="st">`</span><span class="at">Teilnahmen (Anzahl)</span><span class="st">`</span><span class="sc">/</span><span class="fl">1.2</span>,</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>              <span class="co">#   color=~GrundschulCol(Grundschulen),</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>                 <span class="at">stroke =</span> <span class="cn">FALSE</span>, </span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>                 <span class="at">fillOpacity =</span> <span class="dv">1</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="index_cache/html/unnamed-chunk-4_efed5327daab5302bfeb06595c0fb1e3">
 <div class="cell-output-display">
 
 <div class="leaflet html-widget html-fill-item" id="htmlwidget-7cc95db36bbe21bbff67" style="width:100%;height:464px;"></div>
