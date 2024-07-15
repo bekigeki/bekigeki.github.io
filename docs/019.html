@@ -9,7 +9,7 @@
 <meta name="author" content="Toni Wöhrl">
 <meta name="author" content="Florian Bähr">
 
-<title>BeKiGeKi - Testergebnisse in Abhängigkeit von Konstitution, Vereinsmitgliedschaft und Geschlecht</title>
+<title>BeKiGeKi - Laufausdauer, Konstitution und Kinderarmut 2022</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -60,15 +60,6 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
-<script src="site_libs/core-js-2.5.3/shim.min.js"></script>
-<script src="site_libs/react-18.2.0/react.min.js"></script>
-<script src="site_libs/react-18.2.0/react-dom.min.js"></script>
-<script src="site_libs/reactwidget-1.0.0/react-tools.js"></script>
-<link href="site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
-<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
-<link href="site_libs/reactable-0.4.4/reactable.css" rel="stylesheet">
-<script src="site_libs/reactable-binding-0.4.4/reactable.js"></script>
-
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -109,7 +100,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Seitenleiste umschalten" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./014.html">Testergebnisse</a></li><li class="breadcrumb-item"><a href="./014.html">Vereinsmitgliedschaft</a></li></ol></nav>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./014.html">Testergebnisse</a></li><li class="breadcrumb-item"><a href="./019.html">Kinderarmut</a></li></ol></nav>
       <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Seitenleiste umschalten" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
       </a>
       <button type="button" class="btn quarto-search-button" aria-label="Suchen" onclick="window.quartoOpenSearch();">
@@ -278,7 +269,7 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./014.html" class="sidebar-item-text sidebar-link active">
+  <a href="./014.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Vereinsmitgliedschaft</span></a>
   </div>
 </li>
@@ -290,7 +281,7 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./019.html" class="sidebar-item-text sidebar-link">
+  <a href="./019.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Kinderarmut</span></a>
   </div>
 </li>
@@ -317,9 +308,13 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">Auf dieser Seite</h2>
    
   <ul>
-  <li><a href="#vereinsmitgliedschaft-1" id="toc-vereinsmitgliedschaft-1" class="nav-link active" data-scroll-target="#vereinsmitgliedschaft-1">Vereinsmitgliedschaft</a></li>
-  <li><a href="#vereinsmitgliedschaft-und-geschlecht" id="toc-vereinsmitgliedschaft-und-geschlecht" class="nav-link" data-scroll-target="#vereinsmitgliedschaft-und-geschlecht">Vereinsmitgliedschaft und Geschlecht</a></li>
-  <li><a href="#daten-zur-abbildung" id="toc-daten-zur-abbildung" class="nav-link" data-scroll-target="#daten-zur-abbildung">Daten zur Abbildung</a></li>
+  <li><a href="#gemeindeebene-kinderarmut-jahr-2022" id="toc-gemeindeebene-kinderarmut-jahr-2022" class="nav-link active" data-scroll-target="#gemeindeebene-kinderarmut-jahr-2022">Gemeindeebene: Kinderarmut Jahr 2022</a></li>
+  <li><a href="#kreisebene-6-minuten-lauf-übergewicht-und-kinderarmut-jahr-2022" id="toc-kreisebene-6-minuten-lauf-übergewicht-und-kinderarmut-jahr-2022" class="nav-link" data-scroll-target="#kreisebene-6-minuten-lauf-übergewicht-und-kinderarmut-jahr-2022">Kreisebene: 6-Minuten-Lauf, Übergewicht und Kinderarmut Jahr 2022</a>
+  <ul class="collapse">
+  <li><a href="#minuten-lauf" id="toc-minuten-lauf" class="nav-link" data-scroll-target="#minuten-lauf">6-Minuten-Lauf</a></li>
+  <li><a href="#übergewicht" id="toc-übergewicht" class="nav-link" data-scroll-target="#übergewicht">Übergewicht</a></li>
+  <li><a href="#kinderarmut" id="toc-kinderarmut" class="nav-link" data-scroll-target="#kinderarmut">Kinderarmut</a></li>
+  </ul></li>
   
   </ul>
 </nav>
@@ -329,7 +324,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Testergebnisse in Abhängigkeit von Konstitution, Vereinsmitgliedschaft und Geschlecht</h1>
+<h1 class="title">Laufausdauer, Konstitution und Kinderarmut 2022</h1>
 </div>
 
 
@@ -361,68 +356,90 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Veröffentlichungsdatum</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">12. Juni 2024</p>
+      <p class="date">15. Juli 2024</p>
     </div>
   </div>
   
     <div>
     <div class="quarto-title-meta-heading">Geändert</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">26. Juni 2024</p>
+      <p class="date-modified">16. Juli 2024</p>
     </div>
   </div>
     
   </div>
   
-<div>
-  <div class="abstract">
-    <div class="abstract-title">Zusammenfassung</div>
-    <p>Testergebnisse in Abhängigkeit vom Verhältnis Körperlänge/Masse, Vereinszugehörigkeit und Geschlecht.</p>
-  </div>
-</div>
 
 </header>
 
-<section id="vereinsmitgliedschaft-1" class="level2">
-<h2 class="anchored" data-anchor-id="vereinsmitgliedschaft-1">Vereinsmitgliedschaft</h2>
+<section id="gemeindeebene-kinderarmut-jahr-2022" class="level1">
+<h1>Gemeindeebene: Kinderarmut Jahr 2022</h1>
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="014_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+<p><img src="019_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
-<section id="vereinsmitgliedschaft-und-geschlecht" class="level2">
-<h2 class="anchored" data-anchor-id="vereinsmitgliedschaft-und-geschlecht">Vereinsmitgliedschaft und Geschlecht</h2>
+<section id="kreisebene-6-minuten-lauf-übergewicht-und-kinderarmut-jahr-2022" class="level1">
+<h1>Kreisebene: 6-Minuten-Lauf, Übergewicht und Kinderarmut Jahr 2022</h1>
+<section id="minuten-lauf" class="level2">
+<h2 class="anchored" data-anchor-id="minuten-lauf">6-Minuten-Lauf</h2>
+<ul>
+<li>Sortierung der Kreise nach Anteil an Kindern deren Laufleistung im 6-Minuten-Lauf im Schuljahr 2022/2023 unterhalb des thüringenweiten 0,2-Quantils lag (Jungen: 846 m; Mädchen: 810 m; Schuljahr 2022/2023)</li>
+</ul>
 <div class="cell">
 <div class="cell-output-display">
-<p><img src="014_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+<p><img src="019_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="019_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
-<section id="daten-zur-abbildung" class="level2">
-<h2 class="anchored" data-anchor-id="daten-zur-abbildung">Daten zur Abbildung</h2>
+<section id="übergewicht" class="level2">
+<h2 class="anchored" data-anchor-id="übergewicht">Übergewicht</h2>
+<ul>
+<li><p>Anteil an Kindern im jeweiligen Kreis in Prozent, die am Bewegungs-Check im Schuljahr 2022/2023 teilnahmen und nach freiwilliger Angabe von Masse und Größe nach:<br>
+&gt; Kromeyer-Hauschild, K., Wabitsch, M., Kunze, D., Geller, F., Geiß, H. C., Hesse, V., von Hippel, A., Jaeger, U., Johnsen, D., Korte, W., Menner, K., Müller, G., Müller, J. M., Niemann-Pilatus, A., Remer, T., Schaefer, F., Wittchen, H.-U., Zabransky, S., Zellner, K., … Hebebrand, J. (2001). Perzentile für den Body-mass-Index für das Kindes- und Jugendalter unter Heranziehung verschiedener deutscher Stichproben. Monatsschrift Kinderheilkunde, 149(8), 807–818. als “übergewichtig” oder “adipös” eingstuft würden</p></li>
+<li><p>Body-Mass-Index sortiert nach Anteil übergewichtiger Teilnehmerkinder in Prozent</p></li>
+</ul>
 <div class="cell">
 <div class="cell-output-display">
-
-<div class="reactable html-widget html-fill-item" id="htmlwidget-002fc10dfb4805974c2b" style="width:auto;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-002fc10dfb4805974c2b">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Component":["6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","6-Minuten-Lauf","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","20-Meter-Sprint","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Sternlauf","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Standweitsprung","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Medizinballstoßen","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand","Einbeinstand"],"Sex":["m","m","m","m","m","m","m","m","m","m","w","w","w","w","w","w","w","w","w","w","m","m","m","m","m","m","m","m","m","m","w","w","w","w","w","w","w","w","w","w","m","m","m","m","m","m","m","m","m","m","w","w","w","w","w","w","w","w","w","w","m","m","m","m","m","m","m","m","m","m","w","w","w","w","w","w","w","w","w","w","m","m","m","m","m","m","m","m","m","m","w","w","w","w","w","w","w","w","w","w","m","m","m","m","m","m","m","m","m","m","w","w","w","w","w","w","w","w","w","w"],"Hmr":["[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]","[2.5,3.82]","[2.5,3.82]","(3.82,4.31]","(3.82,4.31]","(4.31,4.67]","(4.31,4.67]","(4.67,5.08]","(4.67,5.08]","(5.08,6.5]","(5.08,6.5]"],"Club":["ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein","ja","nein"],"N":[2042,1904,2357,1624,2495,1584,2344,1466,1945,1268,1813,1914,2114,1734,2178,1608,2165,1564,2374,1871,2042,1913,2355,1624,2498,1583,2348,1466,1946,1268,1814,1915,2113,1733,2178,1609,2168,1564,2375,1873,2045,1913,2357,1626,2497,1584,2350,1467,1945,1268,1814,1916,2113,1734,2178,1608,2168,1565,2375,1873,2044,1913,2357,1625,2498,1584,2349,1467,1947,1268,1814,1916,2114,1734,2177,1609,2168,1565,2374,1874,2043,1913,2356,1626,2497,1583,2349,1467,1947,1269,1814,1916,2113,1734,2178,1609,2168,1565,2375,1874,2045,1913,2357,1626,2498,1584,2350,1467,1947,1269,1814,1916,2114,1734,2178,1609,2168,1565,2375,1874],"value":[2.56,2.39,2.83,2.65,2.92,2.72,2.95,2.77,2.92,2.77,2.4,2.33,2.58,2.5,2.66,2.58,2.72,2.62,2.71,2.63,4.47,4.3,4.68,4.53,4.77,4.58,4.75,4.62,4.7,4.58,4.34,4.27,4.49,4.43,4.56,4.49,4.61,4.5,4.56,4.48,1.96,1.83,2.05,1.91,2.09,1.92,2.08,1.93,2.04,1.91,1.88,1.81,1.94,1.87,1.97,1.89,1.98,1.88,1.95,1.86,124.75,116.41,135.68,128.09,139.51,131.05,138.99,132.88,136.55,130.28,117.52,111.96,125.19,121.32,129.09,123.84,131.16,125.58,128.74,124.2,4.52,4.24,4.36,4.11,4.25,3.98,4.07,3.93,3.82,3.65,3.94,3.85,3.81,3.72,3.73,3.58,3.65,3.5,3.42,3.28,14.45,12.81,17.37,15.46,19.12,16.87,19.64,16.2,18.52,16.78,17.3,15.8,20.34,18.87,22.01,19.62,23.77,20.49,23.06,20.29],"value_sd":[0.39,0.41,0.39,0.37,0.37,0.38,0.37,0.36,0.37,0.38,0.35,0.37,0.34,0.34,0.34,0.34,0.33,0.33,0.34,0.33,0.42,0.42,0.4,0.4,0.39,0.41,0.37,0.41,0.38,0.4,0.38,0.38,0.38,0.4,0.38,0.39,0.39,0.38,0.38,0.38,0.29,0.28,0.3,0.31,0.31,0.3,0.31,0.29,0.31,0.3,0.27,0.27,0.28,0.29,0.28,0.28,0.29,0.28,0.29,0.28,20.3,20.45,19.96,19.75,19.07,20.07,18.35,19.13,18.03,18.89,18.24,18.69,18.85,19.44,18.96,19.18,19.19,18.79,18.33,18.36,0.72,0.73,0.72,0.69,0.68,0.68,0.66,0.64,0.65,0.65,0.65,0.67,0.65,0.64,0.63,0.6,0.6,0.6,0.58,0.58,13.03,11.8,15.15,13.72,16.25,15.22,16.68,14.09,15.78,15.14,14.66,13.67,16.66,16.14,17.43,16.12,18.53,16.79,17.94,16.59],"Component_unit":["m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","m/s","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","cm","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","s","s","s","s","s","s","s","s","s","s","s","s","s","s","s","s","s","s","s","s"],"zScore_mean":[-0.27,-0.7,0.39,-0.04,0.63,0.13,0.69,0.26,0.62,0.25,-0.66,-0.86,-0.23,-0.42,-0.02,-0.22,0.12,-0.12,0.11,-0.09,-0.18,-0.58,0.34,-0.02,0.54,0.1,0.5,0.19,0.38,0.08,-0.5,-0.66,-0.12,-0.27,0.04,-0.13,0.15,-0.1,0.05,-0.16,0.05,-0.38,0.35,-0.14,0.47,-0.08,0.44,-0.06,0.32,-0.12,-0.2,-0.46,-0.02,-0.26,0.06,-0.2,0.12,-0.2,0.02,-0.27,-0.16,-0.57,0.37,0,0.56,0.15,0.53,0.24,0.42,0.11,-0.51,-0.79,-0.14,-0.33,0.05,-0.21,0.15,-0.12,0.03,-0.19,0.87,0.49,0.66,0.31,0.5,0.13,0.26,0.07,-0.09,-0.32,0.07,-0.05,-0.1,-0.23,-0.21,-0.42,-0.33,-0.53,-0.64,-0.84,-0.26,-0.36,-0.08,-0.2,0.03,-0.11,0.06,-0.15,-0.01,-0.11,-0.08,-0.18,0.11,0.02,0.21,0.06,0.32,0.12,0.28,0.1]},"columns":[{"id":"Component","name":"Test","type":"factor"},{"id":"Sex","name":"Geschlecht","type":"character"},{"id":"Hmr","name":"Körperlänge/Masse (cm/kg) Intervall","type":"factor"},{"id":"Club","name":"Vereinsmitgliedschaft","type":"character"},{"id":"N","name":"Anzahl Kinder","type":"numeric"},{"id":"value","name":"Mittelwert","type":"numeric"},{"id":"value_sd","name":"Standardabweichung","type":"numeric"},{"id":"Component_unit","name":"Einheit","type":"factor"},{"id":"zScore_mean","name":"zScore","type":"numeric"}],"filterable":true,"pagination":false,"style":{"fontFamily":"Work Sans, sans-serif","fontSize":"0.75rem"},"dataKey":"6a8c4ce4464e33328e8c09a17133b22f"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+<p><img src="019_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="019_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="kinderarmut" class="level2">
+<h2 class="anchored" data-anchor-id="kinderarmut">Kinderarmut</h2>
+<ul>
+<li>Kinderarmut: Nicht erwerbsfähige SGBII-Leistungsberechtigte unter 15 Jahren je 100 Einwohner unter 15 Jahren”, Daten von Bundesinstitut für Bau-, Stadt- und Raumforschung, BBSR Bonn [2024], www.bbsr.bund.de, Raumbezug: Kreis, Indikator-ID: 14439, Zeitbezug 2022</li>
+</ul>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="019_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
 </section>
 
 
 <div id="quarto-appendix" class="default"><section id="aktualisierungen" class="level1 appendix"><h2 class="anchored quarto-appendix-heading">Aktualisierungen</h2><div class="quarto-appendix-contents">
 
 <ul>
-<li>2024-06-12: erste Veröffentlichung</li>
-<li>2022-10-20: Erste Abbildungen</li>
+<li>2024-07-15: Erstellen der Seite</li>
 </ul>
 
 
 </div></section><section class="quarto-appendix-contents"><h2 class="anchored quarto-appendix-heading">Wiederverwendung</h2><div id="quarto-reuse" class="quarto-appendix-contents"><div><a rel="license" href="https://creativecommons.org/licenses/by/4.0/deed.de">https://creativecommons.org/licenses/by/4.0/deed.de</a></div></div></section><section class="quarto-appendix-contents"><h2 class="anchored quarto-appendix-heading">Zitat</h2><div><div class="quarto-appendix-secondary-label">Bitte zitieren Sie diese Arbeit als:</div><div id="ref-wöhrl2024" class="csl-entry quarto-appendix-citeas" role="listitem">
-Wöhrl, T., &amp; Bähr, F. (2024, June 12). <em>Testergebnisse in
-Abhängigkeit von Konstitution, Vereinsmitgliedschaft und
-Geschlecht</em>. <a href="https://bekigeki.github.io/014.html">https://bekigeki.github.io/014.html</a>
+Wöhrl, T., &amp; Bähr, F. (2024, July 15). <em>Laufausdauer,
+Konstitution und Kinderarmut 2022</em>. <a href="https://bekigeki.github.io/019.html">https://bekigeki.github.io/019.html</a>
 </div></div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
