@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>UpSet Risiko-Kombinationen</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #f7f7f7;
+    }
+    h1 {
+      margin-bottom: 0.5rem;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      max-width: 60rem;
+    }
+    #upset-root {
+      width: 100%;
+      max-width: 1000px;
+      height: 550px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>UpSet der Risiko-Kombinationen</h1>
+  <p>
+    Jede Zeile der Daten repräsentiert ein Kind; die Mengen sind Club, Sport-AG, Normalgewicht (NW) und Geschlecht (m/w).
+    Die Intersektionen zeigen, wie viele Kinder in jeder Kombination liegen.
+  </p>
+
+  <div id="upset-root"></div>
+
+  <!-- UpSet.js bundle build (no React/webpack needed) -->
+  <script src="https://unpkg.com/@upsetjs/bundle"></script>
+  <script>
+    const { extractCombinations, render } = upsetjs;
+
+    async function init() {
+      // Load elements exported from R (same folder as this HTML)
+      const elems = await fetch('elems.json').then(r => r.json());
+
+      // Compute sets + combinations from elements
+      const { sets, combinations } = extractCombinations(elems);
+
+      const root = document.getElementById('upset-root');
+      let selection = null;
+
+      function rerender(sel = null) {
+        selection = sel;
+        const props = {
+          sets,
+          combinations,
+          width: root.clientWidth,
+          height: root.clientHeight,
+          selection,
+          onHover: (s) => rerender(s)
+        };
+        render(root, props);
+      }
+
+      rerender();
+      window.addEventListener('resize', () => rerender(selection));
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
