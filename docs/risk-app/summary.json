@@ -1,0 +1,149 @@
+[
+  {
+    "combo_str": "NA+NA",
+    "NW": 0,
+    "N": 1,
+    "mean": 1.925,
+    "median": 1.925
+  },
+  {
+    "combo_str": "Club+NA",
+    "Club": 1,
+    "NW": 0,
+    "N": 4,
+    "mean": 2.5319,
+    "median": 2.4139,
+    "lwr_ci": 2.0219,
+    "upr_ci": 3.042
+  },
+  {
+    "combo_str": "Sport",
+    "Club": 0,
+    "Sport": 1,
+    "NW": 0,
+    "N": 1018,
+    "mean": 2.539,
+    "median": 2.55,
+    "lwr_ci": 2.5135,
+    "upr_ci": 2.5645
+  },
+  {
+    "combo_str": "NA",
+    "NW": 0,
+    "N": 7,
+    "mean": 2.5393,
+    "median": 2.55,
+    "lwr_ci": 2.269,
+    "upr_ci": 2.8095
+  },
+  {
+    "combo_str": "NA+NW",
+    "NW": 1,
+    "N": 8,
+    "mean": 2.5625,
+    "median": 2.65,
+    "lwr_ci": 2.3046,
+    "upr_ci": 2.8204
+  },
+  {
+    "combo_str": "Club",
+    "Club": 1,
+    "Sport": 0,
+    "NW": 0,
+    "N": 3510,
+    "mean": 2.5969,
+    "median": 2.575,
+    "lwr_ci": 2.5831,
+    "upr_ci": 2.6107
+  },
+  {
+    "combo_str": "NW",
+    "Club": 0,
+    "Sport": 0,
+    "NW": 1,
+    "N": 8865,
+    "mean": 2.6163,
+    "median": 2.625,
+    "lwr_ci": 2.6087,
+    "upr_ci": 2.6239
+  },
+  {
+    "combo_str": "NA+NA+NW",
+    "NW": 1,
+    "N": 1,
+    "mean": 2.6444,
+    "median": 2.6444
+  },
+  {
+    "combo_str": "Club+Sport",
+    "Club": 1,
+    "Sport": 1,
+    "NW": 0,
+    "N": 1746,
+    "mean": 2.6582,
+    "median": 2.675,
+    "lwr_ci": 2.6383,
+    "upr_ci": 2.6781
+  },
+  {
+    "combo_str": "Sport+NW",
+    "Club": 0,
+    "Sport": 1,
+    "NW": 1,
+    "N": 2894,
+    "mean": 2.6781,
+    "median": 2.7,
+    "lwr_ci": 2.6648,
+    "upr_ci": 2.6913
+  },
+  {
+    "combo_str": "Club+NA+NW",
+    "Club": 1,
+    "NW": 1,
+    "N": 10,
+    "mean": 2.7106,
+    "median": 2.65,
+    "lwr_ci": 2.5224,
+    "upr_ci": 2.8987
+  },
+  {
+    "combo_str": "Club+NW",
+    "Club": 1,
+    "Sport": 0,
+    "NW": 1,
+    "N": 10929,
+    "mean": 2.7532,
+    "median": 2.75,
+    "lwr_ci": 2.7461,
+    "upr_ci": 2.7604
+  },
+  {
+    "combo_str": "Club+Sport+NW",
+    "Club": 1,
+    "Sport": 1,
+    "NW": 1,
+    "N": 5612,
+    "mean": 2.8106,
+    "median": 2.825,
+    "lwr_ci": 2.8006,
+    "upr_ci": 2.8205
+  },
+  {
+    "combo_str": "NA+Sport",
+    "Sport": 1,
+    "NW": 0,
+    "N": 2,
+    "mean": 2.8375,
+    "median": 2.8375,
+    "lwr_ci": -0.8155,
+    "upr_ci": 6.4905
+  },
+  {
+    "combo_str": "NA+Sport+NW",
+    "Sport": 1,
+    "NW": 1,
+    "N": 1,
+    "mean": 2.975,
+    "median": 2.975
+  }
+]
