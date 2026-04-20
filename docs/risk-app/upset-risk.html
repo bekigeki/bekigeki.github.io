@@ -1,105 +1,58 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UpSet Risiko-Kombinationen</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 1rem;
-      background: #f7f7f7;
-      color: #222;
-    }
+<script type="module">
+  const status = document.getElementById("status");
+  const root = document.getElementById("upset-root");
 
-    h1 {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.6rem;
-    }
+  async function main() {
+    try {
+      status.textContent = "Lade UpSet.js-Modul ...";
+      const mod = await import("https://cdn.jsdelivr.net/npm/@upsetjs/bundle/+esm");
 
-    p {
-      margin: 0 0 1rem 0;
-      max-width: 70ch;
-      line-height: 1.5;
-    }
-
-    #status {
-      margin-bottom: 0.75rem;
-      color: #555;
-      font-size: 0.95rem;
-    }
-
-    #upset-root {
-      width: 100%;
-      max-width: 1100px;
-      height: 650px;
-      border: 1px solid #ccc;
-      background: #fff;
-    }
-  </style>
-</head>
-<body>
-  <h1>UpSet der Risiko-Kombinationen</h1>
-  <p>
-    Jede Zeile in <code>elems.json</code> repräsentiert ein Kind; die Mengen sind Club, Sport-AG, Normalgewicht (NW) und ggf. weitere Merkmale.
-  </p>
-
-  <div id="status">Lade Daten und UpSet.js ...</div>
-  <div id="upset-root"></div>
-
-  <script type="module">
-    const status = document.getElementById("status");
-    const root = document.getElementById("upset-root");
-
-    async function main() {
-      try {
-        status.textContent = "Lade UpSet.js-Modul ...";
-
-        const mod = await import("https://cdn.jsdelivr.net/npm/@upsetjs/bundle/+esm");
-
-        status.textContent = "Lade JSON-Daten ...";
-
-        const response = await fetch("./elems.json");
-        if (!response.ok) {
-          throw new Error(`elems.json konnte nicht geladen werden (${response.status})`);
-        }
-        const elems = await response.json();
-
-        if (!Array.isArray(elems)) {
-          throw new Error("elems.json ist kein JSON-Array");
-        }
-
-        status.textContent = `Bereite ${elems.length} Elemente auf ...`;
-
-        const { extractCombinations, render } = mod;
-        const { sets, combinations } = extractCombinations(elems);
-
-        let selection = null;
-
-        function rerender(sel = null) {
-          selection = sel;
-          render(root, {
-            sets,
-            combinations,
-            width: root.clientWidth,
-            height: root.clientHeight,
-            selection,
-            onHover: (s) => rerender(s)
-          });
-        }
-
-        rerender();
-        window.addEventListener("resize", () => rerender(selection));
-
-        status.textContent = `Geladen: ${elems.length} Elemente`;
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Fehler: " + err.message;
+      status.textContent = "Lade JSON-Daten ...";
+      const response = await fetch("./elems.json");
+      if (!response.ok) {
+        throw new Error(`elems.json konnte nicht geladen werden (${response.status})`);
       }
-    }
 
-    main();
-  </script>
-</body>
-</html>
+      const elems = await response.json();
+
+      if (!Array.isArray(elems)) {
+        throw new Error("elems.json ist kein Array von Objekten");
+      }
+      if (elems.length === 0) {
+        throw new Error("elems.json ist leer");
+      }
+      if (!("name" in elems[0]) || !("sets" in elems[0])) {
+        throw new Error("elems.json braucht Objekte mit 'name' und 'sets'");
+      }
+
+      status.textContent = `Bereite ${elems.length} Elemente auf ...`;
+
+      const { extractCombinations, render } = mod;
+      const { sets, combinations } = extractCombinations(elems);
+
+      let selection = null;
+
+      function rerender(sel = null) {
+        selection = sel;
+        render(root, {
+          sets,
+          combinations,
+          width: root.clientWidth,
+          height: root.clientHeight,
+          selection,
+          onHover: (s) => rerender(s)
+        });
+      }
+
+      rerender();
+      window.addEventListener("resize", () => rerender(selection));
+
+      status.textContent = `Geladen: ${elems.length} Elemente`;
+    } catch (err) {
+      console.error(err);
+      status.textContent = "Fehler: " + err.message;
+    }
+  }
+
+  main();
+</script>
