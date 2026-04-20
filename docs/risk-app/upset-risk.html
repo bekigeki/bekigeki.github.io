@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UpSet Risiko-Kombinationen</title>
   <style>
     body {
@@ -9,19 +10,30 @@
       margin: 0;
       padding: 1rem;
       background: #f7f7f7;
+      color: #222;
     }
+
     h1 {
-      margin-bottom: 0.5rem;
+      margin: 0 0 0.5rem 0;
+      font-size: 1.6rem;
     }
+
     p {
-      margin-top: 0;
-      margin-bottom: 1rem;
-      max-width: 60rem;
+      margin: 0 0 1rem 0;
+      max-width: 70ch;
+      line-height: 1.5;
     }
+
+    #status {
+      margin-bottom: 0.75rem;
+      color: #555;
+      font-size: 0.95rem;
+    }
+
     #upset-root {
       width: 100%;
-      max-width: 1000px;
-      height: 550px;
+      max-width: 1100px;
+      height: 650px;
       border: 1px solid #ccc;
       background: #fff;
     }
@@ -30,42 +42,64 @@
 <body>
   <h1>UpSet der Risiko-Kombinationen</h1>
   <p>
-    Jede Zeile in de>elems.json</code> repräsentiert ein Kind; die Mengen sind Club, Sport-AG, Normalgewicht (NW) und Geschlecht (m/w).
+    Jede Zeile in <code>elems.json</code> repräsentiert ein Kind; die Mengen sind Club, Sport-AG, Normalgewicht (NW) und ggf. weitere Merkmale.
   </p>
 
+  <div id="status">Lade Daten und UpSet.js ...</div>
   <div id="upset-root"></div>
 
-  <!-- Self-hosted UpSet.js bundle -->
-  <script src="lib/upsetjs-bundle.js"></script>
-  <script>
-    const { extractCombinations, render } = upsetjs;
+  <script type="module">
+    const status = document.getElementById("status");
+    const root = document.getElementById("upset-root");
 
-    async function init() {
-      // Load elements exported from R (same folder as this HTML)
-      const elems = await fetch('elems.json').then(r => r.json());
+    async function main() {
+      try {
+        status.textContent = "Lade UpSet.js-Modul ...";
 
-      const { sets, combinations } = extractCombinations(elems);
-      const root = document.getElementById('upset-root');
-      let selection = null;
+        const mod = await import("https://cdn.jsdelivr.net/npm/@upsetjs/bundle/+esm");
 
-      function rerender(sel = null) {
-        selection = sel;
-        const props = {
-          sets,
-          combinations,
-          width: root.clientWidth,
-          height: root.clientHeight,
-          selection,
-          onHover: (s) => rerender(s)
-        };
-        render(root, props);
+        status.textContent = "Lade JSON-Daten ...";
+
+        const response = await fetch("./elems.json");
+        if (!response.ok) {
+          throw new Error(`elems.json konnte nicht geladen werden (${response.status})`);
+        }
+        const elems = await response.json();
+
+        if (!Array.isArray(elems)) {
+          throw new Error("elems.json ist kein JSON-Array");
+        }
+
+        status.textContent = `Bereite ${elems.length} Elemente auf ...`;
+
+        const { extractCombinations, render } = mod;
+        const { sets, combinations } = extractCombinations(elems);
+
+        let selection = null;
+
+        function rerender(sel = null) {
+          selection = sel;
+          render(root, {
+            sets,
+            combinations,
+            width: root.clientWidth,
+            height: root.clientHeight,
+            selection,
+            onHover: (s) => rerender(s)
+          });
+        }
+
+        rerender();
+        window.addEventListener("resize", () => rerender(selection));
+
+        status.textContent = `Geladen: ${elems.length} Elemente`;
+      } catch (err) {
+        console.error(err);
+        status.textContent = "Fehler: " + err.message;
       }
-
-      rerender();
-      window.addEventListener('resize', () => rerender(selection));
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    main();
   </script>
 </body>
 </html>
