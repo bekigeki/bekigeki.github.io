@@ -30,14 +30,13 @@
 <body>
   <h1>UpSet der Risiko-Kombinationen</h1>
   <p>
-    Jede Zeile der Daten repräsentiert ein Kind; die Mengen sind Club, Sport-AG, Normalgewicht (NW) und Geschlecht (m/w).
-    Die Intersektionen zeigen, wie viele Kinder in jeder Kombination liegen.
+    Jede Zeile in de>elems.json</code> repräsentiert ein Kind; die Mengen sind Club, Sport-AG, Normalgewicht (NW) und Geschlecht (m/w).
   </p>
 
   <div id="upset-root"></div>
 
-  <!-- UpSet.js bundle build (no React/webpack needed) -->
-  <script src="https://unpkg.com/@upsetjs/bundle"></script>
+  <!-- Self-hosted UpSet.js bundle -->
+  <script src="lib/upsetjs-bundle.js"></script>
   <script>
     const { extractCombinations, render } = upsetjs;
 
@@ -45,9 +44,7 @@
       // Load elements exported from R (same folder as this HTML)
       const elems = await fetch('elems.json').then(r => r.json());
 
-      // Compute sets + combinations from elements
       const { sets, combinations } = extractCombinations(elems);
-
       const root = document.getElementById('upset-root');
       let selection = null;
 
