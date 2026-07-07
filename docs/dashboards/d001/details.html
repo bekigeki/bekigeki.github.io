@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Schulstandorte</title>
+  <link rel="stylesheet" href="leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <link rel="stylesheet" href="leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <link href="tabulator-tables@6.2.5/dist/css/tabulator.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f7f6f2; --surface:#fff; --text:#222; --muted:#666; --border:#d8d8d2;
+      --blue:#2c7fb8; --green:#1b7f3b; --orange:#d97706; --red:#c0392b; --shadow:0 8px 24px rgba(0,0,0,0.08); --radius:12px;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--text); background:var(--bg); }
+    .wrap { max-width:1560px; margin:0 auto; padding:16px; display:grid; gap:16px; }
+    .top-grid { display:grid; grid-template-columns: 1.45fr 0.85fr; gap:16px; align-items:start; }
+    .panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px; }
+    h1 { margin:0 0 8px; font-size:1.5rem; }
+    .sub,.hint { color:var(--muted); font-size:0.80rem; line-height:1.35; }
+    .filters { display:grid; grid-template-columns: 1fr; gap:10px; margin-top:10px; }
+    .filter-row-compact { display:grid; grid-template-columns: minmax(220px, 1.6fr) minmax(140px, 1fr) 110px; gap:10px; align-items:end; }
+    .filter-row-detail { display:grid; grid-template-columns: 1fr 1fr; gap:10px; align-items:end; }
+    .field-reset button { height:40px; }
+    #statusFilter { min-height:72px; }
+    .field { display:grid; gap:6px; }
+    .field label { font-size:0.9rem; color:var(--muted); }
+    select,input,button { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:#fff; }
+    select[multiple] { min-height: 96px; }
+    .year-box { display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; }
+    .year-range { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .actions { margin-top:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:0.9rem; color:var(--muted); margin-top:8px; }
+    .swatch { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+    .charts-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    #map { height:500px; }
+    #chartFlow, #chartStock { height:380px; }
+    .table-shell { max-width:100%; overflow-x:auto; }
+    #table { height:500px; min-width:1120px; }
+    .ok { color:var(--green); } .err { color:var(--red); }
+    @media (max-width: 980px) {
+      .top-grid, .charts-grid { grid-template-columns: 1fr; }
+      .filter-row-compact, .filter-row-detail { grid-template-columns: 1fr 1fr; }
+      .field-reset { grid-column: 1 / -1; }
+    }
+    @media (max-width: 760px) {
+      #map { height:420px; }
+      #table { height:420px; min-width:980px; }
+      #chartFlow, #chartStock { height:340px; }
+      .year-range, .filter-row-compact, .filter-row-detail { grid-template-columns: 1fr; }
+      .field-reset { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-grid">
+      <div class="panel"><div id="map"></div></div>
+      <div class="panel">
+        <h1>Schulstandorte</h1>
+        <div class="sub">Automatisch geladen aus <code>./schools_data_yearly.json</code> und <code>./schools_data_detail.json</code>. Suche wirkt global über alle Jahre; Jahrspanne wirkt auf Diagramme und Tabelle; Karte zeigt nur ein gewähltes Kartenjahr. Filter für Recoded und Schließungsdatum wirken auch auf Karte und Diagramme.</div>
+        <div id="loadStatus" class="hint">Lade Daten ...</div>
+        <div class="filters">
+          <div class="field">
+            <label>Jahrspanne für Diagramme und Tabelle</label>
+            <div class="year-range">
+              <input id="rangeStart" type="number" min="1994" max="2025" step="1" value="1994" />
+              <input id="rangeEnd" type="number" min="1994" max="2025" step="1" value="2025" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="mapYearSelect">Kartenjahr</label>
+            <div class="year-box">
+              <input id="mapYearSelect" type="range" min="1994" max="2025" step="1" value="1994" />
+              <input id="mapYearValue" type="number" min="1994" max="2025" step="1" value="1994" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="searchBox">Suche über alle Jahre</label>
+            <input id="searchBox" type="text" placeholder="adresse, schulname, schoolkey ..." />
+          </div>
+          <div class="filter-row-compact">
+            <div class="field">
+              <label for="statusFilter">Status</label>
+              <select id="statusFilter" multiple size="4"></select>
+            </div>
+            <div class="field">
+              <label for="clusterToggle">Kartenmodus</label>
+              <select id="clusterToggle">
+                <option value="cluster" selected>Clustering</option>
+                <option value="points">Einzelpunkte</option>
+              </select>
+            </div>
+            <div class="field field-reset">
+              <label>&nbsp;</label>
+              <button id="resetBtn" type="button">Reset</button>
+            </div>
+          </div>
+          <div class="filter-row-detail">
+            <div class="field">
+              <label for="closureFilter">Schließungsdatum vorhanden</label>
+              <select id="closureFilter">
+                <option value="">alle</option>
+                <option value="ja">ja</option>
+                <option value="nein">nein</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="recodedFilter">Recoded</label>
+              <select id="recodedFilter">
+                <option value="">alle</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="actions"><span id="stats" class="hint"></span></div>
+        <div class="legend">
+          <span><span class="swatch" style="background:#1b7f3b"></span>neu</span>
+          <span><span class="swatch" style="background:#2c7fb8"></span>stabil</span>
+          <span><span class="swatch" style="background:#d97706"></span>endet im Folgejahr</span>
+          <span><span class="swatch" style="background:#c0392b"></span>neu und endet im Folgejahr</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="panel"><div id="chartFlow"></div></div>
+      <div class="panel"><div id="chartStock"></div></div>
+    </div>
+
+    <div class="panel"><div class="table-shell"><div id="table"></div></div></div>
+  </div>
+
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/tabulator-tables@6.2.5/dist/js/tabulator.min.js"></script>
+  <script>
+    const els = {
+      rangeStart: document.getElementById('rangeStart'),
+      rangeEnd: document.getElementById('rangeEnd'),
+      mapYearSelect: document.getElementById('mapYearSelect'),
+      mapYearValue: document.getElementById('mapYearValue'),
+      statusFilter: document.getElementById('statusFilter'),
+      closureFilter: document.getElementById('closureFilter'),
+      recodedFilter: document.getElementById('recodedFilter'),
+      searchBox: document.getElementById('searchBox'),
+      clusterToggle: document.getElementById('clusterToggle'),
+      resetBtn: document.getElementById('resetBtn'),
+      stats: document.getElementById('stats'),
+      loadStatus: document.getElementById('loadStatus')
+    };
+
+    let data = [];
+    let detailData = [];
+    let clusterLayer = null;
+    let pointLayer = null;
+
+    const map = L.map('map', {preferCanvas: true});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+    map.setView([50.9, 11.0], 7);
+
+    const table = new Tabulator('#table', {
+      data: [],
+      index: 'row_id',
+      layout: 'fitDataTable',
+      resizableColumns: true,
+      height: 480,
+      columns: [
+        {title: 'Jahr', field: 'year', width: 74},
+        {title: 'Status', field: 'status', width: 140, formatter: 'textarea'},
+        {title: 'Adresse', field: 'address', width: 210, formatter: 'textarea'},
+        {title: 'Schulname', field: 'schulname', width: 180, formatter: 'textarea'},
+        {title: 'Schulnr.', field: 'schoolkey', width: 90},
+        {title: 'Site', field: 'sitekey', width: 82},
+        {title: 'Rec.', field: 'recoded', width: 70},
+        {title: 'ArcGIS', field: 'arcgis_score', width: 78},
+        {title: '0W2 geänd.', field: 'addr_changed_0W2', width: 92},
+        {title: '0WA geänd.', field: 'addr_changed_0WA', width: 92},
+        {title: 'Address 0WA', field: 'addr_label_0WA', width: 180, formatter: 'textarea'},
+        {title: 'Address 0W2', field: 'addr_label_0W2', width: 180, formatter: 'textarea'},
+        {title: 'Schließung', field: 'school_closure_date', width: 110}
+      ],
+      initialSort: [
+        {column: 'year', dir: 'asc'},
+        {column: 'address', dir: 'asc'},
+        {column: 'schoolkey', dir: 'asc'},
+        {column: 'sitekey', dir: 'asc'}
+      ]
+    });
+
+    function uniq(arr) { return [...new Set(arr)]; }
+    function selectedValues(sel) { return Array.from(sel.selectedOptions).map(o => o.value).filter(Boolean); }
+
+    const STATUS_LABELS = {
+      new_disappears_next: 'neu und endet im Folgejahr',
+      new: 'neu',
+      disappears_next: 'endet im Folgejahr',
+      stable: 'stabil'
+    };
+
+    function labelForStatus(status) {
+      return STATUS_LABELS[status] || status;
+    }
+
+    function fillSelect(sel, values, labeller = null, keepFirstOption = false) {
+      const firstOption = keepFirstOption ? sel.querySelector('option')?.outerHTML || '' : '';
+      sel.innerHTML = keepFirstOption ? firstOption : '';
+      values.forEach(v => {
+        const o = document.createElement('option');
+        o.value = v;
+        o.textContent = labeller ? labeller(v) : v;
+        sel.appendChild(o);
+      });
+    }
+
+    function colorForStatus(status) {
+      if (status === 'new_disappears_next') return '#c0392b';
+      if (status === 'new') return '#1b7f3b';
+      if (status === 'disappears_next') return '#d97706';
+      return '#2c7fb8';
+    }
+
+    function radiusForSites(n) {
+      const x = Number(n) || 1;
+      return Math.max(4, Math.min(12, 3 + Math.sqrt(x) * 1.8));
+    }
+
+    function getRange() {
+      let a = Number(els.rangeStart.value), b = Number(els.rangeEnd.value);
+      if (a > b) [a, b] = [b, a];
+      return [a, b];
+    }
+
+    function detailPassesFilters(d) {
+      const statuses = selectedValues(els.statusFilter);
+      const q = (els.searchBox.value || '').trim().toLowerCase();
+      const closure = els.closureFilter.value;
+      const recoded = els.recodedFilter.value;
+
+      if (statuses.length && !statuses.includes(d.status)) return false;
+      if (q && !(d.search_text || '').includes(q)) return false;
+      if (closure === 'ja' && !d.school_closure_date) return false;
+      if (closure === 'nein' && d.school_closure_date) return false;
+      if (recoded !== '' && String(d.recoded ?? '') !== recoded) return false;
+      return true;
+    }
+
+    function yearlyPassesBasicFilters(d) {
+      const statuses = selectedValues(els.statusFilter);
+      const q = (els.searchBox.value || '').trim().toLowerCase();
+
+      if (statuses.length && !statuses.includes(d.status)) return false;
+      if (q && !(d.search_text || '').includes(q)) return false;
+      return true;
+    }
+
+    function globalFilteredDetail() {
+      return detailData.filter(detailPassesFilters);
+    }
+
+    function globalFiltered() {
+      const filteredDetail = detailData.filter(detailPassesFilters);
+      const allowedKeys = new Set(filteredDetail.map(d => [d.year, d.address || ''].join('||')));
+
+      return data.filter(d => {
+        if (!yearlyPassesBasicFilters(d)) return false;
+        return allowedKeys.has([d.year, d.address || ''].join('||'));
+      });
+    }
+
+    function rangeFiltered(base) {
+      const [a, b] = getRange();
+      return base.filter(d => Number(d.year) >= a && Number(d.year) <= b);
+    }
+
+    function rangeFilteredDetail(base) {
+      const [a, b] = getRange();
+      return base.filter(d => Number(d.year) >= a && Number(d.year) <= b);
+    }
+
+    function mapYearFiltered(base) {
+      const y = Number(els.mapYearValue.value);
+      return base.filter(d => Number(d.year) === y);
+    }
+
+    function renderFlowChart(baseRange) {
+      const byYear = new Map();
+      baseRange.forEach(d => {
+        const y = Number(d.year);
+        if (!Number.isFinite(y)) return;
+        if (!byYear.has(y)) byYear.set(y, {new_n: 0, gone_next_n: 0});
+        const obj = byYear.get(y);
+        if (d.status === 'new' || d.status === 'new_disappears_next') obj.new_n += 1;
+        if (d.status === 'disappears_next' || d.status === 'new_disappears_next') obj.gone_next_n += 1;
+      });
+      const xs = [...byYear.keys()].sort((a,b)=>a-b);
+      Plotly.newPlot('chartFlow', [
+        {x: xs, y: xs.map(x => byYear.get(x).new_n), type: 'bar', name: 'neu', marker: {color: '#1b7f3b'}},
+        {x: xs, y: xs.map(x => byYear.get(x).gone_next_n * -1), type: 'bar', name: 'endet im Folgejahr', marker: {color: '#d97706'}}
+      ], {
+        barmode: 'relative',
+        margin: {l: 50, r: 20, t: 36, b: 50},
+        title: {text: 'jährliche Standortänderungen'},
+        xaxis: {title: 'Jahr'}, yaxis: {title: 'Anzahl'},
+        paper_bgcolor: '#ffffff', plot_bgcolor: '#ffffff'
+      }, {displayModeBar: false, responsive: true});
+    }
+
+    function renderStockChart(baseRange) {
+      const byYear = new Map();
+      baseRange.forEach(d => {
+        const y = Number(d.year);
+        if (!Number.isFinite(y)) return;
+        if (!byYear.has(y)) byYear.set(y, {standorte: 0, schulteile: 0, schoolkeySet: new Set()});
+        const obj = byYear.get(y);
+        obj.standorte += 1;
+        obj.schulteile += Number(d.n_schoolsites) || 0;
+        String(d.schoolkeys || '')
+          .split(';')
+          .map(s => s.trim())
+          .filter(Boolean)
+          .forEach(k => obj.schoolkeySet.add(k));
+      });
+      const xs = [...byYear.keys()].sort((a,b)=>a-b);
+      Plotly.newPlot('chartStock', [
+        {x: xs, y: xs.map(x => byYear.get(x).standorte), type: 'scatter', mode: 'lines+markers', name: 'Standorte', line: {color: '#2c7fb8', width: 3}},
+        {x: xs, y: xs.map(x => byYear.get(x).schulteile), type: 'scatter', mode: 'lines+markers', name: 'Schulteile', line: {color: '#6a3d9a', width: 3}},
+        {x: xs, y: xs.map(x => byYear.get(x).schoolkeySet.size), type: 'scatter', mode: 'lines+markers', name: 'Schulnummern', line: {color: '#c0392b', width: 3}}
+      ], {
+        margin: {l: 50, r: 20, t: 36, b: 50},
+        title: {text: 'Standorte, Schulteile und Schulnummern'},
+        xaxis: {title: 'Jahr'}, yaxis: {title: 'Anzahl'},
+        paper_bgcolor: '#ffffff', plot_bgcolor: '#ffffff'
+      }, {displayModeBar: false, responsive: true});
+    }
+
+    function rebuildMap(baseMapYear) {
+      if (clusterLayer) { map.removeLayer(clusterLayer); clusterLayer = null; }
+      if (pointLayer) { map.removeLayer(pointLayer); pointLayer = null; }
+      pointLayer = L.layerGroup();
+      clusterLayer = L.markerClusterGroup({ disableClusteringAtZoom: 14, spiderfyOnMaxZoom: true, showCoverageOnHover: false, maxClusterRadius: 45 });
+
+      const pts = baseMapYear.filter(d => Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lon)));
+      pts.forEach(d => {
+        const marker = L.circleMarker([Number(d.lat), Number(d.lon)], {
+          radius: radiusForSites(d.n_schoolsites),
+          color: colorForStatus(d.status), weight: 1, fillColor: colorForStatus(d.status), fillOpacity: 0.75
+        });
+        marker.bindPopup(
+          '<strong>' + (d.address || '') + '</strong><br>' +
+          'Status: ' + labelForStatus(d.status) + '<br>' +
+          'Schulteile: ' + d.n_schoolsites + '<br>' +
+          'Schulen: ' + d.n_schools + '<br>' +
+          'Schulnummern: ' + (d.schoolkeys || '') + '<br>' +
+          'Schulnamen: ' + (d.schulname || '')
+        );
+        pointLayer.addLayer(marker);
+        clusterLayer.addLayer(marker);
+      });
+
+      if (els.clusterToggle.value === 'cluster') map.addLayer(clusterLayer); else map.addLayer(pointLayer);
+      if (pts.length) {
+        const bounds = L.latLngBounds(pts.map(d => [Number(d.lat), Number(d.lon)]));
+        map.fitBounds(bounds.pad(0.05));
+      }
+    }
+
+    function refresh() {
+      const base = globalFiltered();
+      const baseRange = rangeFiltered(base);
+      const baseMapYear = mapYearFiltered(base);
+
+      const detailBase = globalFilteredDetail();
+      const detailRange = rangeFilteredDetail(detailBase);
+
+      renderFlowChart(baseRange);
+      renderStockChart(baseRange);
+      rebuildMap(baseMapYear);
+
+      const tableRows = detailRange
+        .map(d => ({
+          row_id: [d.year, d.address || '', d.schoolkey || '', d.sitekey || ''].join('||'),
+          year: d.year,
+          status: labelForStatus(d.status),
+          address: d.address,
+          schulname: d.schulname,
+          schoolkey: d.schoolkey,
+          sitekey: d.sitekey,
+          recoded: d.recoded,
+          arcgis_score: d.arcgis_score,
+          addr_changed_0W2: d.addr_changed_0W2,
+          addr_changed_0WA: d.addr_changed_0WA,
+          addr_label_0WA: d.addr_label_0WA,
+          addr_label_0W2: d.addr_label_0W2,
+          school_closure_date: d.school_closure_date
+        }))
+        .sort((a, b) =>
+          (a.year - b.year) ||
+          String(a.address || '').localeCompare(String(b.address || '')) ||
+          String(a.schoolkey || '').localeCompare(String(b.schoolkey || '')) ||
+          String(a.sitekey || '').localeCompare(String(b.sitekey || ''))
+        );
+
+      table.setData(tableRows);
+      table.redraw(true);
+
+      const counts = {new: 0, stable: 0, disappears_next: 0, new_disappears_next: 0};
+      baseMapYear.forEach(d => counts[d.status] = (counts[d.status] || 0) + 1);
+      const [a,b] = getRange();
+      els.stats.textContent = [
+        base.length.toLocaleString() + ' global gefilterte Jahrespunkte',
+        baseRange.length.toLocaleString() + ' Punkte in Jahrspanne ' + a + '-' + b,
+        detailRange.length.toLocaleString() + ' Detailzeilen in Tabelle',
+        baseMapYear.length.toLocaleString() + ' Punkte im Kartenjahr ' + Number(els.mapYearValue.value),
+        'neu: ' + (counts.new || 0),
+        'stabil: ' + (counts.stable || 0),
+        'endet im Folgejahr: ' + (counts.disappears_next || 0)
+      ].join(' | ');
+    }
+
+    function syncMapYear(source) {
+      if (source === 'slider') els.mapYearValue.value = els.mapYearSelect.value;
+      if (source === 'number') els.mapYearSelect.value = els.mapYearValue.value;
+      refresh();
+    }
+
+    function syncRange() {
+      const [a, b] = getRange();
+      els.rangeStart.value = a;
+      els.rangeEnd.value = b;
+      const currentMapYear = Number(els.mapYearValue.value);
+      if (!Number.isFinite(currentMapYear) || currentMapYear < a || currentMapYear > b) {
+        els.mapYearValue.value = b;
+        els.mapYearSelect.value = b;
+      }
+      refresh();
+    }
+
+    async function loadData() {
+      try {
+        const [respYearly, respDetail] = await Promise.all([
+          fetch('./schools_data_yearly.json'),
+          fetch('./schools_data_detail.json')
+        ]);
+
+        if (!respYearly.ok) throw new Error('schools_data_yearly.json HTTP ' + respYearly.status);
+        if (!respDetail.ok) throw new Error('schools_data_detail.json HTTP ' + respDetail.status);
+
+        data = await respYearly.json();
+        detailData = await respDetail.json();
+
+        const years = uniq(data.map(d => Number(d.year)).filter(Number.isFinite)).sort((a,b)=>a-b);
+        const statuses = uniq(data.map(d => d.status).filter(Boolean)).sort();
+        const recodedValues = uniq(detailData.map(d => String(d.recoded ?? '')).filter(v => v !== '')).sort();
+
+        if (!years.length) throw new Error('Keine Jahre in JSON gefunden');
+
+        [els.rangeStart, els.rangeEnd, els.mapYearSelect, els.mapYearValue].forEach(el => {
+          el.min = years[0];
+          el.max = years[years.length - 1];
+        });
+
+        els.rangeStart.value = years[0];
+        els.rangeEnd.value = years[years.length - 1];
+        els.mapYearSelect.value = years[years.length - 1];
+        els.mapYearValue.value = years[years.length - 1];
+
+        fillSelect(els.statusFilter, statuses, labelForStatus);
+        fillSelect(els.recodedFilter, recodedValues, null, true);
+        refresh();
+
+        els.loadStatus.textContent =
+          'Daten geladen: ' +
+          data.length.toLocaleString() + ' Jahres-Standortpunkte und ' +
+          detailData.length.toLocaleString() + ' Detailzeilen';
+        els.loadStatus.className = 'hint ok';
+      } catch (err) {
+        els.loadStatus.textContent =
+          'Fehler beim Laden von ./schools_data_yearly.json oder ./schools_data_detail.json. Öffne die Dateien über einen lokalen Server, z. B. python -m http.server';
+        els.loadStatus.className = 'hint err';
+      }
+    }
+
+    els.rangeStart.addEventListener('input', syncRange);
+    els.rangeEnd.addEventListener('input', syncRange);
+    els.mapYearSelect.addEventListener('input', () => syncMapYear('slider'));
+    els.mapYearValue.addEventListener('input', () => syncMapYear('number'));
+    els.statusFilter.addEventListener('change', refresh);
+    els.closureFilter.addEventListener('change', refresh);
+    els.recodedFilter.addEventListener('change', refresh);
+    els.searchBox.addEventListener('input', refresh);
+    els.clusterToggle.addEventListener('change', refresh);
+    els.resetBtn.addEventListener('click', () => {
+      Array.from(els.statusFilter.options).forEach(o => o.selected = false);
+      els.searchBox.value = '';
+      els.clusterToggle.value = 'cluster';
+      els.closureFilter.value = '';
+      els.recodedFilter.value = '';
+      const years = uniq(data.map(d => Number(d.year)).filter(Number.isFinite)).sort((a,b)=>a-b);
+      if (years.length) {
+        els.rangeStart.value = years[0];
+        els.rangeEnd.value = years[years.length - 1];
+        els.mapYearSelect.value = years[years.length - 1];
+        els.mapYearValue.value = years[years.length - 1];
+      }
+      refresh();
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
