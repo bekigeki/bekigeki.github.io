@@ -1,0 +1,13 @@
+{
+  "file_name": "test_date_handout.pdf",
+  "title": "Test Date Plausibility Checks",
+  "description": "Calendar heatmap, weekday pattern, resolved date precision, and correction details for test-date plausibility checks.",
+  "language": "en",
+  "creation_date": "2026-08-14",
+  "modification_date": "2026-08-14",
+  "n_rows_total": 85751,
+  "min_school_year": 2021,
+  "source_data": "BeKiGeKi)",
+  "creation_date.1": "2026-08-14",
+  "school_holidays_source": "OpenHolidays API via openholidaysR package"
+}
