@@ -4636,13 +4636,84 @@ Messwert.</p>
     </section>
 <section class="glossary-entry" id="raumbezug">
       <h2 class="glossary-term anchored">Raumbezug</h2>
-      <div class="glossary-definition"><p>Auswertung, bei der Fälle dem Landkreis oder der kreisfreien Stadt der besuchten Schule zugeordnet werden.</p>
+      <div class="glossary-definition"><p>Räumliche Zuordnung von Fällen, Schulen oder anderen Auswertungseinheiten zu einem definierten Gebiet, einer Verwaltungseinheit oder einem Schulstandort.</p>
 </div>
-      <div class="glossary-details"><p>Die Zuordnung beschreibt den administrativen Standort der Schule und nicht notwendigerweise den Wohnort des Kindes. Standortauswertungen beziehen sich daher auf teilnehmende Kinder an Schulen im jeweiligen Landkreis oder in der jeweiligen kreisfreien Stadt. Aussagen über die Gesamtheit der dort wohnenden Kinder sind ohne Informationen zum individuellen Wohnort nicht möglich.</p>
+      <div class="glossary-details"><p>Der Raumbezug kann sich beispielsweise auf Landkreise, kreisfreie Städte, Gemeinden, Gemeindeteile, Schulamtsbereiche, Planungsräume oder andere administrative beziehungsweise geographische Einheiten beziehen. Welche Einheit verwendet wird, richtet sich nach der jeweiligen Fragestellung und der verfügbaren räumlichen Zuordnung.
+In BeKiGeKi-Auswertungen werden Fälle in der Regel dem Standort der besuchten Schule zugeordnet. Der Raumbezug beschreibt damit den administrativen oder geographischen Standort der Schule und nicht notwendigerweise den Wohnort des Kindes. Aussagen über die Gesamtheit der in einem Gebiet wohnenden Kinder sind ohne Angaben zum individuellen Wohnort nicht möglich.
+Bei Standortauswertungen ist außerdem zu berücksichtigen, dass Schuladressen, Schulschlüssel und geographische Schulstandorte im Zeitverlauf voneinander abweichen können. Je nach Auswertung kann deshalb eine adressbezogene, schulschlüsselbezogene oder geographisch festgelegte Standortzuordnung verwendet werden.</p>
 </div>
-      <p class="glossary-synonyms"><strong>Synonyme:</strong> Standortauswertung, Auswertung nach Schulstandort, Landkreis- und kreisfreie-Stadt-Auswertung</p>
-      <p class="glossary-tags"><strong>Tags:</strong> Datenbasis, Definition, Limitation, Region</p>
+      <p class="glossary-synonyms"><strong>Synonyme:</strong> Standortauswertung, Auswertung nach Schulstandort, regionale Auswertung, Auswertung nach Verwaltungseinheit</p>
+      <p class="glossary-tags"><strong>Tags:</strong> Datenbasis, Definition, Limitation, Region, Geodaten</p>
+      <p class="glossary-see-also"><strong>Siehe auch:</strong> <a href="#schulstandort">Schulstandort</a>, <a href="#schul-hauptstandort">Schul-Hauptstandort</a>, <a href="#schulteilstandort">Schulteilstandort</a></p>
       
+      
+    </section>
+<section class="glossary-entry" id="schulstandort">
+      <h2 class="glossary-term anchored">Schulstandort</h2>
+      <div class="glossary-definition"><p>Räumlich oder administrativ abgegrenzter Ort, an dem eine Schule oder ein Teil einer Schule lokalisiert ist. Ein Schulstandort kann adressbezogen oder anhand von Geokoordinaten definiert werden. Darüber hinaus kann eine Schule über ihre Schulnummer beziehungsweise ihren Schulschlüssel einer administrativen Gebietseinheit zugeordnet sein, etwa einer Gemeinde, einem Landkreis, einer kreisfreien Stadt oder einem Schulamtsbereich.</p>
+</div>
+      <div class="glossary-details"><p>Der Begriff Schulstandort kann je nach Datenquelle unterschiedliche
+Bedeutungen haben. Für Auswertungen ist daher entscheidend, anhand
+welcher Information ein Standort abgegrenzt wird:</p>
+<ul>
+<li>
+<p>Adressbezogener Schulstandort: Standort, der über die in
+Verwaltungsdaten geführte Schuladresse bestimmt wird. Eine
+Adressänderung kann eine tatsächliche Verlagerung widerspiegeln,
+aber auch nur eine Änderung der Schreibweise, Postleitzahl,
+Straßenbezeichnung oder Hausnummer darstellen.</p>
+</li>
+<li>
+<p>Schulnummernbezogener Standort: Standort, der über eine
+Schulnummer definiert wird. Ein Schulschlüssel kann sich über
+die Zeit ändern, obwohl die Schule am selben Ort verbleibt,
+beispielsweise bei einer Änderung der Schulart, einer
+organisatorischen Umstrukturierung oder einer Neuzuordnung in
+Verwaltungsdaten.</p>
+</li>
+<li>
+<p>Geographischer Schulstandort: Standort, der anhand von
+Geokoordinaten festgelegt wird. Eine Änderung der Adresse führt
+nicht zwingend zu einem neuen geographischen Standort, sofern
+die Geokoordinaten unverändert bleiben.</p>
+</li>
+</ul>
+<p>Eine Schule kann über mehrere räumlich getrennte Schulteile
+verfügen. In diesem Fall wird zwischen Schul-Hauptstandort und
+Schulteilstandort unterschieden:</p>
+<ul>
+<li>
+<p>Schul-Hauptstandort: Der als Hauptsitz einer Schule geführte oder
+für die Auswertung festgelegte zentrale Standort. Für
+standortbezogene Gesamtzählungen wird in der Regel nur der
+Schul-Hauptstandort berücksichtigt.</p>
+</li>
+<li>
+<p>Schulteilstandort: Weiterer Standort einer Schule, etwa ein
+räumlich getrennter Gebäudeteil, eine Außenstelle oder ein
+Standort einer zusammengeführten Schule. Schulteilstandorte
+können dieselbe Schulnummer wie der Hauptstandort haben, jedoch
+eine eigene Adresse und eigene Geokoordinaten aufweisen.</p>
+</li>
+</ul>
+<p>Schulnummer, Schuladresse und geographischer Standort stehen
+daher nicht zwingend in einer Eins-zu-eins-Beziehung. Mehrere
+Schulnummern können sich auf denselben Hauptstandort beziehen;
+umgekehrt kann einer Schulnummer über die Jahre mehr als ein
+Hauptstandort zugeordnet sein, beispielsweise bei einem Umzug.
+Auch können mehrere Schulen denselben geographischen Hauptstandort
+teilen.</p>
+<p>Für Zeitreihen muss deshalb zwischen Schulnummernzählungen sowie
+adressbezogenen Standort- und geographischen
+Schul-Hauptstandort-Zählungen unterschieden werden. Die Schulstandort- und
+Schulnummernhistorie kann in den interaktiven Dashboards
+<a href="https://bekigeki.github.io/dashboards/d001/index.html">Schulstandorte</a> und
+<a href="https://bekigeki.github.io/dashboards/d001/details.html">Schulstandorte detailliert</a>
+untersucht werden.</p>
+</div>
+      <p class="glossary-synonyms"><strong>Synonyme:</strong> Standort der Schule, Schuladresse, Schul-Hauptstandort, Schulteilstandort</p>
+      <p class="glossary-tags"><strong>Tags:</strong> Datenbasis, Definition, Geodaten, Raumbezug, Schule, Zeitreihe</p>
+      <p class="glossary-see-also"><strong>Siehe auch:</strong> <a href="#raumbezug">Raumbezug</a>, <a href="#schulschl-ussel">Schulschlüssel</a>, <a href="#adresse">Adresse</a>, <a href="#geokoordinate">Geokoordinate</a>, <a href="#schul-hauptstandort">Schul-Hauptstandort</a>, <a href="#schulteilstandort">Schulteilstandort</a></p>
       
       
     </section>
