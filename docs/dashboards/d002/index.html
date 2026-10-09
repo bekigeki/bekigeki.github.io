@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merkmalsausprägungen und Anteile – BeKiGeKi</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root { --accent:#c2410c; --muted:#64748b; --line:#e2e8f0; --rowH:390px; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color:#0f172a; background:#f8fafc; }
+  header { padding:12px 18px; background:#fff; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:18px; }
+  header p { margin:4px 0 0; font-size:12px; color:var(--muted); }
+  details.explain { margin-top:8px; font-size:12px; line-height:1.5; color:#334155; }
+  details.explain summary { cursor:pointer; font-weight:600; color:var(--accent); }
+  details.explain h3 { font-size:12px; margin:10px 0 4px; }
+  details.explain ol, details.explain ul { margin:4px 0 4px 18px; padding:0; }
+  details.explain code { background:#f1f5f9; padding:0 3px; border-radius:3px; }
+  .banner { background:#fef3c7; color:#92400e; padding:6px 18px; font-size:12px; display:none; line-height:1.5; }
+  .banner code { background:#fde68a; padding:0 3px; border-radius:3px; }
+  .layout { display:grid; grid-template-columns: 270px minmax(0, 1fr); gap:12px; padding:12px; align-items:start; }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0; }
+  .controls label { display:block; font-size:12px; font-weight:600; margin:12px 0 4px; }
+  .controls label:first-child { margin-top:0; }
+  .controls select, .controls input[type=number] { width:100%; padding:5px; font-size:13px; }
+  .controls input[type=range] { width:100%; }
+  .row { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); }
+  .controls button { margin-top:12px; padding:6px 10px; font-size:12px; cursor:pointer; }
+  .checkbox { display:flex; gap:6px; align-items:flex-start; font-size:12px; margin-top:12px; line-height:1.35; }
+  .checkbox input { margin-top:2px; }
+  .checkbox label { margin:0 !important; font-weight:400 !important; }
+  .hint { font-size:10.5px; color:#92400e; margin:3px 0 0 20px; line-height:1.3; }
+  .zgroup { margin-top:0; padding:8px 10px 10px; border:1px solid var(--line); border-radius:6px; background:#f8fafc; }
+  .zgroup .ztitle { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:8px; }
+  .zgroup .ztitle:first-child { margin-top:0; }
+  .zgroup label { margin-top:6px; }
+  .zgroup select { margin-top:0; }
+  details.fgroup { margin-top:14px; padding:8px 10px 10px; border:1px solid var(--line); border-radius:6px; background:#f8fafc; }
+  details.fgroup summary { cursor:pointer; font-size:12px; font-weight:700; color:#334155; list-style-position:inside; }
+  details.fgroup summary .fcount { font-weight:400; color:var(--accent); }
+  details.fgroup .flogic { margin-top:8px; font-size:12px; }
+  details.fgroup .flogic label { margin:0 0 3px; }
+  details.fgroup .fitem { border-left:2px solid #cbd5e1; padding-left:8px; margin:10px 0 0 0; }
+  details.fgroup .fhead { display:flex; align-items:center; gap:6px; }
+  details.fgroup .fhead label { margin:0; flex:1; }
+  details.fgroup .fhead select { width:auto; padding:2px 4px; font-size:11px; }
+  details.fgroup .fitem.neg { border-left-color:#dc2626; }
+  details.fgroup .fvals { max-height:118px; overflow:auto; margin-top:4px; background:#fff; border:1px solid var(--line); border-radius:5px; padding:3px 6px; }
+  details.fgroup .fvals label.fv { display:flex; gap:6px; align-items:center; font-weight:400; margin:2px 0; font-size:12px; cursor:pointer; }
+  details.fgroup .fvals label.fv input { margin:0; }
+  details.fgroup .fnone { font-size:11px; color:var(--muted); padding:2px 0; }
+  details.fgroup button { margin-top:10px; }
+  .status { font-size:11px; color:var(--muted); margin-top:10px; line-height:1.4; }
+  .note { font-size:10.5px; color:var(--muted); margin-top:6px; line-height:1.35; }
+  .main { display:grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+          grid-template-rows: var(--rowH) var(--rowH) auto; gap:12px; }
+  .p-map   { grid-column:1; grid-row:1; display:flex; flex-direction:column; min-height:0; }
+  .p-hist  { grid-column:1; grid-row:2; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .p-trend { grid-column:2; grid-row:2; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .p-table { grid-column:1 / span 2; grid-row:3; }
+  .p-totals { grid-column:2; grid-row:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  #map { flex:1; min-height:0; border-radius:6px; }
+  .chart { flex:1; min-height:0; }
+  .chart svg { width:100%; height:100%; display:block; }
+  h2 { font-size:13px; margin:0 0 8px; flex:none; }
+  svg text { font-size:11px; fill:#334155; }
+  #hist { user-select:none; -webkit-user-select:none; }
+  .bar { cursor:pointer; }
+  .bar:hover { opacity:.8; }
+  .markrow { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); margin-top:4px; flex:none; }
+  .markrow input { flex:1; min-width:0; padding:3px 6px; font-size:11px; border:1px solid var(--line); border-radius:5px; }
+  .markinfo { font-size:10.5px; color:#334155; margin-top:3px; line-height:1.35; flex:none; }
+  .tlegend { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:11px; margin-top:4px; flex:none; }
+  .tlegend span { display:inline-flex; align-items:center; gap:5px; }
+  .tlegend svg { width:26px; height:8px; }
+  .tablehead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+  .tablehead h2 { margin:0; }
+  .tablehead input[type=search] { width:260px; max-width:50%; padding:5px 8px; font-size:12px; border:1px solid var(--line); border-radius:6px; }
+  .tablewrap { max-height:380px; overflow:auto; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th, td { padding:4px 8px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; }
+  th:first-child, td:first-child { text-align:left; }
+  th { position:sticky; top:0; background:#f1f5f9; cursor:pointer; white-space:normal; vertical-align:bottom; }
+  tr.row-sel td { background:#ffedd5; }
+  tr.row-dim td { color:#94a3b8; }
+  tbody tr { cursor:pointer; }
+  tbody tr:hover td { background:#f8fafc; }
+  .legend { display:flex; align-items:center; gap:6px; font-size:11px; margin-top:6px; flex:none; flex-wrap:wrap; }
+  .legend .grad { width:160px; height:10px; border-radius:3px; }
+  .legend .sizenote { margin-left:auto; color:var(--muted); font-size:10.5px; }
+  @media (max-width: 1000px) {
+    .layout { grid-template-columns: 1fr; }
+    .main { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .p-map, .p-hist, .p-trend, .p-table, .p-totals { grid-column:1; grid-row:auto; }
+    #map { flex:none; height:420px; }
+    .chart { flex:none; }
+    .chart svg { height:auto; }
+    .p-hist, .p-trend { overflow:visible; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="pageTitle">Merkmalsausprägungen nach Gliederungsebene</h1>
+  <p id="pageSub"></p>
+  <details class="explain">
+    <summary>Wie werden Zähler und Nenner gebildet?</summary>
+    <h3>1. Zähler: Merkmal und Ausprägung</h3>
+    <ul>
+      <li>Zuerst wählst du ein Merkmal (z. B. Sportverein oder Testteilnahme), dann die Ausprägung (z. B. Ja, Nein, Unbekannt oder Alle 6 Tests). Gezählt werden die Fälle mit dieser Ausprägung.</li>
+      <li>Hat ein Merkmal eine Gruppe „bekannter“ Ausprägungen, gibt es zusätzlich deren Summe als eigene Auswahl (z. B. „Antwort“ = Ja + Nein oder „Mindestens 1 Test“ = 1 bis 5 Tests + alle 6 Tests).</li>
+    </ul>
+    <h3>2. Nenner</h3>
+    <ul>
+      <li><b>Angesetzte Grundgesamtheit:</b> die Zahl der Drittklässler je Schule und Erhebungswelle (Schulmeldung, sonst amtliche Zahl, sonst Schätzung aus der Primarstufe, sonst die Zahl der erfassten Fälle). Mit plausibler Spanne (kleinste bis größte vorliegende Zahl) und Filter für Schulen ohne eigene Drittklässlerzahl. Der Quotient heißt <i>Abdeckung</i>. Der Filter „Schulen ohne eigene Drittklässlerzahl ausschließen“ ist nur bei diesem Nenner wählbar.</li>
+      <li><b>Alle Fälle zum Merkmal:</b> Summe aller Ausprägungen, z. B. Ja + Nein (bei Merkmalen ohne Unbekannt, etwa „vorhanden + fehlt“) oder Ja + Nein + Unbekannt. Mit dem Zähler „Summe der bekannten Ausprägungen“ ergibt das die Antwort- bzw. Teilnahmerate unter allen erfassten Fällen.</li>
+      <li><b>Nur bekannte Ausprägungen:</b> z. B. Ja + Nein, wenn das Merkmal auch „Unbekannt“ kennt. Mit dem Zähler „Ja“ ergibt das den Anteil „Ja“ unter allen mit bekannter Angabe.</li>
+      <li><b>Weitere Nenner</b> (z. B. erfasste Drittklässler oder „Körpermasse angegeben“) kann der Export zusätzlich anbieten, auch nur für bestimmte Merkmale.</li>
+    </ul>
+    <p>Ausgewertete Drittklässler sind die Fälle nach den Filtern auf vorhandene Geschlechtsangabe und Geburtsdatumsgenauigkeit Y-m oder Y-m-d. Die separat berechnete Erfassungsmenge wird durch diese Filter nicht neu berechnet und kann auch ausgeschlossene Fälle enthalten. Zusatznenner werden weiterhin durch die Exportkonfiguration gesteuert.</p>
+    <p>Jahressummen: Die angesetzte Grundgesamtheit wird unabhängig vom gewählten Nenner immer zusätzlich angezeigt, mit summierter Min–Max-Spanne. Fehlende Grundgesamtheiten werden nicht als null ersetzt; die Spanne ist kein Konfidenzintervall. Der Filter zum Ausschluss von Schulen ohne eigene Drittklässlerzahl gilt für diese zusätzliche Reihe, sofern er aktiv ist. Bei identischen Grenzen fallen die Fehlerbalkenkappen zusammen.</p>
+    <h3>3. Spanne</h3>
+    <ul>
+      <li>Nur bei der angesetzten Grundgesamtheit: Abdeckung max = Zähler ÷ kleinste plausible Grundgesamtheit, Abdeckung min = Zähler ÷ größte plausible Grundgesamtheit. Die Spanne beschreibt die Unsicherheit der Grundgesamtheit, nicht den Stichprobenfehler.</li>
+      <li>Bei Gruppen werden Zähler und Nenner der Schulen aufsummiert. Fehlt bei einer Schule der Nenner, wird sie samt Zähler weggelassen.</li>
+    </ul>
+    <h3>4. Filter, Histogramm, Gliederungsebenen und Punktgröße</h3>
+    <ul>
+      <li><b>Filter:</b> Je Filter lassen sich mehrere Werte ankreuzen (ODER innerhalb eines Filters). „ist“ schließt die gewählten Werte ein, „ist nicht“ schließt sie aus (Negation). Mehrere Filter werden wahlweise mit UND (alle müssen zutreffen) oder ODER (mindestens einer muss zutreffen) verknüpft. Bei UND zeigen die Listen nur Werte, die zu den anderen Filtern passen, mit der Zahl der Schulnummern. Schulen ohne Wert im Filterfeld erfüllen „ist nicht“.</li>
+      <li>Im Histogramm lassen sich Perzentile als Marker einblenden (Feld unter dem Diagramm, Angabe in Prozent, z. B. „20, 50, 80“; 50 = Median). Sie beziehen sich auf die gezeigten Gruppen bzw. Gruppen × Erhebungswellen, jede zählt gleich.</li>
+      <li>Welche Merkmale, Filter und zusätzlichen Gliederungsebenen (z. B. Schulname) angezeigt werden, legt der Export der Daten fest.</li>
+      <li>„Schule“ gruppiert nach der Schulnummer, „Schulname“ nach dem Namen.</li>
+      <li>Die Punktgröße hängt auf jeder Ebene gleich vom Nenner der Gruppe ab (Wurzel der Summe im gewählten Zeitraum); die Farbe zeigt den Anteil.</li>
+    </ul>
+  </details>
+</header>
+<div class="banner" id="banner"></div>
+
+<div class="layout">
+  <aside class="panel controls">
+    <div class="zgroup">
+      <div class="ztitle">Zähler</div>
+      <label for="variable">Merkmal</label>
+      <select id="variable"></select>
+      <div id="valueWrap">
+        <label for="value">Ausprägung</label>
+        <select id="value"></select>
+      </div>
+      <div class="ztitle">Nenner</div>
+      <label for="denom" style="display:none">Nenner</label>
+      <select id="denom"></select>
+    </div>
+
+    <label for="level">Gliederungsebene</label>
+    <select id="level"></select>
+
+    <details class="fgroup" id="filtersWrap" open style="display:none">
+      <summary>Filter <span class="fcount" id="filterCount"></span></summary>
+      <div class="flogic" id="flogicWrap">
+        <label for="filterLogic">Filter verknüpfen mit</label>
+        <select id="filterLogic">
+          <option value="and">UND (alle müssen zutreffen)</option>
+          <option value="or">ODER (mindestens einer)</option>
+        </select>
+      </div>
+      <div id="filters"></div>
+      <button id="resetFilters" type="button">Filter zurücksetzen</button>
+    </details>
+
+    <label for="unit">Einheit im Histogramm</label>
+    <select id="unit">
+      <option value="period">Gruppe über Zeitraum</option>
+      <option value="wave">Gruppe × Erhebungswelle</option>
+    </select>
+
+    <label>Zeitraum (Erhebungswellen)</label>
+    <div class="row"><span>von <b id="fromLabel"></b></span><span>bis <b id="toLabel"></b></span></div>
+    <input type="range" id="fromYear">
+    <input type="range" id="toYear">
+    <button id="allYears" type="button">Alle Erhebungswellen</button>
+
+    <label for="minSchools">Mindestzahl Schulen (Schulnummern) je Gruppe</label>
+    <input type="number" id="minSchools" min="1" value="1">
+
+    <div class="checkbox" id="lbWrap">
+      <input type="checkbox" id="excludeLB">
+      <label for="excludeLB" id="excludeLBLabel" title="Bei manchen Schulen liegt für eine Erhebungswelle keine Meldung, keine amtliche Zahl und keine Schätzung der Drittklässler vor. Dort gilt nur die Zahl der erfassten Fälle als Grundlage, die Abdeckung beträgt dann automatisch 100 %.">Schulen ohne eigene Drittklässlerzahl ausschließen (je Erhebungswelle)</label>
+    </div>
+    <div class="hint" id="lbHint"></div>
+
+    <div class="checkbox"><input type="checkbox" id="onlySel"><label for="onlySel">Tabelle auf Auswahl beschränken</label></div>
+    <button id="resetSel" type="button">Auswahl zurücksetzen</button>
+
+    <div class="status" id="status"></div>
+  </aside>
+
+  <section class="main">
+    <div class="panel p-map">
+      <h2 id="mapTitle">Karte</h2>
+      <div id="map"></div>
+      <div class="legend"><span>0 %</span><div class="grad" id="grad"></div><span>100 %</span>
+        <span class="sizenote">Punktgröße ∝ √ Nenner</span></div>
+    </div>
+    <div class="panel p-totals">
+      <h2 id="totalsTitle">Jahressummen</h2><div id="totals" class="chart"></div>
+      <div class="note">Blau: Zähler · Grau: gewählter Nenner · Orange: angesetzte Grundgesamtheit (immer, mit Min–Max-Spanne). Bei Grundgesamtheit als Nenner nur ein gemeinsamer orangefarbener Balken. Gruppenauswahl und Suche wie in der Tabelle.</div>
+    </div>
+    <div class="panel p-hist">
+      <h2 id="histTitle">Verteilung</h2>
+      <div id="hist" class="chart"></div>
+      <div class="markrow"><label for="histMarks">Marker (Perzentile in %)</label>
+        <input id="histMarks" type="text" placeholder="z. B. 20, 50, 80" autocomplete="off"></div>
+      <div class="markinfo" id="markInfo"></div>
+      <div class="note">Klick wählt eine Klasse, Ziehen über mehrere Balken einen Bereich (nochmals klicken hebt auf). Marker: 50 = Median; jede Gruppe zählt gleich.</div>
+    </div>
+    <div class="panel p-trend">
+      <h2 id="trendTitle">Verlauf</h2>
+      <div id="trend" class="chart"></div>
+      <div class="tlegend" id="trendLegend"></div>
+      <div class="note" id="trendNote"></div>
+    </div>
+    <div class="panel p-table">
+      <div class="tablehead">
+        <h2 id="tableTitle">Tabelle</h2>
+        <input type="search" id="tableSearch" placeholder="Gruppe oder Schulnummer suchen …" autocomplete="off">
+      </div>
+      <div class="tablewrap"><table id="table"></table></div>
+    </div>
+  </section>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ==== LOGIK (ohne DOM) ====
+const N_BINS = 20;
+
+const LOWER_BOUND_SOURCES = new Set(['observed_lower_bound', 'beki_third_grader_cases']);
+
+const DENOM_RESOLVED = 'resolved';
+const DENOM_VAR_ALL = 'var_all';
+const DENOM_VAR_ANS = 'var_answered';
+const VALUE_ANSWERED = '__answered';
+
+const DEFAULT_MARKS = [50];
+
+const BUILTIN_LEVELS = [
+  { id: 'schule',   label: 'Schule (Schulnummer)' },
+  { id: 'standort', label: 'Schulstandort (Hauptstandort)' },
+  { id: 'gemeinde', label: 'Gemeinde' },
+  { id: 'kreis',    label: 'Kreis' },
+  { id: 'land',     label: 'Land' }
+];
+const CUSTOM_LEVELS = new Map();
+
+function asArray(x) { return Array.isArray(x) ? x : (x == null ? [] : [x]); }
+
+function asList(x) {
+  return asArray(x).flatMap(v => v == null ? [] : String(v).split(',')).map(s => s.trim()).filter(Boolean);
+}
+
+function parseMarks(x) {
+  const raw = Array.isArray(x) ? x.map(String).join(',') : (x == null ? '' : String(x));
+  const nums = raw.split(/[;,\s]+/).map(s => s.trim()).filter(Boolean).map(Number)
+    .filter(n => isFinite(n) && n >= 0 && n <= 100);
+  return [...new Set(nums)].sort((a, b) => a - b).slice(0, 6);
+}
+
+function radiusFor(den) {
+  const d = den != null && isFinite(den) && den > 0 ? den : 0;
+  return Math.max(5, Math.min(28, 1.5 + 0.38 * Math.sqrt(d)));
+}
+
+function hexToRgb(h) {
+  const n = parseInt(h.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+const STOPS = ['#440154', '#3b528b', '#21908d', '#5dc863', '#fde725'];
+
+function colorFor(v) {
+  if (v == null || !isFinite(v)) return '#999999';
+  v = Math.max(0, Math.min(1, v));
+  const x = v * (STOPS.length - 1);
+  const i = Math.min(STOPS.length - 2, Math.floor(x));
+  const t = x - i;
+  const a = hexToRgb(STOPS[i]);
+  const b = hexToRgb(STOPS[i + 1]);
+  return 'rgb(' + a.map((c, k) => Math.round(c + (b[k] - c) * t)).join(',') + ')';
+}
+
+function fmtPct(v) {
+  return v == null || !isFinite(v) ? '–' : (100 * v).toFixed(1).replace('.', ',') + ' %';
+}
+
+function fmtInt(v) {
+  return v == null || !isFinite(v) ? '–' : Math.round(v).toLocaleString('de-DE');
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function binOf(v) {
+  if (v == null || !isFinite(v)) return null;
+  return Math.min(N_BINS - 1, Math.floor(Math.max(0, Math.min(1, v)) * N_BINS));
+}
+
+function groupOf(r, level) {
+  switch (level) {
+    case 'schule':
+      return { key: String(r.school_key), label: r.school_label || (r.school_name ? r.school_key + ' – ' + r.school_name : String(r.school_key)) };
+    case 'standort': {
+      const key = r.standort != null && r.standort !== '' ? String(r.standort) : 'schule_' + r.school_key;
+      return { key: key, label: r.standort_label || key };
+    }
+    case 'gemeinde':
+      return { key: String(r.ags_key == null ? 'unbekannt' : r.ags_key), label: r.gemeinde || String(r.ags_key == null ? 'unbekannt' : r.ags_key) };
+    case 'kreis':
+      return { key: r.district || 'unbekannt', label: r.district || 'unbekannt' };
+    case 'land':
+      return { key: 'land', label: 'Thüringen' };
+    default: {
+      const L = CUSTOM_LEVELS.get(level);
+      if (L) {
+        const v = r[L.field];
+        const key = v == null || v === '' ? 'unbekannt' : String(v);
+        const lab = L.label_field && r[L.label_field] != null ? String(r[L.label_field]) : key;
+        return { key: key, label: lab };
+      }
+      return { key: 'land', label: 'Thüringen' };
+    }
+  }
+}
+
+// ---- Filter: Werte je Feld (ODER innerhalb), "ist nicht" (Negation), Verknüpfung der Filter UND/ODER ----
+function activeFilters(filters) { return (filters || []).filter(f => f.values && f.values.length); }
+
+function filterMatch(r, f) {
+  const hit = f.values.includes(String(r[f.field]));
+  return f.negate ? !hit : hit;
+}
+
+function passesFilters(r, filters, logic) {
+  const act = activeFilters(filters);
+  if (!act.length) return true;
+  return logic === 'or' ? act.some(f => filterMatch(r, f)) : act.every(f => filterMatch(r, f));
+}
+
+function filterOptionCounts(rows, filters, i, logic) {
+  const field = filters[i].field;
+  const others = logic === 'or' ? [] : filters.filter((f, j) => j !== i);
+  const m = new Map();
+  for (const r of rows) {
+    if (!passesFilters(r, others, 'and')) continue;
+    const v = r[field];
+    if (v == null || v === '') continue;
+    const k = String(v);
+    let s = m.get(k);
+    if (!s) { s = new Set(); m.set(k, s); }
+    s.add(String(r.school_key));
+  }
+  return m;
+}
+
+function sanitizeFilters(rows, filters, logic) {
+  for (let pass = 0; pass < filters.length + 1; pass++) {
+    let changed = false;
+    filters.forEach((f, i) => {
+      if (!f.values.length) return;
+      const opts = filterOptionCounts(rows, filters, i, logic);
+      const keep = f.values.filter(v => opts.has(v));
+      if (keep.length !== f.values.length) { f.values = keep; changed = true; }
+    });
+    if (!changed) break;
+  }
+}
+
+function describeFilters(filters, logic) {
+  const act = activeFilters(filters);
+  return act.map(f => f.label + (f.negate ? ' ist nicht ' : ' ist ') + f.values.join(' / '))
+    .join(logic === 'or' ? ' ODER ' : ' UND ');
+}
+
+function hasField(rows, field) {
+  for (const r of rows) { if (field in r) return true; }
+  return false;
+}
+
+function normalizeVariables(cfg, metrics, rows) {
+  const out = [];
+  const problems = [];
+  for (const v of asArray(cfg.variables)) {
+    if (!v || !v.id) continue;
+    const values = asArray(v.values).filter(x => x && x.id).map(x => ({
+      id: String(x.id), label: x.label || String(x.id), field: x.field || ('n_' + v.id + '_' + x.id)
+    }));
+    const present = values.filter(x => hasField(rows, x.field));
+    const lost = values.filter(x => !hasField(rows, x.field)).map(x => x.field);
+    if (lost.length) problems.push(String(v.id) + ' (' + lost.join(', ') + ')');
+    if (!present.length) continue;
+    const answered = asList(v.answered).filter(a => present.some(x => x.id === a));
+    out.push({
+      id: String(v.id), label: v.label || String(v.id), values: present, answered: answered,
+      answeredLabel: v.answered_label || null, answeredRate: v.answered_rate || null
+    });
+  }
+  if (!out.length) {
+    for (const m of asArray(metrics)) {
+      if (!m || !m.id || !hasField(rows, 'num_' + m.id)) continue;
+      out.push({ id: String(m.id), label: m.label || String(m.id), values: [{ id: 'n', label: 'Fälle', field: 'num_' + m.id }], answered: [], answeredLabel: null, answeredRate: null, simple: true });
+    }
+  }
+  return { variables: out, problems: problems };
+}
+
+function labelsOf(V, ids) { return ids.map(id => V.values.find(x => x.id === id).label).join(' + '); }
+
+function valueOptions(V) {
+  const opts = V.values.map(x => ({ id: x.id, label: x.label }));
+  if (V.answered.length > 1) {
+    const sum = labelsOf(V, V.answered);
+    opts.push({ id: VALUE_ANSWERED, label: (V.answeredLabel || 'Antwort') + ' (' + sum + ')' });
+  }
+  return opts;
+}
+
+function valueLabelOf(V, valueId) {
+  const o = valueOptions(V).find(x => x.id === valueId);
+  return o ? o.label : valueId;
+}
+
+function valueShortLabel(V, valueId) {
+  if (valueId === VALUE_ANSWERED) return V.answeredLabel || 'Antwort';
+  const x = V.values.find(y => y.id === valueId);
+  return x ? x.label : valueId;
+}
+
+function fieldsOfValue(V, valueId) {
+  if (valueId === VALUE_ANSWERED) return V.answered.map(id => V.values.find(x => x.id === id).field);
+  const x = V.values.find(y => y.id === valueId) || V.values[0];
+  return [x.field];
+}
+
+// Nenner-Optionen je Merkmal.
+// "Alle Fälle" (Summe aller Ausprägungen, z. B. Ja + Nein oder vorhanden + fehlt) gibt es bei jedem Merkmal
+// mit mindestens zwei Ausprägungen. Der Zusatz "mit Unbekannt" erscheint nur, wenn das Merkmal
+// bekannte und unbekannte Ausprägungen unterscheidet (answered gesetzt, aber nicht alle Ausprägungen).
+function denomOptions(V, extras) {
+  const ansName = V.answeredLabel || null;
+  const hasUnknown = V.answered.length > 0 && V.answered.length < V.values.length;
+  const opts = [{
+    id: DENOM_RESOLVED,
+    label: 'Angesetzte Grundgesamtheit Drittklässler (mit Spanne)',
+    short: 'Angesetzte Grundgesamtheit',
+    long: 'angesetzte Grundgesamtheit Drittklässler',
+    fields: null
+  }];
+  const allIds = V.values.map(x => x.id);
+  if (V.values.length > 1) {
+    const sumAll = labelsOf(V, allIds);
+    opts.push({
+      id: DENOM_VAR_ALL,
+      label: 'Alle ausgewerteten Drittklässler',
+      short: 'Alle ausgewerteten Drittklässler',
+      long: 'alle ausgewerteten Drittklässler',
+      fields: V.values.map(x => x.field)
+    });
+  }
+  if (hasUnknown) {
+    const sumAns = labelsOf(V, V.answered);
+    opts.push({
+      id: DENOM_VAR_ANS,
+      label: ansName
+        ? 'Nur Fälle mit „' + ansName + '“ (' + sumAns + ')'
+        : 'Fälle zu „' + V.label + '“, ohne Unbekannt (' + sumAns + ')',
+      short: ansName ? 'Fälle mit „' + ansName + '“' : 'Fälle mit bekannter Angabe',
+      long: ansName
+        ? 'Fälle zu „' + V.label + '“ mit „' + ansName + '“ (' + sumAns + ')'
+        : 'Fälle mit bekannter Angabe zu „' + V.label + '“ (' + sumAns + ')',
+      fields: V.answered.map(id => V.values.find(x => x.id === id).field)
+    });
+  }
+  for (const e of extras) {
+    if (!e.variables.length || e.variables.includes(V.id)) opts.push(e);
+  }
+  return opts;
+}
+
+function normalizeExtraDenoms(cfg, rows, knownVariableIds) {
+  const out = [];
+  const missing = [];
+  const unknownVars = [];
+  for (const o of asArray(cfg.denominators)) {
+    if (!o || !o.id || o.id === DENOM_RESOLVED) continue;
+    let fields = asList(o.fields);
+    if (!fields.length) fields = [o.field || ('num_' + o.id)];
+    const lost = fields.filter(f => !hasField(rows, f));
+    if (lost.length) { missing.push(...lost); continue; }
+    const variables = asList(o.variables);
+    if (knownVariableIds) variables.filter(v => !knownVariableIds.includes(v)).forEach(v => unknownVars.push(String(o.id) + ' → ' + v));
+    out.push({
+      id: String(o.id),
+      label: o.label === 'Erfasste Drittklässler' ? 'Erfasste Drittklässler (vor Auswertungsfiltern)' : (o.label || String(o.id)),
+      short: o.short || o.label || String(o.id),
+      long: o.long || o.short || o.label || String(o.id),
+      fields: fields,
+      variables: variables
+    });
+  }
+  return { extras: out, missing: missing, unknownVars: unknownVars };
+}
+
+function sumFields(r, fields, nullIfAllMissing) {
+  let s = 0, any = false;
+  for (const f of fields) {
+    const v = r[f];
+    if (v != null) { s += v; any = true; }
+  }
+  return !any && nullIfAllMissing ? null : s;
+}
+
+function aggregate(rows, st) {
+  const groups = new Map();
+  let dropped = 0;
+  let droppedLB = 0;
+  let used = 0;
+  const resolved = !st.denFields;
+
+  for (const r of rows) {
+    if (r.wave < st.from || r.wave > st.to) continue;
+    if (!passesFilters(r, st.filters, st.filterLogic)) continue;
+
+    let dv, dmin, dmax;
+    if (resolved) {
+      dv = r.den; dmin = r.den_min; dmax = r.den_max;
+    } else {
+      dv = sumFields(r, st.denFields, true);
+      dmin = dv; dmax = dv;
+    }
+
+    if (dv == null || dmin == null || dmax == null) {
+      dropped++;
+      continue;
+    }
+
+    if (resolved && st.excludeLB && LOWER_BOUND_SOURCES.has(r.den_source)) {
+      droppedLB++;
+      continue;
+    }
+
+    const info = groupOf(r, st.level);
+    let g = groups.get(info.key);
+
+    if (!g) {
+      g = { key: info.key, label: info.label, schools: new Set(), schoolWaves: 0,
+            num: 0, den: 0, denMin: 0, denMax: 0, latSum: 0, lonSum: 0, coordN: 0 };
+      groups.set(info.key, g);
+    }
+
+    const sid = String(r.school_key);
+
+    if (!g.schools.has(sid)) {
+      g.schools.add(sid);
+      if (r.lat != null && r.lon != null && isFinite(r.lat) && isFinite(r.lon)) {
+        g.latSum += r.lat;
+        g.lonSum += r.lon;
+        g.coordN++;
+      }
+    }
+
+    g.num += sumFields(r, st.numFields || [], false);
+    g.den += dv;
+    g.denMin += dmin;
+    g.denMax += dmax;
+    g.schoolWaves++;
+    used++;
+  }
+
+  const out = [];
+
+  for (const g of groups.values()) {
+    g.nSchools = g.schools.size;
+    if (g.nSchools < st.minSchools) continue;
+    g.value = g.den > 0 ? g.num / g.den : null;
+    g.low = g.denMax > 0 ? g.num / g.denMax : null;
+    g.high = g.denMin > 0 ? g.num / g.denMin : null;
+    g.lat = g.coordN ? g.latSum / g.coordN : null;
+    g.lon = g.coordN ? g.lonSum / g.coordN : null;
+    g.bin = binOf(g.value);
+    out.push(g);
+  }
+
+  return { groups: out, dropped, droppedLB, used };
+}
+
+function quantile(sorted, p) {
+  if (!sorted.length) return null;
+  const idx = (sorted.length - 1) * p;
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+function markerValues(units, marks) {
+  const vals = units.map(u => u.value).filter(v => v != null && isFinite(v)).sort((a, b) => a - b);
+  return marks.map(p => ({ p: p, value: quantile(vals, p / 100) })).filter(m => m.value != null);
+}
+
+function waveStats(rows, st, selectedKey) {
+  const waves = [...new Set(rows.map(r => r.wave))]
+    .filter(w => w >= st.from && w <= st.to)
+    .sort((a, b) => a - b);
+
+  return waves.map(w => {
+    const agg = aggregate(rows, Object.assign({}, st, { from: w, to: w }));
+    const vals = agg.groups.map(g => g.value).filter(v => v != null && isFinite(v)).sort((a, b) => a - b);
+    const sum = f => agg.groups.reduce((s, g) => s + g[f], 0);
+    const num = sum('num'), den = sum('den'), denMin = sum('denMin'), denMax = sum('denMax');
+    const sel = selectedKey != null ? agg.groups.find(g => g.key === selectedKey) : null;
+
+    return {
+      wave: w,
+      n: vals.length,
+      mean: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null,
+      median: quantile(vals, 0.5),
+      q25: quantile(vals, 0.25),
+      q75: quantile(vals, 0.75),
+      pooled: den > 0 ? num / den : null,
+      pooledLow: denMax > 0 ? num / denMax : null,
+      pooledHigh: denMin > 0 ? num / denMin : null,
+      selected: sel ? sel.value : null
+    };
+  });
+}
+
+function histUnitsFor(rows, st) {
+  if (st.unit !== 'wave') {
+    return aggregate(rows, st).groups.map(g => ({ key: g.key, bin: g.bin, value: g.value }));
+  }
+  const waves = [...new Set(rows.map(r => r.wave))]
+    .filter(w => w >= st.from && w <= st.to)
+    .sort((a, b) => a - b);
+  const out = [];
+  for (const w of waves) {
+    const agg = aggregate(rows, Object.assign({}, st, { from: w, to: w }));
+    for (const g of agg.groups) out.push({ key: g.key, wave: w, bin: g.bin, value: g.value });
+  }
+  return out;
+}
+
+function inRange(bin, lo, hi) {
+  return lo != null && hi != null && bin != null && bin >= lo && bin <= hi;
+}
+
+function rateNameFor(V, valueId, denomId) {
+  if (denomId === DENOM_RESOLVED) return 'Abdeckung';
+  if (valueId === VALUE_ANSWERED && denomId === DENOM_VAR_ALL) {
+    return V.answeredRate || (V.answeredLabel ? 'Anteil „' + V.answeredLabel + '“' : 'Antwortrate');
+  }
+  if (!V.simple && (denomId === DENOM_VAR_ALL || denomId === DENOM_VAR_ANS)) {
+    return 'Anteil „' + valueShortLabel(V, valueId) + '“';
+  }
+  return 'Anteil';
+}
+
+function makeDemo() {
+  let seed = 42;
+  const rnd = () => {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+
+  const districts = [
+    ['Altenburger Land', 50.99, 12.43], ['Eichsfeld', 51.38, 10.25],
+    ['Erfurt', 50.98, 11.03], ['Gera', 50.88, 12.08],
+    ['Jena', 50.93, 11.59], ['Nordhausen', 51.50, 10.79],
+    ['Saalfeld-Rudolstadt', 50.65, 11.36], ['Weimar', 50.98, 11.33]
+  ];
+
+  const rows = [];
+  let sid = 10000;
+
+  districts.forEach((d, di) => {
+    for (let gi = 0; gi < 3; gi++) {
+      const ags = '160' + String(di * 10 + gi).padStart(2, '0') + '001';
+      for (let si = 0; si < 4; si++) {
+        sid += 7;
+        const lat = d[1] + (rnd() - 0.5) * 0.25;
+        const lon = d[2] + (rnd() - 0.5) * 0.35;
+        const standort = 'ST' + di + gi + Math.floor(si / 2);
+        const standortLabel = d[0] + ', AGS ' + ags + ' (' + standort + ')';
+        const renumbered = si === 0;
+        const ownership = rnd() < 0.8 ? 'öffentlich' : 'frei';
+        const type = ownership === 'frei'
+          ? (rnd() < 0.5 ? 'Waldorfschule' : 'Grundschule')
+          : (rnd() < 0.6 ? 'Grundschule' : (rnd() < 0.7 ? 'Gemeinschaftsschule' : 'Förderschule'));
+        const schoolName = type + ' ' + d[0] + ' ' + (gi + 1) + '.' + (si + 1);
+
+        for (let wave = 2017; wave <= 2025; wave++) {
+          const size = 20 + Math.floor(rnd() * 60);
+          const denMin = size - Math.floor(rnd() * 4);
+          const denMax = size + Math.floor(rnd() * 6);
+          const cov = Math.max(0.1, Math.min(1, 0.55 + 0.04 * (wave - 2017) + (rnd() - 0.5) * 0.4));
+          const observed = Math.min(denMin, Math.round(size * cov));
+          const missing = rnd() < 0.01;
+          const lowerBound = rnd() < 0.08;
+          const key = renumbered && wave >= 2021 ? String(sid + 50000) : String(sid);
+
+          const yn = (answeredShare, yesShare) => {
+            const known = Math.round(observed * answeredShare);
+            const yes = Math.round(known * yesShare);
+            return { yes: yes, no: known - yes, unknown: observed - known };
+          };
+          const sc = yn(0.6 + rnd() * 0.35, 0.3 + rnd() * 0.4);
+          const sa = yn(0.5 + rnd() * 0.4, 0.2 + rnd() * 0.4);
+          const h = Math.round(observed * (0.85 + rnd() * 0.15));
+          const mass = Math.round(observed * (0.8 + rnd() * 0.2));
+          const both = Math.round(Math.min(h, mass) * (0.9 + rnd() * 0.1));
+          const keyage = Math.round(observed * (0.7 + rnd() * 0.25));
+          const tAny = Math.round(observed * (0.7 + rnd() * 0.3));
+          const tAll = Math.round(tAny * (0.5 + rnd() * 0.4));
+
+          rows.push({
+            wave, school_key: key, school_name: schoolName, school_label: key + ' – ' + schoolName,
+            school_name_ort: schoolName + ', ' + d[0],
+            ags_key: ags, district: d[0],
+            gemeinde: d[0] + ' ' + (gi + 1), lat, lon,
+            standort: standort, standort_label: standortLabel,
+            school_ownership_type: ownership, school_type: type,
+            den_source: lowerBound ? 'observed_lower_bound' : 'official_count',
+            den: missing ? null : (lowerBound ? observed : size),
+            den_min: missing ? null : (lowerBound ? observed : denMin),
+            den_max: missing ? null : (lowerBound ? observed : denMax),
+            num_third_grader: observed,
+            n_sports_club_yes: sc.yes, n_sports_club_no: sc.no, n_sports_club_unknown: sc.unknown,
+            n_school_club_yes: sa.yes, n_school_club_no: sa.no, n_school_club_unknown: sa.unknown,
+            n_tests_all6: tAll, n_tests_some: tAny - tAll, n_tests_none: observed - tAny,
+            n_height_yes: h, n_height_no: observed - h,
+            n_mass_yes: mass, n_mass_no: observed - mass,
+            n_mass_height_yes: both, n_mass_height_no: observed - both,
+            n_keyage_yes: keyage, n_keyage_no: observed - keyage
+          });
+        }
+      }
+    }
+  });
+
+  const ynu = [{ id: 'yes', label: 'Ja' }, { id: 'no', label: 'Nein' }, { id: 'unknown', label: 'Unbekannt' }];
+  const vorh = [{ id: 'yes', label: 'vorhanden' }, { id: 'no', label: 'fehlt' }];
+  const yn2 = [{ id: 'yes', label: 'Ja' }, { id: 'no', label: 'Nein' }];
+
+  return {
+    demo: true,
+    config: {
+      variables: [
+        { id: 'sports_club', label: 'Sportverein', values: ynu, answered: ['yes', 'no'] },
+        { id: 'school_club', label: 'Sport-AG', values: ynu, answered: ['yes', 'no'] },
+        { id: 'tests', label: 'Testteilnahme',
+          values: [{ id: 'all6', label: 'Alle 6 Tests' }, { id: 'some', label: '1 bis 5 Tests' }, { id: 'none', label: 'Kein Test' }],
+          answered: ['all6', 'some'], answered_label: 'Mindestens 1 Test', answered_rate: 'Teilnahmerate' },
+        { id: 'height', label: 'Körpergröße', values: vorh },
+        { id: 'mass', label: 'Körpermasse', values: vorh },
+        { id: 'mass_height', label: 'Körpergröße und -masse', values: vorh },
+        { id: 'keyage', label: 'Drittklässler nach Alter', values: yn2 }
+      ],
+      denominators: [
+        { id: 'third_grader', label: 'Erfasste Drittklässler', field: 'num_third_grader' },
+        { id: 'mass_valid', label: 'Körpermasse angegeben (gültige Angaben)', field: 'n_mass_yes', variables: 'mass_height,height' },
+        { id: 'height_valid', label: 'Körpergröße angegeben (gültige Angaben)', field: 'n_height_yes', variables: 'mass_height,mass' }
+      ],
+      filters: [
+        { field: 'school_ownership_type', label: 'Trägerschaft' },
+        { field: 'school_type', label: 'Schulart' },
+        { field: 'district', label: 'Kreis' }
+      ],
+      levels: [
+        { id: 'schulname', label: 'Schulname', field: 'school_name_ort', label_field: null },
+        { id: 'traeger', label: 'Trägerschaft', field: 'school_ownership_type', label_field: null }
+      ],
+      defaults: { variable: 'tests', value: '__answered', denom: 'resolved', level: 'standort', unit: 'wave', from: 2022, to: 2025, hist_marks: [20, 50, 80], filter_logic: 'and' }
+    },
+    metrics: [],
+    rows
+  };
+}
+
+// ==== OBERFLÄCHE ====
+if (typeof document !== 'undefined') {
+  const $ = id => document.getElementById(id);
+
+  let DATA = null;
+  let VARS = [];
+  let EXTRA_DENOMS = [];
+  let map = null;
+  let layer = null;
+  let groups = [];
+  let units = [];
+  let unitBinKeys = new Set();
+  let aggInfo = null;
+  let mapFitted = false;
+  let drag = null;
+  let hasSource = false;
+  let marks = DEFAULT_MARKS.slice();
+
+  const state = {
+    from: 0, to: 0, variable: null, value: null, denom: DENOM_RESOLVED,
+    numFields: [], denFields: null,
+    level: 'standort', minSchools: 1, unit: 'wave',
+    excludeLB: false, filters: [], filterLogic: 'and',
+    selected: null, binLo: null, binHi: null, sortKey: 'value', sortDir: -1
+  };
+
+  async function loadData() {
+    try {
+      const res = await fetch('coverage_school_wave.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      if (!data.rows) throw new Error('Format');
+      return data;
+    } catch (e) {
+      return makeDemo();
+    }
+  }
+
+  function curVar() { return VARS.find(v => v.id === state.variable) || VARS[0]; }
+  function curDenomOpts() { return denomOptions(curVar(), EXTRA_DENOMS); }
+  function curDenom() { return curDenomOpts().find(o => o.id === state.denom) || curDenomOpts()[0]; }
+
+  function numeratorLabel() {
+    const V = curVar();
+    return V.simple ? V.label : V.label + ': ' + valueShortLabel(V, state.value);
+  }
+
+  function levelLabel() {
+    const l = BUILTIN_LEVELS.concat([...CUSTOM_LEVELS.values()].map(c => ({ id: c.id, label: c.label || c.id })))
+      .find(x => x.id === state.level);
+    return l ? l.label : state.level;
+  }
+
+  function isResolved() { return state.denom === DENOM_RESOLVED; }
+  function rateName() { return rateNameFor(curVar(), state.value, state.denom); }
+  function denomShort() { return curDenom().short; }
+  function denomLong() { return curDenom().long; }
+
+  function applySelection() {
+    const V = curVar();
+    state.numFields = fieldsOfValue(V, state.value);
+    state.denFields = curDenom().fields;
+  }
+
+  function hasBin() { return state.binLo != null; }
+  function hasSelection() { return state.selected != null || hasBin(); }
+  function clearBin() { state.binLo = null; state.binHi = null; }
+
+  function isActive(g) {
+    if (state.selected != null) return g.key === state.selected;
+    if (hasBin()) return state.unit === 'wave' ? unitBinKeys.has(g.key) : inRange(g.bin, state.binLo, state.binHi);
+    return true;
+  }
+
+  function toggleSelect(key) {
+    clearBin();
+    state.selected = state.selected === key ? null : key;
+    refresh();
+    if (state.selected != null) {
+      const g = groups.find(x => x.key === key);
+      if (g && g.lat != null) map.panTo([g.lat, g.lon]);
+    }
+  }
+
+  function recompute(fit) {
+    applySelection();
+    aggInfo = aggregate(DATA.rows, state);
+    groups = aggInfo.groups;
+    state.selected = null;
+    clearBin();
+    if (fit) mapFitted = false;
+    refresh();
+  }
+
+  function renderSelectors(keepValue, keepDenom) {
+    const V = curVar();
+    const vopts = valueOptions(V);
+    $('valueWrap').style.display = !V.simple && vopts.length > 0 ? '' : 'none';
+    $('value').innerHTML = vopts.map(o => '<option value="' + esc(o.id) + '">' + esc(o.label) + '</option>').join('');
+    if (!vopts.some(o => o.id === keepValue)) keepValue = vopts[0].id;
+    state.value = keepValue;
+    $('value').value = state.value;
+
+    const dopts = denomOptions(V, EXTRA_DENOMS);
+    $('denom').innerHTML = dopts.map(o => '<option value="' + esc(o.id) + '">' + esc(o.label) + '</option>').join('');
+    if (!dopts.some(o => o.id === keepDenom)) keepDenom = DENOM_RESOLVED;
+    state.denom = keepDenom;
+    $('denom').value = state.denom;
+  }
+
+  function renderFilters() {
+    $('filtersWrap').style.display = state.filters.length ? '' : 'none';
+    if (!state.filters.length) return;
+
+    sanitizeFilters(DATA.rows, state.filters, state.filterLogic);
+
+    const nActive = activeFilters(state.filters).length;
+    $('filterCount').textContent = nActive ? '(' + nActive + ' aktiv)' : '';
+    $('flogicWrap').style.display = state.filters.length > 1 ? '' : 'none';
+    $('filterLogic').value = state.filterLogic;
+
+    $('filters').innerHTML = state.filters.map((f, i) => {
+      const counts = filterOptionCounts(DATA.rows, state.filters, i, state.filterLogic);
+      const vals = [...counts.keys()].sort((a, b) => a.localeCompare(b, 'de'));
+      const items = vals.length
+        ? vals.map(v => '<label class="fv"><input type="checkbox" data-i="' + i + '" data-v="' + esc(v) + '"' +
+            (f.values.includes(v) ? ' checked' : '') + '> ' + esc(v) + ' (' + fmtInt(counts.get(v).size) + ')</label>').join('')
+        : '<div class="fnone">keine Werte verfügbar</div>';
+      return '<div class="fitem' + (f.negate && f.values.length ? ' neg' : '') + '">' +
+        '<div class="fhead"><label>' + esc(f.label) + '</label>' +
+        '<select class="fmode" data-i="' + i + '" title="ist = nur diese Werte, ist nicht = diese Werte ausschließen">' +
+        '<option value="in"' + (f.negate ? '' : ' selected') + '>ist</option>' +
+        '<option value="not"' + (f.negate ? ' selected' : '') + '>ist nicht</option></select></div>' +
+        '<div class="fvals">' + items + '</div></div>';
+    }).join('');
+
+    $('filters').querySelectorAll('input[type=checkbox]').forEach(cb =>
+      cb.addEventListener('change', () => {
+        const f = state.filters[Number(cb.dataset.i)];
+        const v = cb.dataset.v;
+        f.values = cb.checked ? [...new Set([...f.values, v])] : f.values.filter(x => x !== v);
+        renderFilters();
+        recompute(true);
+      }));
+
+    $('filters').querySelectorAll('select.fmode').forEach(s =>
+      s.addEventListener('change', () => {
+        state.filters[Number(s.dataset.i)].negate = s.value === 'not';
+        renderFilters();
+        recompute(true);
+      }));
+  }
+
+  function renderHeaderTexts() {
+    $('pageTitle').textContent = rateName() + ': ' + numeratorLabel();
+    $('pageSub').textContent = rateName() + ' = Fälle mit „' + numeratorLabel() + '“ ÷ ' + denomLong() + '.' +
+      (isResolved()
+        ? ' Spanne = Abdeckung bei größter bis kleinster plausibler Grundgesamtheit (kein Konfidenzintervall).'
+        : ' Der Nenner ist keine Schätzung der Grundgesamtheit: bedingter Anteil ohne Spanne.');
+    $('trendNote').textContent = 'Gruppen-Median und -Mittelwert je Erhebungswelle; gepoolt = Σ Zähler ÷ Σ ' +
+      (isResolved() ? 'angesetzte Grundgesamtheit (Strich: plausible Spanne)' : 'Nenner') +
+      '; Band: 25.–75. Perzentil; Violett: ausgewählte Gruppe.';
+
+    $('excludeLB').disabled = !hasSource || !isResolved();
+    $('lbWrap').style.opacity = !hasSource || !isResolved() ? '0.5' : '';
+    $('lbHint').textContent = !hasSource
+      ? 'Nicht verfügbar: In den Daten fehlt die Angabe zur Quelle der Grundgesamtheit.'
+      : (!isResolved() ? 'Nur wählbar beim Nenner „Angesetzte Grundgesamtheit“.' : '');
+  }
+
+  function refresh() {
+    renderHeaderTexts();
+    units = histUnitsFor(DATA.rows, state);
+    unitBinKeys = new Set(units.filter(u => inRange(u.bin, state.binLo, state.binHi)).map(u => u.key));
+    renderHist();
+    renderTrend();
+    renderMap();
+    renderTable();
+    renderStatus();
+  }
+
+  function renderStatus() {
+    const sel = groups.filter(isActive).length;
+    const desc = describeFilters(state.filters, state.filterLogic);
+    $('status').innerHTML =
+      'Erhebungswellen: ' + state.from + '–' + state.to + '<br>' +
+      (desc ? 'Filter: ' + esc(desc) + '<br>' : '') +
+      'Gruppen: ' + groups.length + (hasSelection() ? ' (ausgewählt: ' + sel + ')' : '') + '<br>' +
+      'Schule × Erhebungswelle verwendet: ' + fmtInt(aggInfo.used) + '<br>' +
+      'Ohne Nenner ausgeschlossen: ' + fmtInt(aggInfo.dropped) +
+      (state.excludeLB && isResolved() ? '<br>Ohne eigene Drittklässlerzahl ausgeschlossen: ' + fmtInt(aggInfo.droppedLB) : '');
+  }
+
+  function renderMap() {
+    $('mapTitle').textContent = 'Karte – ' + numeratorLabel() + ' ÷ ' + denomShort() + ' (' + levelLabel() + ', ' + state.from + '–' + state.to + ')';
+    layer.clearLayers();
+    const pts = [];
+    const ordered = groups.slice().sort((a, b) => b.den - a.den);
+
+    for (const g of ordered) {
+      if (g.lat == null) continue;
+      const active = isActive(g);
+      const sel = state.selected === g.key;
+      const radius = radiusFor(g.den);
+
+      const m = L.circleMarker([g.lat, g.lon], {
+        radius: sel ? radius + 3 : radius,
+        color: sel ? '#000' : '#334155',
+        weight: sel ? 3 : 1,
+        fillColor: colorFor(g.value),
+        fillOpacity: hasSelection() ? (active ? 0.95 : 0.12) : 0.85,
+        opacity: hasSelection() && !active ? 0.25 : 1
+      });
+
+      m.bindTooltip(
+        '<b>' + esc(g.label) + '</b><br>' +
+        esc(rateName()) + ': <b>' + fmtPct(g.value) + '</b><br>' +
+        'Zähler (' + esc(numeratorLabel()) + '): ' + fmtInt(g.num) + '<br>' +
+        'Nenner (' + esc(denomShort()) + '): ' + fmtInt(g.den) +
+        (isResolved() ? ' (Spanne ' + fmtInt(g.denMin) + '–' + fmtInt(g.denMax) + ')<br>' +
+          'Abdeckung zwischen ' + fmtPct(g.low) + ' und ' + fmtPct(g.high) : '') + '<br>' +
+        fmtInt(g.nSchools) + ' Schulnummer(n)'
+      );
+
+      m.on('click', () => toggleSelect(g.key));
+      m.addTo(layer);
+      pts.push([g.lat, g.lon]);
+    }
+
+    if (!mapFitted && pts.length) {
+      map.fitBounds(pts, { padding: [30, 30], maxZoom: 11 });
+      mapFitted = true;
+    }
+  }
+
+  function styleBars(lo, hi, extra) {
+    $('hist').querySelectorAll('.bar').forEach(el => {
+      const b = Number(el.dataset.bin);
+      const on = (lo != null && b >= lo && b <= hi) || (extra && extra.has(b));
+      el.setAttribute('stroke', on ? '#c2410c' : '#475569');
+      el.setAttribute('stroke-width', on ? 2.5 : 0.5);
+    });
+  }
+
+  function fmtP(p) { return String(p).replace('.', ','); }
+
+  function renderHist() {
+    const waveMode = state.unit === 'wave';
+    const unitName = waveMode ? 'Gruppen × Erhebungswellen' : 'Gruppen';
+    let title = 'Verteilung: ' + rateName() + ' über ' + units.length + ' ' + unitName;
+
+    if (hasBin()) {
+      const a = state.binLo * 100 / N_BINS;
+      const b = (state.binHi + 1) * 100 / N_BINS;
+      const n = units.filter(u => inRange(u.bin, state.binLo, state.binHi)).length;
+      title += ' – Auswahl ' + a + '–' + b + ' % (' + n + ')';
+    }
+
+    $('histTitle').textContent = title;
+    const W = 420, H = 250, ml = 38, mr = 10, mt = 30, mb = 40;
+    const counts = new Array(N_BINS).fill(0);
+
+    for (const u of units) {
+      if (u.bin != null) counts[u.bin]++;
+    }
+
+    const maxC = Math.max(1, ...counts);
+    const bw = (W - ml - mr) / N_BINS;
+    const xOfV = v => ml + (W - ml - mr) * Math.max(0, Math.min(1, v));
+
+    let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">';
+
+    for (let i = 0; i < N_BINS; i++) {
+      const h = (H - mt - mb) * counts[i] / maxC;
+      const x = ml + i * bw;
+      const y = H - mb - h;
+      const mid = (i + 0.5) / N_BINS;
+
+      svg += '<rect class="bar" data-bin="' + i + '" x="' + (x + 1) + '" y="' + y +
+             '" width="' + (bw - 2) + '" height="' + Math.max(h, 0) + '" fill="' + colorFor(mid) +
+             '" stroke="#475569" stroke-width="0.5">' +
+             '<title>' + (i * 100 / N_BINS) + '–' + ((i + 1) * 100 / N_BINS) + ' %: ' + counts[i] + ' ' + unitName + '</title></rect>';
+
+      if (counts[i] > 0) {
+        svg += '<text x="' + (x + bw / 2) + '" y="' + (y - 3) + '" text-anchor="middle" pointer-events="none">' + counts[i] + '</text>';
+      }
+    }
+
+    svg += '<line x1="' + ml + '" y1="' + (H - mb) + '" x2="' + (W - mr) + '" y2="' + (H - mb) + '" stroke="#94a3b8"/>';
+
+    for (const t of [0, 25, 50, 75, 100]) {
+      const x = ml + (W - ml - mr) * t / 100;
+      svg += '<text x="' + x + '" y="' + (H - mb + 15) + '" text-anchor="middle">' + t + ' %</text>';
+    }
+
+    const mv = markerValues(units, marks);
+    mv.forEach((m, i) => {
+      const x = xOfV(m.value);
+      const isMedian = m.p === 50;
+      const color = isMedian ? '#c2410c' : '#1e293b';
+      const name = isMedian ? 'Median' : 'P' + fmtP(m.p);
+      const ty = 10 + (i % 2) * 11;
+      const tx = Math.max(ml + 30, Math.min(W - mr - 30, x));
+      svg += '<line x1="' + x + '" y1="' + (ty + 3) + '" x2="' + x + '" y2="' + (H - mb) + '" stroke="' + color +
+             '" stroke-width="' + (isMedian ? 2 : 1.5) + '"' + (isMedian ? '' : ' stroke-dasharray="5 3"') + ' pointer-events="none"/>';
+      svg += '<text x="' + tx + '" y="' + ty + '" text-anchor="middle" style="fill:' + color + ';font-weight:600">' +
+             name + ' ' + fmtPct(m.value) + '</text>';
+    });
+
+    svg += '<text x="' + (ml + (W - ml - mr) / 2) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(rateName()) + ' (Werte über 100 % in der letzten Klasse)</text>';
+    svg += '<text x="12" y="' + (mt + (H - mt - mb) / 2) + '" transform="rotate(-90 12 ' + (mt + (H - mt - mb) / 2) + ')" text-anchor="middle">Anzahl</text>';
+    svg += '</svg>';
+
+    $('hist').innerHTML = svg;
+
+    $('markInfo').textContent = mv.length
+      ? mv.map(m => (m.p === 50 ? 'Median' : 'P' + fmtP(m.p)) + ': ' + fmtPct(m.value)).join(' · ')
+      : '';
+
+    const selBins = new Set();
+    if (state.selected != null) {
+      units.filter(u => u.key === state.selected && u.bin != null).forEach(u => selBins.add(u.bin));
+    }
+    styleBars(state.binLo, state.binHi, selBins);
+
+    $('hist').querySelectorAll('.bar').forEach(el => {
+      const b = Number(el.dataset.bin);
+      el.addEventListener('mousedown', ev => {
+        ev.preventDefault();
+        drag = { start: b, end: b };
+        styleBars(b, b);
+      });
+      el.addEventListener('mouseenter', () => {
+        if (!drag) return;
+        drag.end = b;
+        styleBars(Math.min(drag.start, drag.end), Math.max(drag.start, drag.end));
+      });
+    });
+  }
+
+  document.addEventListener('mouseup', () => {
+    if (!drag) return;
+    const lo = Math.min(drag.start, drag.end);
+    const hi = Math.max(drag.start, drag.end);
+    drag = null;
+    const same = state.binLo === lo && state.binHi === hi;
+    state.selected = null;
+    if (same) clearBin();
+    else { state.binLo = lo; state.binHi = hi; }
+    refresh();
+  });
+
+  function renderTrend() {
+    const stats = waveStats(DATA.rows, state, state.selected);
+    $('trendTitle').textContent = 'Verlauf – ' + numeratorLabel() + ' ÷ ' + denomShort() + ' (' + levelLabel() + ', ' + state.from + '–' + state.to + ')';
+
+    if (!stats.length) { $('trend').innerHTML = ''; $('trendLegend').innerHTML = ''; return; }
+
+    const W = 420, H = 250, ml = 62, mr = 10, mt = 12, mb = 30;
+    const pw = W - ml - mr, ph = H - mt - mb;
+
+    const allVals = [];
+    for (const s of stats) {
+      for (const k of ['mean', 'median', 'q25', 'q75', 'pooled', 'pooledLow', 'pooledHigh', 'selected']) {
+        if (s[k] != null && isFinite(s[k])) allVals.push(s[k]);
+      }
+    }
+
+    const yMax = Math.min(1.2, Math.max(0.2, Math.ceil(Math.max(0, ...allVals) * 20) / 20));
+    const xOf = i => ml + (stats.length === 1 ? pw / 2 : pw * i / (stats.length - 1));
+    const yOf = v => mt + ph * (1 - v / yMax);
+
+    let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">';
+
+    for (let t = 0; t <= 4; t++) {
+      const v = yMax * t / 4;
+      svg += '<line x1="' + ml + '" y1="' + yOf(v) + '" x2="' + (ml + pw) + '" y2="' + yOf(v) + '" stroke="#e2e8f0"/>';
+      svg += '<text x="' + (ml - 5) + '" y="' + (yOf(v) + 4) + '" text-anchor="end">' + Math.round(v * 100) + ' %</text>';
+    }
+
+    stats.forEach((s, i) => {
+      svg += '<text x="' + xOf(i) + '" y="' + (H - mb + 15) + '" text-anchor="middle">' + s.wave + '</text>';
+    });
+
+    for (let i = 0; i < stats.length - 1; i++) {
+      const a = stats[i], b = stats[i + 1];
+      if (a.q25 == null || a.q75 == null || b.q25 == null || b.q75 == null) continue;
+      svg += '<polygon fill="#0f766e" opacity="0.15" points="' +
+        xOf(i) + ',' + yOf(a.q75) + ' ' + xOf(i + 1) + ',' + yOf(b.q75) + ' ' +
+        xOf(i + 1) + ',' + yOf(b.q25) + ' ' + xOf(i) + ',' + yOf(a.q25) + '"/>';
+    }
+
+    if (isResolved()) {
+      stats.forEach((s, i) => {
+        if (s.pooledLow == null || s.pooledHigh == null) return;
+        svg += '<line x1="' + xOf(i) + '" y1="' + yOf(s.pooledLow) + '" x2="' + xOf(i) + '" y2="' + yOf(s.pooledHigh) +
+               '" stroke="#1e293b" stroke-width="3" opacity="0.35"/>';
+      });
+    }
+
+    const path = key => {
+      let d = '', pen = false;
+      stats.forEach((s, i) => {
+        const v = s[key];
+        if (v == null || !isFinite(v)) { pen = false; return; }
+        d += (pen ? 'L' : 'M') + xOf(i).toFixed(1) + ' ' + yOf(v).toFixed(1) + ' ';
+        pen = true;
+      });
+      return d;
+    };
+
+    const dots = (key, color) => stats.map((s, i) =>
+      s[key] == null ? '' : '<circle cx="' + xOf(i) + '" cy="' + yOf(s[key]) + '" r="3" fill="' + color + '"/>'
+    ).join('');
+
+    const series = [
+      ['median', 'Median der Gruppen', '#0f766e', '', 2],
+      ['mean', 'Mittelwert der Gruppen', '#c2410c', '6 4', 2],
+      ['pooled', 'Gepoolt', '#1e293b', '2 3', 2]
+    ];
+
+    if (state.selected != null) {
+      const g = groups.find(x => x.key === state.selected);
+      series.push(['selected', g ? g.label : 'Auswahl', '#7c3aed', '', 3]);
+    }
+
+    series.forEach(sr => {
+      svg += '<path d="' + path(sr[0]) + '" fill="none" stroke="' + sr[2] + '" stroke-width="' + sr[4] +
+             '"' + (sr[3] ? ' stroke-dasharray="' + sr[3] + '"' : '') + '/>' + dots(sr[0], sr[2]);
+    });
+
+    const bw = pw / Math.max(1, stats.length);
+    stats.forEach((s, i) => {
+      svg += '<rect x="' + (xOf(i) - bw / 2) + '" y="' + mt + '" width="' + bw + '" height="' + ph + '" fill="transparent">' +
+        '<title>' + s.wave + ': Median ' + fmtPct(s.median) + ', Mittelwert ' + fmtPct(s.mean) +
+        ', gepoolt ' + fmtPct(s.pooled) + (isResolved() ? ' (' + fmtPct(s.pooledLow) + '–' + fmtPct(s.pooledHigh) + ')' : '') +
+        ', Quartile ' + fmtPct(s.q25) + '–' + fmtPct(s.q75) + ', ' + s.n + ' Gruppen' + '</title></rect>';
+    });
+
+    svg += '<text transform="translate(14 '+(mt+ph/2)+') rotate(-90)" text-anchor="middle">Anteil (%)</text></svg>';
+    $('trend').innerHTML = svg;
+
+    $('trendLegend').innerHTML = series.map(sr =>
+      '<span><svg viewBox="0 0 26 8"><line x1="0" y1="4" x2="26" y2="4" stroke="' + sr[2] +
+      '" stroke-width="' + sr[4] + '"' + (sr[3] ? ' stroke-dasharray="' + sr[3] + '"' : '') + '/></svg>' +
+      esc(sr[1]) + '</span>'
+    ).join('');
+  }
+
+  function renderTotals() {
+    let eligible=groups.slice();
+    if($('onlySel').checked && hasSelection()) eligible=eligible.filter(isActive);
+    const q=$('tableSearch').value.trim().toLowerCase();
+    if(q) eligible=eligible.filter(g=>g.label.toLowerCase().includes(q)||g.key.toLowerCase().includes(q));
+    const keys=new Set(eligible.map(g=>g.key));
+    const years=[...new Set(DATA.rows.map(r=>r.wave))].filter(w=>w>=state.from&&w<=state.to).sort((a,b)=>a-b);
+    const stats=years.map(w=>{
+      const st={...state,from:w,to:w,minSchools:1};
+      const gs=aggregate(DATA.rows,st).groups.filter(g=>keys.has(g.key));
+      const pop=aggregate(DATA.rows,{...st,denFields:null}).groups.filter(g=>keys.has(g.key));
+      const sum=(arr,k)=>arr.reduce((a,g)=>a+g[k],0);
+      return {wave:w,num:sum(gs,'num'),den:sum(gs,'den'),pop:pop.length?sum(pop,'den'):null,
+        min:sum(pop,'denMin'),max:sum(pop,'denMax')};
+    });
+    $('totalsTitle').textContent='Jahressummen – '+numeratorLabel();
+    if(!eligible.length||!stats.length){$('totals').innerHTML='<p>Keine passenden Fälle.</p>';return;}
+    const W=480,H=250,ml=78,mr=12,mt=16,mb=36,pw=W-ml-mr,ph=H-mt-mb;
+    const ymax=Math.max(1,...stats.map(d=>Math.max(d.num,d.den,d.max)))*1.12;
+    const y=v=>mt+ph*(1-v/ymax),slot=pw/stats.length,bw=Math.min(24,slot*.22);
+    let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Jahressummen">';
+    for(let t=0;t<=4;t++){
+      const v=ymax*t/4;
+      svg+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#e2e8f0"/><text x="'+(ml-5)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fmtInt(v)+'</text>';
+    }
+    stats.forEach((d,i)=>{
+      const cx=ml+slot*(i+.5);
+      const bars=isResolved()?[[d.num,cx-bw-2,'#2563eb','Zähler'],[d.pop,cx+2,'#ea580c','Grundgesamtheit']]:
+        [[d.num,cx-1.5*bw-3,'#2563eb','Zähler'],[d.den,cx-bw/2,'#64748b','Nenner'],[d.pop,cx+bw/2+3,'#ea580c','Grundgesamtheit']];
+      bars.forEach(b=>{
+        if(b[0]==null)return;
+        svg+='<rect x="'+b[1]+'" y="'+y(b[0])+'" width="'+bw+'" height="'+(y(0)-y(b[0]))+'" fill="'+b[2]+'"><title>'+d.wave+' – '+b[3]+': '+fmtInt(b[0])+'</title></rect>';
+        if(b[3]==='Grundgesamtheit'){
+          const x=b[1]+bw/2;
+          svg+='<path d="M'+x+' '+y(d.min)+'V'+y(d.max)+' M'+(x-5)+' '+y(d.min)+'H'+(x+5)+' M'+(x-5)+' '+y(d.max)+'H'+(x+5)+'" stroke="#0f172a" stroke-width="2" fill="none"><title>Min–Max: '+fmtInt(d.min)+'–'+fmtInt(d.max)+'</title></path>';
+        }
+      });
+      svg+='<text x="'+cx+'" y="'+(H-12)+'" text-anchor="middle">'+d.wave+'</text>';
+    });
+    svg+='<text transform="translate(15 '+(mt+ph/2)+') rotate(-90)" text-anchor="middle">Anzahl Fälle</text></svg>';
+    $('totals').innerHTML=svg;
+  }
+
+  function renderTable() {
+    renderTotals();
+    $('tableTitle').textContent = 'Tabelle – ' + numeratorLabel() + ' ÷ ' + denomShort();
+    const rn = rateName();
+    const cols = [
+      ['label', 'Gruppe', ''],
+      ['nSchools', 'Schulnr.', 'Anzahl Schulnummern in der Gruppe'],
+      ['num', 'Fälle im Zähler', 'Zähler: ' + numeratorLabel()],
+      ['den', 'Fälle im Nenner', 'Nenner: ' + denomLong()],
+      ['value', rn, 'Zähler ÷ Nenner']
+    ];
+
+    if (isResolved()) {
+      cols.push(['low', 'Abdeckung min', 'Zähler ÷ größte plausible Grundgesamtheit']);
+      cols.push(['high', 'Abdeckung max', 'Zähler ÷ kleinste plausible Grundgesamtheit']);
+    }
+
+    let rows = groups.slice();
+
+    if ($('onlySel').checked && hasSelection()) {
+      rows = rows.filter(isActive);
+    }
+
+    const q = $('tableSearch').value.trim().toLowerCase();
+    if (q) {
+      rows = rows.filter(g => g.label.toLowerCase().includes(q) || g.key.toLowerCase().includes(q));
+    }
+
+    const k = (state.sortKey === 'low' || state.sortKey === 'high') && !isResolved() ? 'value' : state.sortKey;
+
+    rows.sort((a, b) => {
+      const va = a[k], vb = b[k];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'string') return state.sortDir * va.localeCompare(vb, 'de');
+      return state.sortDir * (va - vb);
+    });
+
+    const shown = rows.slice(0, 500);
+
+    let html = '<thead><tr>' + cols.map(c =>
+      '<th data-key="' + c[0] + '" title="' + esc(c[2]) + '">' + esc(c[1]) + (k === c[0] ? (state.sortDir > 0 ? ' ▲' : ' ▼') : '') + '</th>'
+    ).join('') + '</tr></thead><tbody>';
+
+    for (const g of shown) {
+      const cls = hasSelection() ? (isActive(g) ? 'row-sel' : 'row-dim') : '';
+      html += '<tr class="' + cls + '" data-key="' + esc(g.key) + '">' +
+        '<td>' + esc(g.label) + '</td><td>' + fmtInt(g.nSchools) + '</td><td>' + fmtInt(g.num) +
+        '</td><td>' + fmtInt(g.den) + '</td><td>' + fmtPct(g.value) + '</td>' +
+        (isResolved() ? '<td>' + fmtPct(g.low) + '</td><td>' + fmtPct(g.high) + '</td>' : '') + '</tr>';
+    }
+
+    html += '</tbody>';
+    if (!rows.length) {
+      html += '<tfoot><tr><td colspan="' + cols.length + '">Keine Gruppe gefunden' + (q ? ' für „' + esc(q) + '“' : '') + '</td></tr></tfoot>';
+    } else if (rows.length > shown.length) {
+      html += '<tfoot><tr><td colspan="' + cols.length + '">… ' + (rows.length - shown.length) + ' weitere Zeilen (nach Spalte sortieren oder suchen)</td></tr></tfoot>';
+    }
+
+    $('table').innerHTML = html;
+
+    $('table').querySelectorAll('th').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.key;
+        if (state.sortKey === key) state.sortDir *= -1;
+        else { state.sortKey = key; state.sortDir = key === 'label' ? 1 : -1; }
+        renderTable();
+      });
+    });
+
+    $('table').querySelectorAll('tbody tr').forEach(tr => {
+      tr.addEventListener('click', () => toggleSelect(tr.dataset.key));
+    });
+  }
+
+  function setYearLabels() {
+    $('fromLabel').textContent = state.from;
+    $('toLabel').textContent = state.to;
+  }
+
+  async function init() {
+    DATA = await loadData();
+    const cfg = DATA.config || {};
+    const defaults = cfg.defaults || {};
+    const messages = [];
+
+    if (DATA.demo) {
+      messages.push('Demo-Daten (zufällig erzeugt), weil <code>coverage_school_wave.json</code> nicht geladen werden konnte. Starte die Seite über einen Webserver oder lege die Datei daneben.');
+    }
+
+    if (!DATA.config) {
+      messages.push('Die geladene JSON enthält keinen <code>config</code>-Block: Es werden keine Ausprägungen, Filter und zusätzlichen Gliederungsebenen angezeigt.');
+    }
+
+    const nv = normalizeVariables(cfg, DATA.metrics, DATA.rows);
+    VARS = nv.variables;
+    if (nv.problems.length) {
+      messages.push('Für diese Merkmale fehlen Felder in den Daten (Ausprägungen ausgelassen): <b>' + esc(nv.problems.join('; ')) + '</b>.');
+    }
+    if (!VARS.length) {
+      $('banner').style.display = 'block';
+      $('banner').innerHTML = 'Keine Merkmale gefunden: Die JSON enthält weder <code>config$variables</code> noch <code>num_&lt;merkmal&gt;</code>-Felder.';
+      return;
+    }
+
+    const ed = normalizeExtraDenoms(cfg, DATA.rows, VARS.map(v => v.id));
+    EXTRA_DENOMS = ed.extras;
+    if (ed.missing.length) {
+      messages.push('Für diese Nenner fehlen Felder in den Daten: <b>' + esc(ed.missing.join(', ')) + '</b>.');
+    }
+    if (ed.unknownVars.length) {
+      messages.push('Nenner verweisen auf unbekannte Merkmale (<code>variables</code>): <b>' + esc(ed.unknownVars.join(', ')) + '</b>.');
+    }
+
+    if (!hasField(DATA.rows, 'standort')) {
+      messages.push('Das Feld <code>standort</code> fehlt in den Daten: Die Ebene „Schulstandort“ gruppiert dann jede Schulnummer einzeln.');
+    }
+
+    CUSTOM_LEVELS.clear();
+    const badLevels = [];
+    for (const l of asArray(cfg.levels)) {
+      if (!l || !l.id || !l.field) continue;
+      if (BUILTIN_LEVELS.some(b => b.id === l.id)) { badLevels.push(String(l.id) + ' (ID bereits vergeben)'); continue; }
+      if (!hasField(DATA.rows, l.field)) { badLevels.push(String(l.id) + ' (Feld ' + l.field + ' fehlt)'); continue; }
+      CUSTOM_LEVELS.set(String(l.id), { id: String(l.id), label: l.label || String(l.id), field: l.field, label_field: l.label_field || null });
+    }
+    if (badLevels.length) {
+      messages.push('Zusätzliche Gliederungsebenen nicht verfügbar: <b>' + esc(badLevels.join(', ')) + '</b>.');
+    }
+
+    const wanted = asArray(cfg.filters).filter(f => f && f.field);
+    const missingFilters = wanted.filter(f => !hasField(DATA.rows, f.field)).map(f => f.field);
+    state.filters = wanted.filter(f => hasField(DATA.rows, f.field))
+      .map(f => ({ field: String(f.field), label: f.label || String(f.field), values: [], negate: false }));
+    state.filterLogic = defaults.filter_logic === 'or' ? 'or' : 'and';
+    if (missingFilters.length) {
+      messages.push('Filterfelder fehlen in den Daten: <b>' + esc(missingFilters.join(', ')) + '</b>.');
+    }
+
+    hasSource = hasField(DATA.rows, 'den_source');
+    if (hasSource) {
+      const seen = new Set(DATA.rows.map(r => r.den_source));
+      const hits = [...LOWER_BOUND_SOURCES].filter(s => seen.has(s));
+      if (!hits.length) {
+        messages.push('Der Filter erkennt keine Zeile: Vorhandene Werte der Quelle: ' + esc([...seen].join(', ')) +
+          '. Passe <code>LOWER_BOUND_SOURCES</code> im Skript an.');
+      }
+    } else {
+      messages.push('Das Feld <code>den_source</code> fehlt in den Daten: Der Filter für Schulen ohne eigene Drittklässlerzahl ist deaktiviert.');
+    }
+
+    if (messages.length) {
+      $('banner').style.display = 'block';
+      $('banner').innerHTML = messages.join('<br>');
+    }
+
+    const waves = [...new Set(DATA.rows.map(r => r.wave))].sort((a, b) => a - b);
+    const minW = waves[0], maxW = waves[waves.length - 1];
+
+    for (const id of ['fromYear', 'toYear']) {
+      $(id).min = minW; $(id).max = maxW; $(id).step = 1;
+    }
+
+    state.from = Math.max(minW, Math.min(maxW, Number(defaults.from) || 2022));
+    state.to = Math.max(state.from, Math.min(maxW, Number(defaults.to) || 2025));
+    $('fromYear').value = state.from;
+    $('toYear').value = state.to;
+    setYearLabels();
+
+    $('variable').innerHTML = VARS.map(v => '<option value="' + esc(v.id) + '">' + esc(v.label) + '</option>').join('');
+    state.variable = VARS.some(v => v.id === defaults.variable) ? defaults.variable : VARS[0].id;
+    $('variable').value = state.variable;
+    renderSelectors(defaults.value, defaults.denom);
+
+    const levelOpts = BUILTIN_LEVELS.concat([...CUSTOM_LEVELS.values()].map(c => ({ id: c.id, label: c.label })));
+    $('level').innerHTML = levelOpts.map(l => '<option value="' + esc(l.id) + '">' + esc(l.label) + '</option>').join('');
+    state.level = levelOpts.some(l => l.id === defaults.level) ? defaults.level : 'standort';
+    state.unit = ['wave', 'period'].includes(defaults.unit) ? defaults.unit : 'wave';
+
+    $('level').value = state.level;
+    $('unit').value = state.unit;
+    $('excludeLB').checked = state.excludeLB;
+
+    const cfgMarks = parseMarks(defaults.hist_marks);
+    marks = cfgMarks.length ? cfgMarks : DEFAULT_MARKS.slice();
+    $('histMarks').value = marks.map(fmtP).join(', ');
+
+    renderFilters();
+
+    $('grad').style.background = 'linear-gradient(to right,' + STOPS.join(',') + ')';
+
+    map = L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap-Mitwirkende', maxZoom: 18
+    }).addTo(map);
+    map.setView([50.9, 11.0], 8);
+    layer = L.layerGroup().addTo(map);
+
+    window.addEventListener('resize', () => map.invalidateSize());
+
+    $('variable').addEventListener('change', e => {
+      const oldDenom = state.denom;
+      state.variable = e.target.value;
+      renderSelectors(null, oldDenom);
+      state.sortKey = 'value';
+      recompute(false);
+    });
+    $('value').addEventListener('change', e => { state.value = e.target.value; recompute(false); });
+    $('denom').addEventListener('change', e => { state.denom = e.target.value; state.sortKey = 'value'; recompute(false); });
+    $('level').addEventListener('change', e => { state.level = e.target.value; recompute(true); });
+    $('filterLogic').addEventListener('change', e => {
+      state.filterLogic = e.target.value === 'or' ? 'or' : 'and';
+      renderFilters();
+      recompute(true);
+    });
+    $('resetFilters').addEventListener('click', () => {
+      state.filters.forEach(f => { f.values = []; f.negate = false; });
+      renderFilters();
+      recompute(true);
+    });
+    $('unit').addEventListener('change', e => { state.unit = e.target.value; clearBin(); refresh(); });
+    $('excludeLB').addEventListener('change', e => { state.excludeLB = e.target.checked; recompute(true); });
+    $('minSchools').addEventListener('change', e => { state.minSchools = Math.max(1, Number(e.target.value) || 1); recompute(true); });
+    $('histMarks').addEventListener('input', e => { marks = parseMarks(e.target.value); renderHist(); });
+    $('onlySel').addEventListener('change', renderTable);
+    $('tableSearch').addEventListener('input', renderTable);
+    $('resetSel').addEventListener('click', () => { state.selected = null; clearBin(); refresh(); });
+    $('allYears').addEventListener('click', () => {
+      state.from = minW; state.to = maxW;
+      $('fromYear').value = minW; $('toYear').value = maxW;
+      setYearLabels(); recompute(false);
+    });
+
+    $('fromYear').addEventListener('input', e => {
+      state.from = Number(e.target.value);
+      if (state.from > state.to) { state.to = state.from; $('toYear').value = state.to; }
+      setYearLabels(); recompute(false);
+    });
+
+    $('toYear').addEventListener('input', e => {
+      state.to = Number(e.target.value);
+      if (state.to < state.from) { state.from = state.to; $('fromYear').value = state.from; }
+      setYearLabels(); recompute(false);
+    });
+
+    map.invalidateSize();
+    recompute(true);
+    setTimeout(() => { map.invalidateSize(); mapFitted = false; renderMap(); }, 200);
+  }
+
+  init();
+}
+
+if (typeof module !== 'undefined') {
+  module.exports = { aggregate, makeDemo, binOf, colorFor, fmtPct, waveStats, quantile, groupOf, histUnitsFor, inRange, passesFilters, activeFilters, filterOptionCounts, sanitizeFilters, describeFilters, hasField, asArray, asList, parseMarks, markerValues, radiusFor, normalizeVariables, valueOptions, valueShortLabel, fieldsOfValue, denomOptions, normalizeExtraDenoms, sumFields, rateNameFor, CUSTOM_LEVELS, VALUE_ANSWERED, DENOM_RESOLVED, DENOM_VAR_ALL, DENOM_VAR_ANS };
+}
+</script>
+</body>
+</html>
