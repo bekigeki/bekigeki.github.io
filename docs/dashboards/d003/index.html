@@ -99,7 +99,7 @@
     <select id="statusFilter">
       <option value="all">Alle</option>
       <option value="pending">Noch nicht erfasst</option>
-      <option value="done">Fertig</option>
+      <option value="done">Erfasst</option>
       <option value="check">Rückfragen notwendig</option>
     </select>
 
@@ -153,7 +153,7 @@
 <script>
 const STATUS = {
   pending: { label:'Noch nicht erfasst',   color:'#9ca3af' },
-  done:    { label:'Fertig',               color:'#2e7d32' },
+  done:    { label:'aktuell keine Rückfragen',               color:'#2e7d32' },
   check:   { label:'Rückfragen notwendig', color:'#f59e0b' }
 };
 const ORDER = ['done','check','pending'];
