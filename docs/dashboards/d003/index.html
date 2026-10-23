@@ -79,7 +79,7 @@
       <div class="kpi"><b id="kChk">–</b><span>davon Schulen mit Rückfragen</span></div>
       <div class="kpi"><b id="kFiles">–</b><span>Dateien erfasst</span></div>
       <div class="kpi"><b id="kFilesChk">–</b><span>davon Dateien mit Rückfragen</span></div>
-      <div class="kpi"><b id="kKids">–</b><span>auswertbare Kinder</span></div>
+      <div class="kpi"><b id="kKids">–</b><span>auswertbare Fälle</span></div>
     </div>
 
     <label for="level">Gliederungsebene</label>
@@ -116,7 +116,7 @@
         <li><b>Erfasste Dateien:</b> verschiedene Dateinamen je Schule, summiert.</li>
         <li><b>Dateien mit Rückfragen:</b> verschiedene Dateinamen im Status „to_check“.</li>
         <li><b>Zeitverlauf:</b> Einreichedatum = Datum im Dateinamen. Testdatum = häufigstes <code>Testdate</code> je Datei. Gezählt werden Dateien.</li>
-        <li><b>Auswertbare Kinder:</b> Geschlecht bekannt, Alter bekannt (Jahr und Monat) und mindestens ein Test.</li>
+        <li><b>Auswertbare Fälle:</b> Geschlecht bekannt, Alter bekannt (Jahr und Monat) und mindestens ein Test.</li>
         <li><b>Offen:</b> Eine Schule mit gemischtem Status gilt als „Rückfragen notwendig“, bis alle Dateien erledigt sind.</li>
       </ul>
     </details>
@@ -253,8 +253,8 @@ function renderMap() {
       '<br>' + esc(r.schulamt) + '<br>Status: <b>' + s.label + '</b>' +
       (r._s !== 'pending' ? '<br>Dateien: ' + fmtInt(filesOf(r)) + ' (mit Rückfragen: ' + fmtInt(r.dateien_pruefen || 0) + ')' +
         (r.einreiche_datum ? '<br>Einreichedatum: ' + esc(r.einreiche_datum) : '') +
-        '<br>Kinder erfasst: ' + fmtInt(r.kinder_erfasst) + '<br>Kinder auswertbar: ' + fmtInt(r.kinder_auswertbar) : ''));
-    m.on('click', () => toggleSelect(LEVELS[state.level].f(r)));
+       '<br>Fälle erfasst: ' + fmtInt(r.kinder_erfasst) + '<br>Fälle auswertbar: ' + fmtInt(r.kinder_auswertbar) : ''));
+      m.on('click', () => toggleSelect(LEVELS[state.level].f(r)));
     m.addTo(layer); pts.push([r.lat, r.lon]);
   }
   if (!mapFitted && pts.length) { map.fitBounds(pts, { padding:[30,30], maxZoom:11 }); mapFitted = true; }
@@ -355,7 +355,7 @@ function renderTable() {
     ['check','Rückfragen notwendig','Schulen mit mindestens einer Datei im Status to_check'], ['pending','Noch nicht erfasst',''],
     ['quote','Anteil erfasst','Schulen erfasst ÷ erwartet'],
     ['files','Dateien erfasst','Verschiedene Dateinamen'], ['filesChk','Dateien mit Rückfragen','Dateien im Status to_check'],
-    ['kidsAll','Kinder erfasst',''], ['kids','Kinder auswertbar','Geschlecht + Alter bekannt, mind. 1 Test']
+    ['kidsAll','Fälle erfasst',''], ['kids','Fälle auswertbar','Geschlecht + Alter bekannt, mind. 1 Test']
   ];
   let rows = groups.slice();
   if ($('onlySel').checked && state.selected != null) rows = rows.filter(g => g.key === state.selected);
