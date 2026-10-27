@@ -1,794 +1,809 @@
 <!DOCTYPE html>
 <html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Merkmalsanteile und Abdeckung – BeKiGeKi</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>
-:root{--line:#e2e8f0;--muted:#64748b;--accent:#c2410c;--rowH:350px}
-*{box-sizing:border-box}
-body{margin:0;background:#f8fafc;color:#0f172a;font:13px/1.4 system-ui,sans-serif}
-header{padding:12px 18px;background:#fff;border-bottom:1px solid var(--line)}
-h1{font-size:18px;margin:0}h2{font-size:13px;margin:0 0 7px}
-header p,.note,.status{font-size:10px;color:var(--muted)}header p{margin:4px 0}
-details{margin-top:8px}
-summary{cursor:pointer;color:var(--accent);font-weight:650;font-size:11px}
-details.explain{font-size:11px;color:#334155}
-details.explain h3{font-size:11px;margin:8px 0 2px}
-details.explain p{margin:3px 0}
-.banner{display:none;padding:7px 18px;background:#fef3c7;color:#92400e;font-size:12px}
-.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:10px;padding:10px;align-items:start}
-.panel{min-width:0;padding:10px;background:#fff;border:1px solid var(--line);border-radius:7px}
-.controls{position:sticky;top:8px}
-.controls label{display:block;margin:8px 0 3px;font-size:11px;font-weight:600}
-.controls select,.controls input[type=number]{width:100%;padding:4px;font-size:12px}
-.controls input[type=range]{width:100%}
-button{padding:4px 7px;font-size:11px;cursor:pointer}
-.row{display:flex;gap:5px;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted)}
-.row>*{min-width:0}
-.fgroup{padding:7px;border:1px solid var(--line);border-radius:5px;background:#f8fafc}
-.flogic{width:100%;margin:6px 0}
-.fitem{margin-top:7px;padding-left:6px;border-left:2px solid #cbd5e1}
-.fhead{display:flex;gap:4px;align-items:center}
-.fhead strong{flex:1;font-size:10px}
-.fhead select{width:auto}
-.fvals{max-height:90px;overflow:auto;background:#fff}
-.fvals label{display:flex;gap:4px;margin:2px;font-weight:400}
-.main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:var(--rowH) var(--rowH) var(--rowH) auto;gap:10px}
-.p-map{grid-column:1;grid-row:1;display:flex;flex-direction:column}
-.p-totals{grid-column:2;grid-row:1}
-.p-share{grid-column:1;grid-row:2}
-.p-trend{grid-column:2;grid-row:2}
-.p-coverage{grid-column:1;grid-row:3}
-.p-coverage-trend{grid-column:2;grid-row:3}
-.p-table{grid-column:1/span 2;grid-row:4}
-#map{flex:1;min-height:0;border-radius:5px}
-.chart{width:100%;height:250px}
-.chart svg{width:100%;height:100%;display:block}
-.main svg text{font-size:8px;fill:#334155}
-#hist{user-select:none;-webkit-user-select:none}
-.bar-sel{cursor:pointer}
-.legend{display:flex;gap:6px;align-items:center;margin-top:5px;font-size:10px;color:var(--muted)}
-.grad{width:135px;height:9px;border-radius:3px}
-.note{margin-top:4px;line-height:1.3}
-.markrow{display:flex;gap:5px;align-items:center;margin-top:4px;font-size:10px}
-.markrow input{flex:1;min-width:40px;padding:3px;font-size:10px}
-.mode-row{display:flex;gap:8px;align-items:center;margin-top:4px;font-size:10px;color:var(--muted)}
-.mode-row select{padding:2px;font-size:10px}
-.tablehead{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:6px}
-.tablehead h2{margin:0}
-.tablehead input{width:240px;max-width:50%;padding:4px;font-size:11px}
-.tablewrap{max-height:360px;overflow:auto}
-table{width:100%;border-collapse:collapse;font-size:10px}
-th,td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-th:first-child,td:first-child{text-align:left}
-th{position:sticky;top:0;background:#f1f5f9;cursor:pointer;z-index:2}
-tr.sumrow td{background:#e0e7ef;font-weight:700;border-top:2px solid #64748b;border-bottom:2px solid #64748b}
-tbody tr:not(.sumrow){cursor:pointer}
-tbody tr:not(.sumrow):hover td{background:#f8fafc}
-tr.row-sel td{background:#ffedd5}
-tr.row-dim td{color:#94a3b8}
-@media(max-width:1000px){
- .layout{grid-template-columns:1fr}.controls{position:static}
- .main{grid-template-columns:1fr;grid-template-rows:auto}
- .p-map,.p-totals,.p-share,.p-trend,.p-coverage,.p-coverage-trend,.p-table{grid-column:1;grid-row:auto}
- .p-map{height:450px}
- .p-totals,.p-share,.p-trend,.p-coverage,.p-coverage-trend{min-height:320px}
-}
-</style>
-</head>
-<body>
-<header>
-<h1 id="pageTitle">Merkmalsanteil und Abdeckungsgrad</h1>
-<p id="pageSub">
-Ausprägungsanteil = Fälle der Auswahl ÷ gültige Antworten.
-Abdeckungsgrad = erhobene Fälle des Merkmals ÷ angesetzte Grundgesamtheit.
-</p>
-<details class="explain">
-<summary>Erläuterungen zu Zähler, Anteilen, Abdeckung, Auswahl</summary>
-<h3>Ausprägungsanteil</h3>
-<p>Zähler ist die gewählte Ausprägung, Nenner sind die gültigen Antworten des Merkmals. „Unbekannt“ zählt nicht als gültige Antwort.</p>
-<h3>Abdeckungsgrad</h3>
-<p>Die Abdeckung gehört zum Merkmal, nicht zur gewählten Ausprägung: erhobene Fälle (z. B. Sportverein: Ja + Nein; Körpergröße: nur „vorhanden“) geteilt durch die angesetzte Grundgesamtheit. Abdeckung min = ÷ größte, Abdeckung max = ÷ kleinste plausible Grundgesamtheit; die Spanne ist kein Konfidenzintervall.</p>
-<h3>Auswahl und Overlays</h3>
-<p>Im Ausprägungshistogramm wählt ein Klick eine Klasse aus bzw. ab, Klick auf weitere Klassen erweitert die Auswahl, Ziehen wählt einen Bereich (Strg/⌘ addiert). Diese Auswahl filtert Karte, beide Verläufe, Jahressummen und Tabelle. Das Abdeckungshistogramm kennt keine Mehrfachauswahl: Klick setzt/löscht den Abdeckungsbereich. In Tabelle und Karte lassen sich mehrere Gruppen markieren — diese Markierung filtert nicht, sondern hebt die Gruppen auf der Karte deutlich hervor und zeigt sie als farbige Overlay-Linien in beiden Verläufen.</p>
-<h3>Histogramm-Modi</h3>
-<p>Häufigkeit, kumuliert ≤ Klassengrenze (steigend) und absteigend ≥ Klassengrenze (hohe Balken links). Kumulative Modi haben eine Prozent-y-Achse.</p>
-<h3>Jahressummen und Summenzeile</h3>
-<p>Jahressummen: Zähler · gültige Antworten · gefilterte Grundgesamtheit mit Min–Max · ungefilterte Export-Summe mit Min–Max. Die Summenzeile der Tabelle steht unter dem Kopf und poolt Anteile aus den Summen (Σ Zähler ÷ Σ Nenner).</p>
-</details>
-</header>
-<div class="banner" id="banner"></div>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Merkmalsanteile und Abdeckung – BeKiGeKi</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+      :root{--line:#e2e8f0;--muted:#64748b;--accent:#c2410c;--rowH:350px}
+      *{box-sizing:border-box}
+      body{margin:0;background:#f8fafc;color:#0f172a;font:13px/1.4 system-ui,sans-serif}
+      header{padding:12px 18px;background:#fff;border-bottom:1px solid var(--line)}
+      h1{font-size:18px;margin:0}h2{font-size:13px;margin:0 0 7px}
+      header p,.note,.status{font-size:10px;color:var(--muted)}header p{margin:4px 0}
+      details{margin-top:8px}
+      summary{cursor:pointer;color:var(--accent);font-weight:650;font-size:11px}
+      details.explain{font-size:11px;color:#334155}
+      details.explain h3{font-size:11px;margin:8px 0 2px}
+      details.explain p{margin:3px 0}
+      .banner{display:none;padding:7px 18px;background:#fef3c7;color:#92400e;font-size:12px}
+      .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:10px;padding:10px;align-items:start}
+      .panel{min-width:0;padding:10px;background:#fff;border:1px solid var(--line);border-radius:7px}
+      .controls{position:sticky;top:8px}
+      .controls label{display:block;margin:8px 0 3px;font-size:11px;font-weight:600}
+      .controls select,.controls input[type=number]{width:100%;padding:4px;font-size:12px}
+      .controls input[type=range]{width:100%}
+      #coverageMin,#coverageMax{width:64px}
+      .controls .row{justify-content:flex-start}
+      button{padding:4px 7px;font-size:11px;cursor:pointer}
+      .row{display:flex;gap:5px;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted)}
+      .row>*{min-width:0}
+      .fgroup{padding:7px;border:1px solid var(--line);border-radius:5px;background:#f8fafc}
+      .flogic{width:100%;margin:6px 0}
+      .fitem{margin-top:7px;padding-left:6px;border-left:2px solid #cbd5e1}
+      .fhead{display:flex;gap:4px;align-items:center}
+      .fhead strong{flex:1;font-size:10px}
+      .fhead select{width:auto}
+      .fvals{max-height:90px;overflow:auto;background:#fff}
+      .fvals label{display:flex;gap:4px;margin:2px;font-weight:400}
+      .main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:var(--rowH) var(--rowH) var(--rowH) auto;gap:10px}
+      .p-map{grid-column:1;grid-row:1;display:flex;flex-direction:column}
+      .p-totals{grid-column:2;grid-row:1}
+      .p-share{grid-column:1;grid-row:2}
+      .p-trend{grid-column:2;grid-row:2}
+      .p-coverage{grid-column:1;grid-row:3}
+      .p-coverage-trend{grid-column:2;grid-row:3}
+      .p-table{grid-column:1/span 2;grid-row:4}
+      #map{flex:1;min-height:0;border-radius:5px}
+      .chart{width:100%;height:250px}
+      .chart svg{width:100%;height:100%;display:block}
+      .main svg text{font-size:8px;fill:#334155}
+      #hist{user-select:none;-webkit-user-select:none}
+      .bar-sel{cursor:pointer}
+      .legend{display:flex;gap:6px;align-items:center;margin-top:5px;font-size:10px;color:var(--muted)}
+      .grad{width:135px;height:9px;border-radius:3px}
+      .note{margin-top:4px;line-height:1.3}
+      .markrow{display:flex;gap:5px;align-items:center;margin-top:4px;font-size:10px}
+      .markrow input{flex:1;min-width:40px;padding:3px;font-size:10px}
+      .mode-row{display:flex;gap:8px;align-items:center;margin-top:4px;font-size:10px;color:var(--muted)}
+      .mode-row select{padding:2px;font-size:10px}
+      .tablehead{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:6px}
+      .tablehead h2{margin:0}
+      .tablehead input{width:240px;max-width:50%;padding:4px;font-size:11px}
+      .tablewrap{max-height:360px;overflow:auto}
+      table{width:100%;border-collapse:collapse;font-size:10px}
+      th,td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+      th:first-child,td:first-child{text-align:left}
+      th{position:sticky;top:0;background:#f1f5f9;cursor:pointer;z-index:2}
+      tr.sumrow td{background:#e0e7ef;font-weight:700;border-top:2px solid #64748b;border-bottom:2px solid #64748b}
+      tbody tr:not(.sumrow){cursor:pointer}
+      tbody tr:not(.sumrow):hover td{background:#f8fafc}
+      tr.row-sel td{background:#ffedd5}
+      tr.row-dim td{color:#94a3b8}
+      @media(max-width:1000px){
+          .layout{grid-template-columns:1fr}.controls{position:static}
+          .main{grid-template-columns:1fr;grid-template-rows:auto}
+          .p-map,.p-totals,.p-share,.p-trend,.p-coverage,.p-coverage-trend,.p-table{grid-column:1;grid-row:auto}
+          .p-map{height:450px}
+          .p-totals,.p-share,.p-trend,.p-coverage,.p-coverage-trend{min-height:320px}
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 id="pageTitle">Merkmalsanteil und Abdeckungsgrad</h1>
+      <p id="pageSub">
+        Ausprägungsanteil = Fälle der Auswahl ÷ gültige Antworten.
+        Abdeckungsgrad = erhobene Fälle des Merkmals ÷ angesetzte Grundgesamtheit.
+      </p>
+      <details class="explain">
+        <summary>Erläuterungen zu Zähler, Anteilen, Abdeckung, Auswahl</summary>
+        <h3>Ausprägungsanteil</h3>
+        <p>Zähler ist die gewählte Ausprägung, Nenner sind die gültigen Antworten des Merkmals. „Unbekannt“ zählt nicht als gültige Antwort.</p>
+        <h3>Abdeckungsgrad</h3>
+        <p>Die Abdeckung gehört zum Merkmal, nicht zur gewählten Ausprägung: erhobene Fälle (z. B. Sportverein: Ja + Nein; Körpergröße: nur „vorhanden“) geteilt durch die angesetzte Grundgesamtheit. Abdeckung min = ÷ größte, Abdeckung max = ÷ kleinste plausible Grundgesamtheit; die Spanne ist kein Konfidenzintervall.</p>
+        <h3>Auswahl und Overlays</h3>
+        <p>Im Ausprägungshistogramm wählt ein Klick eine Klasse aus bzw. ab, Klick auf weitere Klassen erweitert die Auswahl, Ziehen wählt einen Bereich (Strg/⌘ addiert). Diese Auswahl filtert Karte, beide Verläufe, Jahressummen und Tabelle. Das Abdeckungshistogramm kennt keine Mehrfachauswahl: Klick setzt/löscht den Abdeckungsbereich. In Tabelle und Karte lassen sich mehrere Gruppen markieren — diese Markierung filtert nicht, sondern hebt die Gruppen auf der Karte deutlich hervor und zeigt sie als farbige Overlay-Linien in beiden Verläufen.</p>
+        <h3>Histogramm-Modi</h3>
+        <p>Häufigkeit, kumuliert ≤ Klassengrenze (steigend) und absteigend ≥ Klassengrenze (hohe Balken links). Kumulative Modi haben eine Prozent-y-Achse.</p>
+        <h3>Median und Mittelwert in den Verläufen</h3>
+        <p>Beide beschreiben die Verteilung der Gruppenwerte (Ausprägungsanteil bzw. Abdeckung je Gruppe) einer Welle — sie gewichten <b>Gruppen gleich stark</b>, unabhängig davon, wie viele Schulen oder Fälle sie enthalten. Anders als die Summenzeile der Tabelle ist das keine gepoolte Quote (Σ Zähler ÷ Σ Nenner).</p>
+        <p><b>Median:</b> der mittlere Wert, wenn man alle Gruppenwerte sortiert — die Hälfte der Gruppen liegt darunter, die Hälfte darüber. Robust gegenüber Ausreißern (einzelne Schulen mit extremen Anteilen verschieben ihn kaum).</p>
+        <p><b>Mittelwert:</b> der ungewichtete Durchschnitt der Gruppenwerte (Aufsummiert ÷ Anzahl Gruppen). Er reagiert empfindlich auf Ausreißer; eine kleine Schule mit 100 % kann ihn deutlich anheben.</p>
+        <p>Zeigen sich große Abstände zwischen Median und Mittelwert bzw. ein breites 25.–75.-Perzentil-Band, sind die Gruppenwerte stark streuend oder schiefsverteilt — dann ist der Median die aussagekräftigere Kennzahl.</p>
+        <h3>Jahressummen und Summenzeile</h3>
+        <p>Jahressummen: Ausprägung · gültige Antworten · gefilterte Grundgesamtheit mit Min–Max. Die Summenzeile der Tabelle steht unter dem Kopf und poolt Anteile aus den Summen (Σ Zähler ÷ Σ Nenner).</p>
+      </details>
+    </header>
+    <div class="banner" id="banner"></div>
 
-<div class="layout">
-<aside class="panel controls">
-<label for="variable">Merkmal</label><select id="variable"></select>
-<label for="value">Ausprägung</label><select id="value"></select>
-<label for="level">Gliederungsebene</label><select id="level"></select>
+    <div class="layout">
+      <aside class="panel controls">
+        <label for="variable">Merkmal</label><select id="variable"></select>
+        <label for="value">Ausprägung</label><select id="value"></select>
+        <label for="level">Gliederungsebene</label><select id="level"></select>
 
-<details class="fgroup" id="filtersWrap" style="display:none">
-<summary>Filter <span id="filterCount"></span></summary>
-<div id="filterContent">
-<select id="filterLogic" class="flogic">
-<option value="and">Filter mit UND</option>
-<option value="or">Filter mit ODER</option>
-</select>
-<div id="filters"></div>
-<button id="resetFilters" type="button">Filter zurücksetzen</button>
-</div>
-</details>
+        <details class="fgroup" id="filtersWrap" style="display:none">
+          <summary>Filter <span id="filterCount"></span></summary>
+          <div id="filterContent">
+            <select id="filterLogic" class="flogic">
+              <option value="and">Filter mit UND</option>
+              <option value="or">Filter mit ODER</option>
+            </select>
+            <div id="filters"></div>
+            <button id="resetFilters" type="button">Filter zurücksetzen</button>
+          </div>
+        </details>
 
-<label for="unit">Einheit</label>
-<select id="unit">
-<option value="period">Schule über Zeitraum</option>
-<option value="wave">Schule × Erhebungswelle</option>
-</select>
+        <label for="unit">Einheit</label>
+        <select id="unit">
+          <option value="period">Schule über Zeitraum</option>
+          <option value="wave">Schule × Erhebungswelle</option>
+        </select>
 
-<label>Erhebungswellen</label>
-<div class="row"><span>von <b id="fromLabel"></b></span><span>bis <b id="toLabel"></b></span></div>
-<input type="range" id="fromYear"><input type="range" id="toYear">
-<button id="allYears" type="button">Alle Wellen</button>
+        <label>Erhebungswellen</label>
+        <div class="row"><span>von <b id="fromLabel"></b></span><span>bis <b id="toLabel"></b></span></div>
+        <input type="range" id="fromYear"><input type="range" id="toYear">
+        <button id="allYears" type="button">Alle Erhebungswellen</button>
 
-<label for="minSchools">Mindestzahl Schulen je Gruppe</label>
-<input id="minSchools" type="number" min="1" value="1">
+        <label for="minSchools">Mindestzahl Schulen je Gruppe</label>
+        <input id="minSchools" type="number" min="1" value="1">
 
-<label><input type="checkbox" id="excludeLB"> Beobachtete Untergrenzen ausschließen</label>
+        <label><input type="checkbox" id="excludeLB"> Beobachtete Untergrenzen ausschließen</label>
 
-<label>Abdeckungsgradbereich (%)</label>
-<div class="row">
-<input id="coverageMin" type="number" min="0" max="100" placeholder="von">
-<input id="coverageMax" type="number" min="0" max="100" placeholder="bis">
-<button id="clearCoverage" type="button">Löschen</button>
-</div>
+        <label>Abdeckungsgradbereich (%)</label>
+        <div class="row">
+          <input id="coverageMin" type="number" min="0" max="100" placeholder="von">
+          <input id="coverageMax" type="number" min="0" max="100" placeholder="bis">
+          <button id="clearCoverage" type="button">Löschen</button>
+        </div>
 
-<label><input type="checkbox" id="onlySel"> Tabelle auf Auswahl beschränken</label>
-<button id="resetSel" type="button">Auswahl zurücksetzen</button>
-<div class="status" id="status"></div>
-</aside>
+        <label><input type="checkbox" id="onlySel"> Tabelle auf Auswahl beschränken</label>
+        <button id="resetSel" type="button">Auswahl zurücksetzen</button>
+        <div class="status" id="status"></div>
+      </aside>
 
-<section class="main">
-<div class="panel p-map"><h2 id="mapTitle">Karte</h2><div id="map"></div>
-<div class="legend"><span>0 %</span><div id="grad" class="grad"></div><span>100 % Abdeckung</span></div></div>
+      <section class="main">
+        <div class="panel p-map"><h2 id="mapTitle">Karte</h2>
+          <div class="mode-row"><label for="mapMode">Färbung</label>
+            <select id="mapMode">
+              <option value="coverage">Abdeckungsgrad</option>
+              <option value="share">Ausprägungsanteil</option>
+          </select></div>
+          <div id="map"></div>
+          <div class="legend"><span>0 %</span><div id="grad" class="grad"></div><span id="legendLabel">100 % Abdeckung</span></div></div>
 
-<div class="panel p-totals"><h2 id="totalsTitle">Jahressummen</h2>
-<div id="totals" class="chart"></div>
-<div class="note">Blau: alle gefilterten Fälle · Grau: gültige Antworten · Rot: gefilterte Grundgesamtheit mit Min–Max · Orange: ungefilterte Export-Summe mit Min–Max.</div></div>
+        <div class="panel p-totals"><h2 id="totalsTitle">Jahressummen</h2>
+          <div id="totals" class="chart"></div>
+          <div class="note">Blau: Fälle der Auswahl (Ausprägung) · Rot: gültige Antworten · Orange: Grundgesamtheit mit Min–Max.</div></div>
 
-<div class="panel p-share"><h2>Verteilung des Ausprägungsanteils</h2>
-<div id="hist" class="chart"></div>
-<div class="mode-row"><label for="shareMode">Modus</label>
-<select id="shareMode">
-<option value="freq">Häufigkeit</option>
-<option value="cum">kumuliert (≤ Grenze)</option>
-<option value="decum">absteigend (≥ Grenze)</option>
-</select></div>
-<div class="markrow"><label for="histMarks">Perzentile (%)</label><input id="histMarks" type="text" placeholder="20, 50, 80"></div>
-<div id="markInfo" class="note"></div>
-<div class="note">Klick: Klasse wählen/abwählen · Ziehen: Bereich · Strg/⌘ beim Ziehen: hinzufügen.</div></div>
+        <div class="panel p-share"><h2>Verteilung des Ausprägungsanteils</h2>
+          <div id="hist" class="chart"></div>
+          <div class="mode-row"><label for="shareMode">Modus</label>
+            <select id="shareMode">
+              <option value="freq">Häufigkeit</option>
+              <option value="cum">kumuliert (≤ Grenze)</option>
+              <option value="decum">absteigend (≥ Grenze)</option>
+          </select></div>
+          <div class="markrow"><label for="histMarks">Perzentile (%)</label><input id="histMarks" type="text" placeholder="20, 50, 80"></div>
+          <div id="markInfo" class="note"></div>
+          <div class="note">Klick: Klasse wählen/abwählen · Ziehen: Bereich · Strg/⌘ beim Ziehen: hinzufügen.</div></div>
 
-<div class="panel p-trend"><h2>Ausprägungsanteil im Verlauf</h2>
-<div id="trend" class="chart"></div>
-<div id="trendLegend" class="note"></div></div>
+        <div class="panel p-trend"><h2>Ausprägungsanteil im Verlauf</h2>
+          <div id="trend" class="chart"></div>
+          <div id="trendLegend" class="note"></div></div>
 
-<div class="panel p-coverage"><h2 id="coverageTitle">Abdeckungsgrad je Schule</h2>
-<div id="coverageHist" class="chart"></div>
-<div class="mode-row"><label for="coverageMode">Modus</label>
-<select id="coverageMode">
-<option value="freq">Häufigkeit</option>
-<option value="cum">kumuliert (≤ Grenze)</option>
-<option value="decum">absteigend (≥ Grenze)</option>
-</select></div>
-<div class="markrow"><label for="coverageMarks">Perzentile (%)</label><input id="coverageMarks" type="text" placeholder="20, 50, 80"></div>
-<div id="coverageMarkInfo" class="note"></div>
-<div class="note">Klick auf eine Klasse setzt/löscht den Abdeckungsbereich (keine Mehrfachauswahl).</div></div>
+        <div class="panel p-coverage"><h2 id="coverageTitle">Abdeckungsgrad je Schule</h2>
+          <div id="coverageHist" class="chart"></div>
+          <div class="mode-row"><label for="coverageMode">Modus</label>
+            <select id="coverageMode">
+              <option value="freq">Häufigkeit</option>
+              <option value="cum">kumuliert (≤ Grenze)</option>
+              <option value="decum">absteigend (≥ Grenze)</option>
+          </select></div>
+          <div class="markrow"><label for="coverageMarks">Perzentile (%)</label><input id="coverageMarks" type="text" placeholder="20, 50, 80"></div>
+          <div id="coverageMarkInfo" class="note"></div>
+          <div class="note">Klick auf eine Klasse setzt/löscht den Abdeckungsbereich (keine Mehrfachauswahl).</div></div>
 
-<div class="panel p-coverage-trend"><h2>Abdeckungsgrad im Verlauf</h2>
-<div id="coverageTrend" class="chart"></div>
-<div id="coverageTrendNote" class="note"></div></div>
+        <div class="panel p-coverage-trend"><h2>Abdeckungsgrad im Verlauf</h2>
+          <div id="coverageTrend" class="chart"></div>
+          <div id="coverageTrendNote" class="note"></div></div>
 
-<div class="panel p-table">
-<div class="tablehead"><h2>Tabelle</h2><input type="search" id="tableSearch" placeholder="Gruppe oder Schulnummer suchen"></div>
-<div class="tablewrap"><table id="table"></table></div></div>
-</section>
-</div>
+        <div class="panel p-table">
+          <div class="tablehead"><h2>Tabelle</h2><input type="search" id="tableSearch" placeholder="Gruppe oder Schulnummer suchen"></div>
+          <div class="tablewrap"><table id="table"></table></div></div>
+      </section>
+    </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-"use strict";
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      "use strict";
 
-const N_BINS=20;
-const LOWER_BOUND_SOURCES=new Set(["observed_lower_bound","beki_third_grader_cases"]);
-const COLORS=["#440154","#3b528b","#21908d","#5dc863","#fde725"];
-const OVERLAY_COLORS=["#7c3aed","#0ea5e9","#db2777","#65a30d","#b45309","#475569"];
-const BUILTIN_LEVELS=[
- {id:"schule",label:"Schule (Schulnummer)"},{id:"standort",label:"Schulstandort"},
- {id:"gemeinde",label:"Gemeinde"},{id:"kreis",label:"Kreis"},{id:"land",label:"Land"}];
-const $=id=>document.getElementById(id);
-let DATA,VARS=[],CUSTOM=new Map(),map,layer,groups=[],aggInfo,fitted=false;
-let shareMarks=[20,50,80],coverageMarks=[20,50,80];
+      const N_BINS=20;
+      const LOWER_BOUND_SOURCES=new Set(["observed_lower_bound","beki_third_grader_cases"]);
+      const COLORS=["#440154","#3b528b","#21908d","#5dc863","#fde725"];
+      const OVERLAY_COLORS=["#7c3aed","#0ea5e9","#db2777","#65a30d","#b45309","#475569"];
+      const BUILTIN_LEVELS=[
+          {id:"schule",label:"Schule (Schulnummer)"},{id:"standort",label:"Schulstandort"},
+          {id:"gemeinde",label:"Gemeinde"},{id:"kreis",label:"Kreis"},{id:"land",label:"Land"}];
+      const $=id=>document.getElementById(id);
+      let DATA,VARS=[],CUSTOM=new Map(),map,layer,groups=[],aggInfo,fitted=false;
+      let shareMarks=[20,50,80],coverageMarks=[20,50,80];
 
-// shareBins: Mehrfachauswahl im Ausprägungshistogramm (Filter).
-// selectedGroups: Tabellen-/Karten-Markierung -- nur Overlay, kein Filter.
-const state={from:0,to:0,variable:null,value:null,numFields:[],
- level:"standort",unit:"wave",minSchools:1,excludeLB:false,filters:[],filterLogic:"and",
- shareBins:new Set(),selectedGroups:new Set(),
- coverageMin:null,coverageMax:null,sortKey:"value",sortDir:-1};
+      // shareBins: Mehrfachauswahl im Ausprägungshistogramm (Filter).
+      // selectedGroups: Tabellen-/Karten-Markierung -- nur Overlay, kein Filter.
+      const state={from:0,to:0,variable:null,value:null,numFields:[],
+                   level:"standort",unit:"wave",minSchools:1,excludeLB:false,filters:[],filterLogic:"and",
+                   shareBins:new Set(),selectedGroups:new Set(),
+                   coverageMin:null,coverageMax:null,sortKey:"value",sortDir:-1,mapColor:"coverage"};
 
-// Drag-Zustand für Histogramm-Ziehauswahl; justDragged verhindert, dass
-// das click-Event nach dem Ziehen dieselbe Klasse erneut toggelt.
-let dragState=null;
-let justDragged=false;
+      // Drag-Zustand für Histogramm-Ziehauswahl; justDragged verhindert, dass
+      // das click-Event nach dem Ziehen dieselbe Klasse erneut toggelt.
+      let dragState=null;
+      let justDragged=false;
 
-function arr(x){return Array.isArray(x)?x:(x==null?[]:[x]);}
-function esc(x){return String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function intFmt(x){return x==null||!Number.isFinite(Number(x))?"–":Math.round(Number(x)).toLocaleString("de-DE");}
-function pct(x){return x==null||!Number.isFinite(x)?"–":(100*x).toFixed(1).replace(".",",")+" %";}
-function quantile(a,p){if(!a.length)return null;const z=(a.length-1)*p,l=Math.floor(z),h=Math.ceil(z);return a[l]+(a[h]-a[l])*(z-l);}
-function rgb(h){const n=parseInt(h.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];}
-function color(v){if(v==null||!Number.isFinite(v))return"#999";
- const z=Math.max(0,Math.min(1,v))*(COLORS.length-1),i=Math.min(COLORS.length-2,Math.floor(z)),t=z-i,a=rgb(COLORS[i]),b=rgb(COLORS[i+1]);
- return"rgb("+a.map((x,k)=>Math.round(x+(b[k]-x)*t)).join(",")+")";}
-function marksFromText(x){return[...new Set(String(x||"").split(/[;,\s]+/).map(Number).filter(n=>Number.isFinite(n)&&n>=0&&n<=100))].sort((a,b)=>a-b).slice(0,6);}
-function variable(){return VARS.find(x=>x.id===state.variable)||VARS[0];}
-function numFieldsOf(){return[variable().values.find(x=>x.id===state.value)?.field].filter(Boolean);}
-function coverageFields(){return arr(variable().coverage_fields).filter(Boolean);}
-function allFields(){return variable().values.map(x=>x.field).filter(Boolean);}
-function validFields(){const v=variable(),ids=Array.isArray(v.answered)&&v.answered.length?v.answered:v.values.map(x=>x.id);
- return ids.map(id=>v.values.find(x=>x.id===id)?.field).filter(Boolean);}
-function sum(row,fields){return fields.reduce((s,f)=>s+(Number(row[f])||0),0);}
-function numerator(row){return sum(row,state.numFields);}
-function coverageNumerator(row){return sum(row,coverageFields());}
-function groupInfo(r){
- const c=CUSTOM.get(state.level);
- if(c){const v=r[c.field],k=v==null||v===""?"unbekannt":String(v);
-  return{key:k,label:c.label_field&&r[c.label_field]!=null?String(r[c.label_field]):k};}
- switch(state.level){
-  case"schule":return{key:String(r.school_key),label:r.school_label||r.school_name||String(r.school_key)};
-  case"standort":{const k=r.standort?String(r.standort):"schule_"+r.school_key;return{key:k,label:r.standort_label||k};}
-  case"gemeinde":return{key:String(r.ags_key||"unbekannt"),label:r.gemeinde||String(r.ags_key||"unbekannt")};
-  case"kreis":return{key:String(r.district||"unbekannt"),label:String(r.district||"unbekannt")};
-  default:return{key:"land",label:"Thüringen"};}}
-function activeFilters(){return state.filters.filter(f=>f.values.length);}
-function passesFilters(r){const fs=activeFilters();if(!fs.length)return true;
- const t=f=>{const hit=f.values.includes(String(r[f.field]));return f.negate?!hit:hit;};
- return state.filterLogic==="or"?fs.some(t):fs.every(t);}
-function coverageOf(r){const d=Number(r.den),n=coverageNumerator(r);
- if(!Number.isFinite(d)||d<=0)return null;return n/d;}
-function coverageAllowed(r){const x=coverageOf(r);
- return x!=null&&(state.coverageMin==null||x>=state.coverageMin)&&(state.coverageMax==null||x<=state.coverageMax);}
+      function arr(x){return Array.isArray(x)?x:(x==null?[]:[x]);}
+      function esc(x){return String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+      function intFmt(x){return x==null||!Number.isFinite(Number(x))?"–":Math.round(Number(x)).toLocaleString("de-DE");}
+      function pct(x){return x==null||!Number.isFinite(x)?"–":(100*x).toFixed(1).replace(".",",")+" %";}
+      function quantile(a,p){if(!a.length)return null;const z=(a.length-1)*p,l=Math.floor(z),h=Math.ceil(z);return a[l]+(a[h]-a[l])*(z-l);}
+      function rgb(h){const n=parseInt(h.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];}
+      function color(v){if(v==null||!Number.isFinite(v))return"#999";
+                        const z=Math.max(0,Math.min(1,v))*(COLORS.length-1),i=Math.min(COLORS.length-2,Math.floor(z)),t=z-i,a=rgb(COLORS[i]),b=rgb(COLORS[i+1]);
+                        return"rgb("+a.map((x,k)=>Math.round(x+(b[k]-x)*t)).join(",")+")";}
+      function marksFromText(x){return[...new Set(String(x||"").split(/[;,\s]+/).map(Number).filter(n=>Number.isFinite(n)&&n>=0&&n<=100))].sort((a,b)=>a-b).slice(0,6);}
+      function variable(){return VARS.find(x=>x.id===state.variable)||VARS[0];}
+      function numFieldsOf(){return[variable().values.find(x=>x.id===state.value)?.field].filter(Boolean);}
+      function coverageFields(){return arr(variable().coverage_fields).filter(Boolean);}
+      function allFields(){return variable().values.map(x=>x.field).filter(Boolean);}
+      function validFields(){const v=variable(),ids=Array.isArray(v.answered)&&v.answered.length?v.answered:v.values.map(x=>x.id);
+                             return ids.map(id=>v.values.find(x=>x.id===id)?.field).filter(Boolean);}
+      function sum(row,fields){return fields.reduce((s,f)=>s+(Number(row[f])||0),0);}
+      function numerator(row){return sum(row,state.numFields);}
+      function coverageNumerator(row){return sum(row,coverageFields());}
+      function groupInfo(r){
+          const c=CUSTOM.get(state.level);
+          if(c){const v=r[c.field],k=v==null||v===""?"unbekannt":String(v);
+                return{key:k,label:c.label_field&&r[c.label_field]!=null?String(r[c.label_field]):k};}
+          switch(state.level){
+          case"schule":return{key:String(r.school_key),label:r.school_label||r.school_name||String(r.school_key)};
+          case"standort":{const k=r.standort?String(r.standort):"schule_"+r.school_key;return{key:k,label:r.standort_label||k};}
+          case"gemeinde":return{key:String(r.ags_key||"unbekannt"),label:r.gemeinde||String(r.ags_key||"unbekannt")};
+          case"kreis":return{key:String(r.district||"unbekannt"),label:String(r.district||"unbekannt")};
+          default:return{key:"land",label:"Thüringen"};}}
+      function activeFilters(){return state.filters.filter(f=>f.values.length);}
+      function passesFilters(r){const fs=activeFilters();if(!fs.length)return true;
+                                const t=f=>{const hit=f.values.includes(String(r[f.field]));return f.negate?!hit:hit;};
+                                return state.filterLogic==="or"?fs.some(t):fs.every(t);}
+      function coverageOf(r){const d=Number(r.den),n=coverageNumerator(r);
+                             if(!Number.isFinite(d)||d<=0)return null;return n/d;}
+      function coverageAllowed(r){const x=coverageOf(r);
+                                  return x!=null&&(state.coverageMin==null||x>=state.coverageMin)&&(state.coverageMax==null||x<=state.coverageMax);}
 
-function aggregate(rows,from=state.from,to=state.to){
- const m=new Map();let used=0,dropped=0;
- for(const r of rows){
-  const w=Number(r.wave);
-  if(w<from||w>to||!passesFilters(r))continue;
-  if(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source)){dropped++;continue;}
-  if(!coverageAllowed(r)){dropped++;continue;}
-  const d=Number(r.den);if(!Number.isFinite(d)||d<=0){dropped++;continue;}
-  const info=groupInfo(r);
-  if(!m.has(info.key))m.set(info.key,{...info,schoolSet:new Set(),num:0,total:0,valid:0,covNum:0,
-   den:0,denMin:0,denMax:0,latSum:0,lonSum:0,coordN:0});
-  const g=m.get(info.key);
-  g.schoolSet.add(String(r.school_key));
-  g.num+=numerator(r);
-  g.total+=sum(r,allFields());
-  g.valid+=sum(r,validFields());
-  g.covNum+=coverageNumerator(r);
-  g.den+=d;
-  const dmin=Number(r.den_min),dmax=Number(r.den_max);
-  g.denMin+=Number.isFinite(dmin)?dmin:d;g.denMax+=Number.isFinite(dmax)?dmax:d;
-  const lat=Number(r.lat),lon=Number(r.lon);
-  if(Number.isFinite(lat)&&Number.isFinite(lon)){g.latSum+=lat;g.lonSum+=lon;g.coordN++;}
-  used++;}
- const out=[...m.values()].map(g=>{
-  g.nSchools=g.schoolSet.size;
-  g.value=g.valid>0?g.num/g.valid:null;
-  g.coverage=g.den>0?g.covNum/g.den:null;
-  g.coverageLow=g.denMax>0?g.covNum/g.denMax:null;
-  g.coverageHigh=g.denMin>0?g.covNum/g.denMin:null;
-  g.lat=g.coordN?g.latSum/g.coordN:null;g.lon=g.coordN?g.lonSum/g.coordN:null;
-  g.bin=g.value==null?null:Math.min(N_BINS-1,Math.floor(Math.max(0,Math.min(1,g.value))*N_BINS));
-  return g;}).filter(g=>g.nSchools>=state.minSchools);
- return{groups:out,used,dropped};}
+      function aggregate(rows,from=state.from,to=state.to){
+          const m=new Map();let used=0,dropped=0;
+          for(const r of rows){
+              const w=Number(r.wave);
+              if(w<from||w>to||!passesFilters(r))continue;
+              if(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source)){dropped++;continue;}
+              if(!coverageAllowed(r)){dropped++;continue;}
+              const d=Number(r.den);if(!Number.isFinite(d)||d<=0){dropped++;continue;}
+              const info=groupInfo(r);
+              if(!m.has(info.key))m.set(info.key,{...info,schoolSet:new Set(),num:0,total:0,valid:0,covNum:0,
+                                                  den:0,denMin:0,denMax:0,latSum:0,lonSum:0,coordN:0});
+              const g=m.get(info.key);
+              g.schoolSet.add(String(r.school_key));
+              g.num+=numerator(r);
+              g.total+=sum(r,allFields());
+              g.valid+=sum(r,validFields());
+              g.covNum+=coverageNumerator(r);
+              g.den+=d;
+              const dmin=Number(r.den_min),dmax=Number(r.den_max);
+              g.denMin+=Number.isFinite(dmin)?dmin:d;g.denMax+=Number.isFinite(dmax)?dmax:d;
+              const lat=Number(r.lat),lon=Number(r.lon);
+              if(Number.isFinite(lat)&&Number.isFinite(lon)){g.latSum+=lat;g.lonSum+=lon;g.coordN++;}
+              used++;}
+          const out=[...m.values()].map(g=>{
+              g.nSchools=g.schoolSet.size;
+              g.value=g.valid>0?g.num/g.valid:null;
+              g.coverage=g.den>0?g.covNum/g.den:null;
+              g.coverageLow=g.denMax>0?g.covNum/g.denMax:null;
+              g.coverageHigh=g.denMin>0?g.covNum/g.denMin:null;
+              g.lat=g.coordN?g.latSum/g.coordN:null;g.lon=g.coordN?g.lonSum/g.coordN:null;
+              g.bin=g.value==null?null:Math.min(N_BINS-1,Math.floor(Math.max(0,Math.min(1,g.value))*N_BINS));
+              return g;}).filter(g=>g.nSchools>=state.minSchools);
+          return{groups:out,used,dropped};}
 
-function isActive(g){
- if(state.shareBins.size===0)return true;
- return g.bin!=null&&state.shareBins.has(g.bin);}
-function hasSelection(){return state.shareBins.size>0;}
-function clearSelection(){state.selectedGroups.clear();state.shareBins.clear();}
-function refresh(fit=false){
- if(fit)fitted=false;
- state.numFields=numFieldsOf();
- aggInfo=aggregate(DATA.rows);groups=aggInfo.groups;
- for(const k of [...state.selectedGroups]) if(!groups.some(g=>g.key===k)) state.selectedGroups.delete(k);
- renderMap();renderShare();renderTrend();renderCoverageHist();renderCoverageTrend();
- renderTotals();renderTable();renderStatus();}
-function renderSelectors(){
- $("variable").innerHTML=VARS.map(v=>'<option value="'+esc(v.id)+'">'+esc(v.label||v.id)+"</option>").join("");
- $("variable").value=state.variable;
- const vs=variable().values;
- $("value").innerHTML=vs.map(v=>'<option value="'+esc(v.id)+'">'+esc(v.label||v.id)+"</option>").join("");
- if(!vs.some(v=>v.id===state.value))state.value=vs[0]?.id;
- $("value").value=state.value;state.numFields=numFieldsOf();}
-function renderFilters(){
- $("filtersWrap").style.display=state.filters.length?"":"none";
- $("filterCount").textContent=activeFilters().length?"("+activeFilters().length+" aktiv)":"";
- $("filterLogic").value=state.filterLogic;
- $("filters").innerHTML=state.filters.map((f,i)=>{
-  const vs=[...new Set(DATA.rows.map(r=>r[f.field]).filter(x=>x!=null&&x!=="").map(String))]
-   .sort((a,b)=>a.localeCompare(b,"de"));
-  return'<div class="fitem"><div class="fhead"><strong>'+esc(f.label)+'</strong>'+
-   '<select data-mode="'+i+'"><option value="in" '+(!f.negate?"selected":"")+'>ist</option>'+
-   '<option value="not" '+(f.negate?"selected":"")+'>ist nicht</option></select></div><div class="fvals">'+
-   vs.map(v=>'<label><input type="checkbox" data-i="'+i+'" data-v="'+esc(v)+'" '+
-    (f.values.includes(v)?"checked":"")+'> '+esc(v)+'</label>').join("")+"</div></div>";}).join("");
- $("filters").querySelectorAll("[data-i]").forEach(el=>el.addEventListener("change",()=>{
-  const f=state.filters[Number(el.dataset.i)],v=el.dataset.v;
-  f.values=el.checked?[...new Set([...f.values,v])]:f.values.filter(x=>x!==v);
-  renderFilters();refresh(true);}));
- $("filters").querySelectorAll("[data-mode]").forEach(el=>el.addEventListener("change",()=>{
-  state.filters[Number(el.dataset.mode)].negate=el.value==="not";renderFilters();refresh(true);}));}
-function svgStart(w,h){return'<svg viewBox="0 0 '+w+" "+h+'" preserveAspectRatio="xMidYMid meet">';}
+      function isActive(g){
+          if(state.shareBins.size===0)return true;
+          return g.bin!=null&&state.shareBins.has(g.bin);}
+      function hasSelection(){return state.shareBins.size>0;}
+      function clearSelection(){state.selectedGroups.clear();state.shareBins.clear();}
+      function refresh(fit=false){
+          if(fit)fitted=false;
+          state.numFields=numFieldsOf();
+          aggInfo=aggregate(DATA.rows);groups=aggInfo.groups;
+          for(const k of [...state.selectedGroups]) if(!groups.some(g=>g.key===k)) state.selectedGroups.delete(k);
+          renderMap();renderShare();renderTrend();renderCoverageHist();renderCoverageTrend();
+          renderTotals();renderTable();renderStatus();}
+      function renderSelectors(){
+          $("variable").innerHTML=VARS.map(v=>'<option value="'+esc(v.id)+'">'+esc(v.label||v.id)+"</option>").join("");
+          $("variable").value=state.variable;
+          const vs=variable().values;
+          $("value").innerHTML=vs.map(v=>'<option value="'+esc(v.id)+'">'+esc(v.label||v.id)+"</option>").join("");
+          if(!vs.some(v=>v.id===state.value))state.value=vs[0]?.id;
+          $("value").value=state.value;state.numFields=numFieldsOf();}
+      function renderFilters(){
+          $("filtersWrap").style.display=state.filters.length?"":"none";
+          $("filterCount").textContent=activeFilters().length?"("+activeFilters().length+" aktiv)":"";
+          $("filterLogic").value=state.filterLogic;
+          $("filters").innerHTML=state.filters.map((f,i)=>{
+              const vs=[...new Set(DATA.rows.map(r=>r[f.field]).filter(x=>x!=null&&x!=="").map(String))]
+                    .sort((a,b)=>a.localeCompare(b,"de"));
+              return'<div class="fitem"><div class="fhead"><strong>'+esc(f.label)+'</strong>'+
+                  '<select data-mode="'+i+'"><option value="in" '+(!f.negate?"selected":"")+'>ist</option>'+
+                  '<option value="not" '+(f.negate?"selected":"")+'>ist nicht</option></select></div><div class="fvals">'+
+                  vs.map(v=>'<label><input type="checkbox" data-i="'+i+'" data-v="'+esc(v)+'" '+
+                         (f.values.includes(v)?"checked":"")+'> '+esc(v)+'</label>').join("")+"</div></div>";}).join("");
+          $("filters").querySelectorAll("[data-i]").forEach(el=>el.addEventListener("change",()=>{
+              const f=state.filters[Number(el.dataset.i)],v=el.dataset.v;
+              f.values=el.checked?[...new Set([...f.values,v])]:f.values.filter(x=>x!==v);
+              renderFilters();refresh(true);}));
+          $("filters").querySelectorAll("[data-mode]").forEach(el=>el.addEventListener("change",()=>{
+              state.filters[Number(el.dataset.mode)].negate=el.value==="not";renderFilters();refresh(true);}));}
+      function svgStart(w,h){return'<svg viewBox="0 0 '+w+" "+h+'" preserveAspectRatio="xMidYMid meet">';}
 
-// Histogramm. isCoverage=false: Mehrfachauswahl mit sauberer Trennung von
-// Klick und Ziehen (justDragged unterdrueckt das nachfolgende click-Event).
-function drawHistogram(el,counts,opts){
- const W=opts.W,H=opts.H,ml=opts.ml,mr=opts.mr,mt=opts.mt,mb=opts.mb;
- const pw=W-ml-mr,ph=H-mt-mb,bw=pw/N_BINS,mode=opts.mode;
- const total=counts.reduce((a,b)=>a+b,0);
- const cumArr=[];let c=0;
- for(let i=0;i<N_BINS;i++){c+=counts[i];cumArr.push(c);}
- const val=i=>mode==="cum"?(total?cumArr[i]/total:0)
-  :mode==="decum"?(total?(total-(i>0?cumArr[i-1]:0))/total:0):counts[i];
- const isPct=mode!=="freq";
- const maxY=isPct?1:Math.max(1,...counts);
- let s=svgStart(W,H);
- for(let j=0;j<=5;j++){
-  const v=maxY*j/5,y=mt+ph*(1-j/5);
-  s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+y+'" y2="'+y+'" stroke="#e2e8f0"/>'+
-   '<text x="'+(ml-3)+'" y="'+(y+3)+'" text-anchor="end">'+
-   (isPct?Math.round(v*100)+"%":Math.round(v))+"</text>";}
- const binInFilter=i=>{
-  if(!opts.isCoverage)return opts.selectedBins.has(i);
-  return state.coverageMin!=null&&state.coverageMax!=null&&
-   i/N_BINS>=state.coverageMin-1e-9&&(i+1)/N_BINS<=state.coverageMax+1e-9;};
- for(let i=0;i<N_BINS;i++){
-  const v=val(i),h=ph*v/maxY,x=ml+i*bw,y=mt+ph-h;
-  const sel=binInFilter(i);
-  s+='<rect class="bar-sel" data-bin="'+i+'" x="'+(x+1)+'" y="'+y+'" width="'+(bw-2)+'" height="'+h+
-   '" fill="'+color((i+.5)/N_BINS)+'" stroke="'+(sel?"#c2410c":"#475569")+
-   '" stroke-width="'+(sel?2.5:1)+'"><title>'+i*5+"–"+(i+1)*5+"%: "+
-   counts[i]+" "+opts.unitName+(sel?(opts.isCoverage?" (im Bereich)":" (ausgewählt)"):"")+"</title></rect>";
-  if(!isPct&&counts[i])s+='<text x="'+(x+bw/2)+'" y="'+(y-2)+'" text-anchor="middle">'+counts[i]+"</text>";
-  if(isPct&&i%4===0)s+='<text x="'+(x+bw/2)+'" y="'+(y-2)+'" text-anchor="middle">'+pct(v)+"</text>";
-  s+='<text x="'+(x+bw/2)+'" y="'+(H-mb+13)+'" text-anchor="middle">'+i*5+"%</text>";}
- if(opts.marks){
-  const sorted=opts.sorted||[];
-  opts.marks.forEach((p,i)=>{const v=quantile(sorted,p/100);if(v==null)return;
-   const x=ml+pw*Math.max(0,Math.min(1,v));
-   s+='<line x1="'+x+'" x2="'+x+'" y1="'+(9+i%2*9)+'" y2="'+(H-mb)+'" stroke="'+(p===50?"#c2410c":"#334155")+
-    '" stroke-dasharray="'+(p===50?"":"3 2")+'"/><text x="'+x+'" y="'+(9+i%2*9)+'" text-anchor="middle">'+
-    (p===50?"Median":"P"+p)+" "+pct(v)+"</text>";});}
- const modeLabel=mode==="cum"?" (kumuliert ≤)":mode==="decum"?" (absteigend ≥)":"";
- s+='<text x="'+(ml+pw/2)+'" y="'+(H-3)+'" text-anchor="middle">'+opts.xLabel+modeLabel+"</text>"+
-  '<text transform="translate(10 '+(mt+ph/2)+') rotate(-90)" text-anchor="middle">'+
-  (isPct?"Anteil":"Anzahl")+"</text></svg>";
- el.innerHTML=s;
+      // Histogramm. isCoverage=false: Mehrfachauswahl mit sauberer Trennung von
+      // Klick und Ziehen (justDragged unterdrueckt das nachfolgende click-Event).
+      function drawHistogram(el,counts,opts){
+          const W=opts.W,H=opts.H,ml=opts.ml,mr=opts.mr,mt=opts.mt,mb=opts.mb;
+          const pw=W-ml-mr,ph=H-mt-mb,bw=pw/N_BINS,mode=opts.mode;
+          const total=counts.reduce((a,b)=>a+b,0);
+          const cumArr=[];let c=0;
+          for(let i=0;i<N_BINS;i++){c+=counts[i];cumArr.push(c);}
+          const val=i=>mode==="cum"?(total?cumArr[i]/total:0)
+                :mode==="decum"?(total?(total-(i>0?cumArr[i-1]:0))/total:0):counts[i];
+          const isPct=mode!=="freq";
+          const maxY=isPct?1:Math.max(1,...counts);
+          let s=svgStart(W,H);
+          for(let j=0;j<=5;j++){
+              const v=maxY*j/5,y=mt+ph*(1-j/5);
+              s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+y+'" y2="'+y+'" stroke="#e2e8f0"/>'+
+                  '<text x="'+(ml-3)+'" y="'+(y+3)+'" text-anchor="end">'+
+                  (isPct?Math.round(v*100)+"%":Math.round(v))+"</text>";}
+          const binInFilter=i=>{
+              if(!opts.isCoverage)return opts.selectedBins.has(i);
+              return state.coverageMin!=null&&state.coverageMax!=null&&
+                  i/N_BINS>=state.coverageMin-1e-9&&(i+1)/N_BINS<=state.coverageMax+1e-9;};
+          for(let i=0;i<N_BINS;i++){
+              const v=val(i),h=ph*v/maxY,x=ml+i*bw,y=mt+ph-h;
+              const sel=binInFilter(i);
+              s+='<rect class="bar-sel" data-bin="'+i+'" x="'+(x+1)+'" y="'+y+'" width="'+(bw-2)+'" height="'+h+
+                  '" fill="'+color((i+.5)/N_BINS)+'" stroke="'+(sel?"#c2410c":"#475569")+
+                  '" stroke-width="'+(sel?2.5:1)+'"><title>'+i*5+"–"+(i+1)*5+"%: "+
+                  counts[i]+" "+opts.unitName+(sel?(opts.isCoverage?" (im Bereich)":" (ausgewählt)"):"")+"</title></rect>";
+              if(!isPct&&counts[i])s+='<text x="'+(x+bw/2)+'" y="'+(y-2)+'" text-anchor="middle">'+counts[i]+"</text>";
+              if(isPct&&i%4===0)s+='<text x="'+(x+bw/2)+'" y="'+(y-2)+'" text-anchor="middle">'+pct(v)+"</text>";
+              s+='<text x="'+(x+bw/2)+'" y="'+(H-mb+13)+'" text-anchor="middle">'+i*5+"%</text>";}
+          if(opts.marks){
+              const sorted=opts.sorted||[];
+              opts.marks.forEach((p,i)=>{const v=quantile(sorted,p/100);if(v==null)return;
+                                         const x=ml+pw*Math.max(0,Math.min(1,v));
+                                         s+='<line x1="'+x+'" x2="'+x+'" y1="'+(9+i%2*9)+'" y2="'+(H-mb)+'" stroke="'+(p===50?"#c2410c":"#334155")+
+                                         '" stroke-dasharray="'+(p===50?"":"3 2")+'"/><text x="'+x+'" y="'+(9+i%2*9)+'" text-anchor="middle">'+
+                                         (p===50?"Median":"P"+p)+" "+pct(v)+"</text>";});}
+          const modeLabel=mode==="cum"?" (kumuliert ≤)":mode==="decum"?" (absteigend ≥)":"";
+          s+='<text x="'+(ml+pw/2)+'" y="'+(H-3)+'" text-anchor="middle">'+opts.xLabel+modeLabel+"</text>"+
+              '<text transform="translate(10 '+(mt+ph/2)+') rotate(-90)" text-anchor="middle">'+
+              (isPct?"Anteil":"Anzahl")+"</text></svg>";
+          el.innerHTML=s;
 
- const bars=[...el.querySelectorAll(".bar-sel")];
- const restyle=()=>bars.forEach(b=>{const i=Number(b.dataset.bin),on=binInFilter(i);
-  b.setAttribute("stroke",on?"#c2410c":"#475569");b.setAttribute("stroke-width",on?2.5:1);});
+          const bars=[...el.querySelectorAll(".bar-sel")];
+          const restyle=()=>bars.forEach(b=>{const i=Number(b.dataset.bin),on=binInFilter(i);
+                                             b.setAttribute("stroke",on?"#c2410c":"#475569");b.setAttribute("stroke-width",on?2.5:1);});
 
- if(!opts.isCoverage){
-  // --- Auspraegungshistogramm: Klick toggelt, Ziehen waehlt Bereich ---
-  bars.forEach(b=>{
-   const bin=()=>Number(b.dataset.bin);
+          if(!opts.isCoverage){
+              // --- Auspraegungshistogramm: Klick toggelt, Ziehen waehlt Bereich ---
+              bars.forEach(b=>{
+                  const bin=()=>Number(b.dataset.bin);
 
-   b.addEventListener("mousedown",ev=>{
-    ev.preventDefault();
-    const i=bin();
-    // Vorschau: Kopie der Basis (Strg/⌘ fuegt zur bestehenden Auswahl hinzu).
-    dragState={start:i,end:i,base:new Set(ev.ctrlKey||ev.metaKey?state.shareBins:[]),moved:false};
-   });
+                  b.addEventListener("mousedown",ev=>{
+                      ev.preventDefault();
+                      const i=bin();
+                      // Vorschau: Kopie der Basis (Strg/⌘ fuegt zur bestehenden Auswahl hinzu).
+                      dragState={start:i,end:i,base:new Set(ev.ctrlKey||ev.metaKey?state.shareBins:[]),moved:false};
+                  });
 
-   b.addEventListener("mouseenter",()=>{
-    if(!dragState)return;
-    const i=bin();
-    if(i!==dragState.end){dragState.end=i;dragState.moved=true;}
-   });
+                  b.addEventListener("mouseenter",()=>{
+                      if(!dragState)return;
+                      const i=bin();
+                      if(i!==dragState.end){dragState.end=i;dragState.moved=true;}
+                  });
 
-   b.addEventListener("click",ev=>{
-    // Nach einem Ziehvorgang nicht erneut toggeln.
-    if(justDragged){justDragged=false;return;}
-    if(ev.shiftKey)return;
-    const i=bin();
-    state.shareBins.has(i)?state.shareBins.delete(i):state.shareBins.add(i);
-    refresh();
-   });
-  });
+                  b.addEventListener("click",ev=>{
+                      // Nach einem Ziehvorgang nicht erneut toggeln.
+                      if(justDragged){justDragged=false;return;}
+                      if(ev.shiftKey)return;
+                      const i=bin();
+                      state.shareBins.has(i)?state.shareBins.delete(i):state.shareBins.add(i);
+                      refresh();
+                  });
+              });
 
-  // mousemove auf dem Element (auch zwischen Balken) aktualisiert Vorschau.
-  el.addEventListener("mousemove",ev=>{
-   if(!dragState)return;
-   const target=ev.target.closest?ev.target.closest(".bar-sel"):null;
-   if(!target)return;
-   const i=Number(target.dataset.bin);
-   if(i!==dragState.end){dragState.end=i;dragState.moved=true;}
-  });
+              // mousemove auf dem Element (auch zwischen Balken) aktualisiert Vorschau.
+              el.addEventListener("mousemove",ev=>{
+                  if(!dragState)return;
+                  const target=ev.target.closest?ev.target.closest(".bar-sel"):null;
+                  if(!target)return;
+                  const i=Number(target.dataset.bin);
+                  if(i!==dragState.end){dragState.end=i;dragState.moved=true;}
+              });
 
-  el.addEventListener("mouseleave",()=>{if(dragState)dragState.moved=true;});
+              el.addEventListener("mouseleave",()=>{if(dragState)dragState.moved=true;});
 
- }else{
-  // --- Abdeckungshistogramm: Klick = Bereichsfilter setzen/loeschen ---
-  bars.forEach(b=>b.addEventListener("click",()=>{
-   const i=Number(b.dataset.bin),lo=i/N_BINS,hi=(i+1)/N_BINS;
-   const same=state.coverageMin===lo&&state.coverageMax===hi;
-   state.coverageMin=same?null:lo;state.coverageMax=same?null:hi;
-   $("coverageMin").value=same?"":i*5;$("coverageMax").value=same?"":(i+1)*5;
-   refresh();}));
- }
-}
+          }else{
+              // --- Abdeckungshistogramm: Klick = Bereichsfilter setzen/loeschen ---
+              bars.forEach(b=>b.addEventListener("click",()=>{
+                  const i=Number(b.dataset.bin),lo=i/N_BINS,hi=(i+1)/N_BINS;
+                  const same=state.coverageMin===lo&&state.coverageMax===hi;
+                  state.coverageMin=same?null:lo;state.coverageMax=same?null:hi;
+                  $("coverageMin").value=same?"":i*5;$("coverageMax").value=same?"":(i+1)*5;
+                  refresh();}));
+          }
+      }
 
-// Globales mouseup: beendet das Ziehen und uebernimmt die Auswahl.
-document.addEventListener("mouseup",()=>{
- if(!dragState)return;
- const d=dragState;dragState=null;
+      // Globales mouseup: beendet das Ziehen und uebernimmt die Auswahl.
+      document.addEventListener("mouseup",()=>{
+          if(!dragState)return;
+          const d=dragState;dragState=null;
 
- // Auswahl = Basis + zusammenhaengender Bereich [min(start,end), max(start,end)].
- const next=new Set(d.base);
- for(let k=Math.min(d.start,d.end);k<=Math.max(d.start,d.end);k++)next.add(k);
+          // Auswahl = Basis + zusammenhaengender Bereich [min(start,end), max(start,end)].
+          const next=new Set(d.base);
+          for(let k=Math.min(d.start,d.end);k<=Math.max(d.start,d.end);k++)next.add(k);
 
- if(d.moved){
-  // Ziehvorgang: Auswahl uebernehmen; click-Event unterdruecken.
-  state.shareBins.clear();
-  next.forEach(k=>state.shareBins.add(k));
-  justDragged=true;
-  refresh();
- }else{
-  // Kein Ziehen: reiner Mausklick; das click-Event uebernimmt das Toggeln.
-  // Nur Strg/⌘-Klick ohne Ziehen wird hier direkt behandelt.
-  // (nichts zu tun; click-Handler toggelt.)
- }
-});
-function renderMap(){
-layer.clearLayers();const pts=[];
-groups.slice().sort((a,b)=>b.den-a.den).forEach(g=>{
-if(g.lat==null||g.lon==null)return;
-const active=isActive(g);                     // Histogrammklassen-Filter
-const marked=state.selectedGroups.has(g.key);  // Overlay-Markierung
-// Kleinere Punkte: engerer Radius und kleineres Maximum.
-const baseRad=Math.max(4,Math.min(16,1.2+.22*Math.sqrt(Math.max(0,g.den))));
-const anyMark=state.selectedGroups.size>0;
+          if(d.moved){
+              // Ziehvorgang: Auswahl uebernehmen; click-Event unterdruecken.
+              state.shareBins.clear();
+              next.forEach(k=>state.shareBins.add(k));
+              justDragged=true;
+              refresh();
+          }else{
+              // Kein Ziehen: reiner Mausklick; das click-Event uebernimmt das Toggeln.
+              // Nur Strg/⌘-Klick ohne Ziehen wird hier direkt behandelt.
+              // (nichts zu tun; click-Handler toggelt.)
+          }
+      });
+      function renderMap(){
+          layer.clearLayers();const pts=[];
+          groups.slice().sort((a,b)=>b.den-a.den).filter(isActive).forEach(g=>{
+              if(g.lat==null||g.lon==null)return;
+              const active=isActive(g);                     // Histogrammklassen-Filter
+              const marked=state.selectedGroups.has(g.key);  // Overlay-Markierung
+              // Kleinere Punkte: engerer Radius und kleineres Maximum.
+              const baseRad=Math.max(4,Math.min(16,1.2+.22*Math.sqrt(Math.max(0,g.den))));
+                  const anyMark=state.selectedGroups.size>0;
+                  const fillVal=state.mapColor==="share"?g.value:g.coverage;
 
-const m=L.circleMarker([g.lat,g.lon],{
-radius:marked?baseRad+2.5:baseRad,
-color:marked?"#7c3aed":"#334155",
-weight:marked?3:1,
-fillColor:color(g.coverage),
-// Markiert: solide (deckend). Unmarkiert: transparent, sobald
-// irgendeine Gruppe markiert ist; ausserdem noch transparenter,
-// wenn der Histogrammfilter nicht erfuellt ist.
-fillOpacity:anyMark?(marked?1:(active?.12:.05)):(active?.7:.15),
-opacity:anyMark&&!marked?.25:1
-});
+                  const m=L.circleMarker([g.lat,g.lon],{
+                      radius:marked?baseRad+2.5:baseRad,
+                      color:marked?"#7c3aed":"#334155",
+                      weight:marked?3:1,
+                      fillColor:color(fillVal),
+                      // Markiert: solide (deckend). Unmarkiert: transparent, sobald
+                      // irgendeine Gruppe markiert ist; ausserdem noch transparenter,
+                      // wenn der Histogrammfilter nicht erfuellt ist.
+                      fillOpacity:anyMark?(marked?1:(active?.12:.05)):(active?.7:.15),
+                      opacity:anyMark&&!marked?.25:1
+                  });
 
-m.bindTooltip("<b>"+esc(g.label)+"</b>"+
-(marked?' <span style="color:#7c3aed">● markiert</span>':"")+
-"<br>Abdeckung des Merkmals: "+pct(g.coverage)+
-"<br>Abdeckung min–max: "+pct(g.coverageLow)+"–"+pct(g.coverageHigh)+
-"<br>Ausprägungsanteil: "+pct(g.value)+"<br>Gültige Antworten: "+intFmt(g.valid)+
-"<br>Grundgesamtheit: "+intFmt(g.den)+" ("+intFmt(g.denMin)+"–"+intFmt(g.denMax)+")");
+                  m.bindTooltip("<b>"+esc(g.label)+"</b>"+
+                                (marked?' <span style="color:#7c3aed">● markiert</span>':"")+
+                                "<br>Abdeckung des Merkmals: "+pct(g.coverage)+
+                                "<br>Abdeckung min–max: "+pct(g.coverageLow)+"–"+pct(g.coverageHigh)+
+                                "<br>Ausprägungsanteil: "+pct(g.value)+"<br>Gültige Antworten: "+intFmt(g.valid)+
+                                "<br>Grundgesamtheit: "+intFmt(g.den)+" ("+intFmt(g.denMin)+"–"+intFmt(g.denMax)+")");
 
-m.on("click",()=>{
-state.selectedGroups.has(g.key)?state.selectedGroups.delete(g.key):state.selectedGroups.add(g.key);
-refresh();});
-m.addTo(layer);pts.push([g.lat,g.lon]);});
+                  m.on("click",()=>{
+                      state.selectedGroups.has(g.key)?state.selectedGroups.delete(g.key):state.selectedGroups.add(g.key);
+                      refresh();});
+                  m.addTo(layer);pts.push([g.lat,g.lon]);});
 
-if(!fitted&&pts.length){map.fitBounds(pts,{padding:[25,25],maxZoom:11});fitted=true;}
-$("mapTitle").textContent="Karte – Abdeckung: "+variable().label+
-(state.selectedGroups.size?" ("+state.selectedGroups.size+" markiert)":"");}
+              if(!fitted&&pts.length){map.fitBounds(pts,{padding:[25,25],maxZoom:11});fitted=true;}
+              $("mapTitle").textContent="Karte – "+(state.mapColor==="share"?"Ausprägungsanteil":"Abdeckung")+": "+variable().label+
+              (state.selectedGroups.size?" ("+state.selectedGroups.size+" markiert)":"");}
 
-                      
-                      function renderShare(){
-                      const counts=Array(N_BINS).fill(0);
-                      groups.forEach(g=>{if(g.bin!=null)counts[g.bin]++;});
-                      const sorted=groups.map(g=>g.value).filter(Number.isFinite).sort((a,b)=>a-b);
-                      drawHistogram($("hist"),counts,{W:460,H:250,ml:40,mr:8,mt:26,mb:35,
-                      mode:$("shareMode").value,unitName:"Gruppen",selectedBins:state.shareBins,
-                      isCoverage:false,marks:shareMarks,sorted,xLabel:"Ausprägungsanteil"});
-                      $("markInfo").textContent=shareMarks.map(p=>p===50?"Median":"P"+p).join(" · ")+
-                      (state.shareBins.size?" · gewählte Klassen: "+state.shareBins.size:"");}
-                      function renderCoverageHist(){
-                      const rows=DATA.rows.filter(r=>
-                      Number(r.wave)>=state.from&&Number(r.wave)<=state.to&&passesFilters(r)&&
-                                                                  !(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source))&&coverageAllowed(r));
-                                                                  const by=new Map();
-                                                                  rows.forEach(r=>{
-                        const d=Number(r.den);if(!Number.isFinite(d)||d<=0)return;
-                                                                         const key=state.unit==="wave"?String(r.school_key)+"|"+r.wave:String(r.school_key);
-                                                                         if(!by.has(key))by.set(key,{schoolKey:String(r.school_key),covNum:0,den:0});
-                                                                         const x=by.get(key);x.covNum+=coverageNumerator(r);x.den+=d;});
-                                                                         const items=[...by.entries()].map(([key,x])=>({key,schoolKey:x.schoolKey,value:x.den>0?x.covNum/x.den:null}))
-                          .filter(x=>Number.isFinite(x.value));
-                          const counts=Array(N_BINS).fill(0);
-                          items.forEach(x=>counts[Math.min(N_BINS-1,Math.floor(Math.max(0,Math.min(1,x.value))*N_BINS))]++);
-                          const sorted=items.map(x=>x.value).sort((a,b)=>a-b);
-                          drawHistogram($("coverageHist"),counts,{W:900,H:250,ml:44,mr:8,mt:30,mb:36,
-                          mode:$("coverageMode").value,unitName:"Schulen",
-                          isCoverage:true,marks:coverageMarks,sorted,xLabel:"Abdeckung des Merkmals"});
-                          $("coverageTitle").textContent="Abdeckung: "+variable().label+(state.unit==="wave"?" × Welle":"")+" ("+items.length+")";
-                          $("coverageMarkInfo").textContent=coverageMarks.map(p=>{
-                          const v=quantile(sorted,p/100);return(p===50?"Median":"P"+p)+": "+pct(v);}).join(" · ");}
-                          function yearlyGroups(y){return aggregate(DATA.rows,y,y).groups;}
+      function renderShare(){
+          const counts=Array(N_BINS).fill(0);
+          groups.forEach(g=>{if(g.bin!=null)counts[g.bin]++;});
+          const sorted=groups.map(g=>g.value).filter(Number.isFinite).sort((a,b)=>a-b);
+          drawHistogram($("hist"),counts,{W:460,H:250,ml:40,mr:8,mt:26,mb:35,
+                                          mode:$("shareMode").value,unitName:"Gruppen",selectedBins:state.shareBins,
+                                          isCoverage:false,marks:shareMarks,sorted,xLabel:"Ausprägungsanteil"});
+          $("markInfo").textContent=shareMarks.map(p=>p===50?"Median":"P"+p).join(" · ")+
+              (state.shareBins.size?" · gewählte Klassen: "+state.shareBins.size:"");}
+      function renderCoverageHist(){
+          const rows=DATA.rows.filter(r=>
+              Number(r.wave)>=state.from&&Number(r.wave)<=state.to&&passesFilters(r)&&
+                  !(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source))&&coverageAllowed(r));
+          const by=new Map();
+          rows.forEach(r=>{
+              const d=Number(r.den);if(!Number.isFinite(d)||d<=0)return;
+              const key=state.unit==="wave"?String(r.school_key)+"|"+r.wave:String(r.school_key);
+              if(!by.has(key))by.set(key,{schoolKey:String(r.school_key),covNum:0,den:0});
+              const x=by.get(key);x.covNum+=coverageNumerator(r);x.den+=d;});
+          const items=[...by.entries()].map(([key,x])=>({key,schoolKey:x.schoolKey,value:x.den>0?x.covNum/x.den:null}))
+                .filter(x=>Number.isFinite(x.value));
+          const counts=Array(N_BINS).fill(0);
+          items.forEach(x=>counts[Math.min(N_BINS-1,Math.floor(Math.max(0,Math.min(1,x.value))*N_BINS))]++);
+          const sorted=items.map(x=>x.value).sort((a,b)=>a-b);
+          drawHistogram($("coverageHist"),counts,{W:900,H:250,ml:44,mr:8,mt:30,mb:36,
+                                                  mode:$("coverageMode").value,unitName:"Schulen",
+                                                  isCoverage:true,marks:coverageMarks,sorted,xLabel:"Abdeckung des Merkmals"});
+          $("coverageTitle").textContent="Abdeckung: "+variable().label+(state.unit==="wave"?" × Welle":"")+" ("+items.length+")";
+          $("coverageMarkInfo").textContent=coverageMarks.map(p=>{
+              const v=quantile(sorted,p/100);return(p===50?"Median":"P"+p)+": "+pct(v);}).join(" · ");}
+      function yearlyGroups(y){return aggregate(DATA.rows,y,y).groups;}
 
-                          function renderTrend(){
-                          const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
-                                                                 // Median/Mittel/Quartile auf allen gefilterten Gruppen; markierte Gruppen
-                                                                 // sind nur Overlays. Anteilsklassen-Auswahl filtert (isActive).
-                                                                 const stats=years.map(year=>{
-                            const gs=yearlyGroups(year).filter(isActive);
-                            const a=gs.map(g=>g.value).filter(Number.isFinite).sort((x,y)=>x-y);
-                            return{year,q1:quantile(a,.25),med:quantile(a,.5),q3:quantile(a,.75),
-                            mean:a.length?a.reduce((x,y)=>x+y,0)/a.length:null};});
-                            const overlays=[];
-                            let idx=0;
-                            for(const key of state.selectedGroups){
-                            const label=groups.find(g=>g.key===key)?.label||key;
-                            const vals=[];
-                            for(let y=state.from;y<=state.to;y++){
-                                                    const g=yearlyGroups(y).find(x=>x.key===key);
-                              vals.push({year:y,v:g!=null?g.value:null});}
-                              overlays.push({key,label,color:OVERLAY_COLORS[idx++%OVERLAY_COLORS.length],vals});}
-                              drawTrend("trend",stats,"#0f766e",overlays);
-                              $("trendLegend").textContent="Median · Mittelwert · Band: 25.–75. Perzentil der gefilterten Gruppen"+
-                              (overlays.length?" · farbige Linien: markierte Gruppen (Overlay)":"")+".";}
-                              function renderCoverageTrend(){
-                              const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
-                                                                     const stats=years.map(year=>{
-                                const rows=DATA.rows.filter(r=>Number(r.wave)===year&&passesFilters(r)&&
-                                !(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source))&&coverageAllowed(r));
-                                const by=new Map();
-                                rows.forEach(r=>{
-                                // Anteilsklassen-Auswahl bleibt als Filter wirksam.
-                                if(state.shareBins.size>0){
-                                const g=groups.find(x=>x.schoolSet.has(String(r.school_key)));
-                                if(!g||g.bin==null||!state.shareBins.has(g.bin))return;}
-                                const d=Number(r.den);if(!Number.isFinite(d)||d<=0)return;
-                                                                                 const k=String(r.school_key);
-                                                                                 if(!by.has(k))by.set(k,{covNum:0,den:0});
-                                                                                 const x=by.get(k);x.covNum+=coverageNumerator(r);x.den+=d;});
-                                                                                 const a=[...by.values()].map(x=>x.den>0?x.covNum/x.den:null).filter(Number.isFinite).sort((x,y)=>x-y);
-                                  return{year,q1:quantile(a,.25),med:quantile(a,.5),q3:quantile(a,.75),
-                                  mean:a.length?a.reduce((x,y)=>x+y,0)/a.length:null};});
-                                  const overlays=[];
-                                  let idx=0;
-                                  for(const key of state.selectedGroups){
-                                  const label=groups.find(g=>g.key===key)?.label||key;
-                                  const vals=[];
-                                  for(let y=state.from;y<=state.to;y++){
-                                                          const g=yearlyGroups(y).find(x=>x.key===key);
-                                    vals.push({year:y,v:g!=null?g.coverage:null});}
-                                    overlays.push({key,label,color:OVERLAY_COLORS[idx++%OVERLAY_COLORS.length],vals});}
-                                    drawTrend("coverageTrend",stats,"#d97706",overlays);
-                                    $("coverageTrendNote").textContent="Abdeckung des Merkmals je Schule: Median, Mittelwert, 25.–75. Perzentil"+
-                                    (overlays.length?" · farbige Linien: markierte Gruppen (Overlay)":"")+".";}
+      function renderTrend(){
+          const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
+          // Median/Mittel/Quartile auf allen gefilterten Gruppen; markierte Gruppen
+          // sind nur Overlays. Anteilsklassen-Auswahl filtert (isActive).
+          const stats=years.map(year=>{
+              const gs=yearlyGroups(year).filter(isActive);
+              const a=gs.map(g=>g.value).filter(Number.isFinite).sort((x,y)=>x-y);
+              return{year,q1:quantile(a,.25),med:quantile(a,.5),q3:quantile(a,.75),
+                     mean:a.length?a.reduce((x,y)=>x+y,0)/a.length:null};});
+          const overlays=[];
+          let idx=0;
+          for(const key of state.selectedGroups){
+              const label=groups.find(g=>g.key===key)?.label||key;
+              const vals=[];
+              for(let y=state.from;y<=state.to;y++){
+                  const g=yearlyGroups(y).find(x=>x.key===key);
+                  vals.push({year:y,v:g!=null?g.value:null});}
+              overlays.push({key,label,color:OVERLAY_COLORS[idx++%OVERLAY_COLORS.length],vals});}
+          drawTrend("trend",stats,"#0f766e",overlays);
+          $("trendLegend").textContent="Median · Mittelwert · Band: 25.–75. Perzentil der gefilterten Gruppen"+
+              (overlays.length?" · farbige Linien: markierte Gruppen (Overlay)":"")+
+              " · Median = mittlerer Gruppenwert, Mittelwert = Durchschnitt der Gruppen (beide ohne Größen-Gewichtung).";}
+      function renderCoverageTrend(){
+          const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
+          const stats=years.map(year=>{
+              const rows=DATA.rows.filter(r=>Number(r.wave)===year&&passesFilters(r)&&
+                                          !(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source))&&coverageAllowed(r));
+              const by=new Map();
+              rows.forEach(r=>{
+                  // Anteilsklassen-Auswahl bleibt als Filter wirksam.
+                  if(state.shareBins.size>0){
+                      const g=groups.find(x=>x.schoolSet.has(String(r.school_key)));
+                      if(!g||g.bin==null||!state.shareBins.has(g.bin))return;}
+                  const d=Number(r.den);if(!Number.isFinite(d)||d<=0)return;
+                  const k=String(r.school_key);
+                  if(!by.has(k))by.set(k,{covNum:0,den:0});
+                  const x=by.get(k);x.covNum+=coverageNumerator(r);x.den+=d;});
+              const a=[...by.values()].map(x=>x.den>0?x.covNum/x.den:null).filter(Number.isFinite).sort((x,y)=>x-y);
+              return{year,q1:quantile(a,.25),med:quantile(a,.5),q3:quantile(a,.75),
+                     mean:a.length?a.reduce((x,y)=>x+y,0)/a.length:null};});
+          const overlays=[];
+          let idx=0;
+          for(const key of state.selectedGroups){
+              const label=groups.find(g=>g.key===key)?.label||key;
+              const vals=[];
+              for(let y=state.from;y<=state.to;y++){
+                  const g=yearlyGroups(y).find(x=>x.key===key);
+                  vals.push({year:y,v:g!=null?g.coverage:null});}
+              overlays.push({key,label,color:OVERLAY_COLORS[idx++%OVERLAY_COLORS.length],vals});}
+          drawTrend("coverageTrend",stats,"#d97706",overlays);
+          $("coverageTrendNote").textContent="Abdeckung des Merkmals je Schule: Median, Mittelwert, 25.–75. Perzentil"+
+              (overlays.length?" · farbige Linien: markierte Gruppen (Overlay)":"")+
+              " · Median = mittlerer Gruppenwert, Mittelwert = Durchschnitt der Gruppen (beide ohne Größen-Gewichtung).";}
 
-                                    function drawTrend(id,stats,band,overlays){
- const W=460,H=250,ml=44,mr=8,mt=22,mb=34,pw=W-ml-mr,ph=H-mt-mb;
- const vals=stats.flatMap(x=>[x.q1,x.med,x.q3,x.mean]).filter(Number.isFinite).concat(
-  (overlays||[]).flatMap(o=>o.vals.map(v=>v.v).filter(Number.isFinite)));
- const ym=Math.max(.1,Math.min(1.2,Math.ceil(Math.max(0,...vals)*10)/10));
- const X=i=>ml+(stats.length<2?pw/2:pw*i/(stats.length-1)),Y=v=>mt+ph*(1-v/ym);
- let s=svgStart(W,H);
- for(let j=0;j<=4;j++){const v=ym*j/4;
-  s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="#e2e8f0"/>'+
-  '<text x="'+(ml-4)+'" y="'+(Y(v)+3)+'" text-anchor="end">'+Math.round(v*100)+"%</text>";}
- for(let i=0;i<stats.length-1;i++){const a=stats[i],b=stats[i+1];
-  if([a.q1,a.q3,b.q1,b.q3].some(v=>v==null))continue;
-  s+='<polygon fill="'+band+'" opacity=".16" points="'+X(i)+","+Y(a.q3)+" "+X(i+1)+","+Y(b.q3)+
-   " "+X(i+1)+","+Y(b.q1)+" "+X(i)+","+Y(a.q1)+'"/>';}
- stats.forEach((a,i)=>s+='<text x="'+X(i)+'" y="'+(H-11)+'" text-anchor="middle">'+a.year+"</text>");
- const series=[["med","Median","#0f766e",""],["mean","Mittelwert","#c2410c","5 3"]];
- series.forEach(([key,label,c,dash])=>{
-  let path="",pen=false;
-  stats.forEach((a,i)=>{if(!Number.isFinite(a[key])){pen=false;return;}
-   path+=(pen?"L":"M")+X(i)+" "+Y(a[key])+" ";pen=true;});
-  s+='<path d="'+path+'" fill="none" stroke="'+c+'" stroke-width="2"'+(dash?' stroke-dasharray="'+dash+'"':"")+"/>";
-  stats.forEach((a,i)=>{if(Number.isFinite(a[key]))s+='<circle cx="'+X(i)+'" cy="'+Y(a[key])+
-   '" r="2.5" fill="'+c+'"><title>'+a.year+" "+label+": "+pct(a[key])+"</title></circle>";});});
- (overlays||[]).forEach(o=>{
-  let path="",pen=false;
-  o.vals.forEach((d,i)=>{if(!Number.isFinite(d.v)){pen=false;return;}
-   path+=(pen?"L":"M")+X(i)+" "+Y(d.v)+" ";pen=true;});
-  s+='<path d="'+path+'" fill="none" stroke="'+o.color+'" stroke-width="2.5"/>';
-  o.vals.forEach((d,i)=>{if(Number.isFinite(d.v))s+='<circle cx="'+X(i)+'" cy="'+Y(d.v)+
-   '" r="2.5" fill="'+o.color+'"><title>'+d.year+" · "+esc(o.label)+": "+pct(d.v)+"</title></circle>";});});
- s+="</svg>";$(id).innerHTML=s;}
-function renderTotals(){
- const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
- const data=years.map(year=>{
-  const gs=yearlyGroups(year).filter(isActive); // Histogrammfilter wirkt
-  const rowsOfYear=DATA.rows.filter(r=>Number(r.wave)===year);
-  const uniq=field=>{const v=[...new Set(rowsOfYear.map(r=>Number(r[field])).filter(Number.isFinite))];
-   return v.length===1?v[0]:null;};
-  return{year,
-   total:gs.reduce((s,g)=>s+g.total,0),
-   valid:gs.reduce((s,g)=>s+g.valid,0),
-   den:gs.reduce((s,g)=>s+g.den,0),min:gs.reduce((s,g)=>s+g.denMin,0),max:gs.reduce((s,g)=>s+g.denMax,0),
-   national:uniq("national_den"),nationalMin:uniq("national_den_min"),nationalMax:uniq("national_den_max")};});
- const W=500,H=250,ml=55,mr=8,mt=18,mb=35,pw=W-ml-mr,ph=H-mt-mb,
-  slot=pw/Math.max(1,data.length),bw=Math.min(11,slot*.13);
- const max=Math.max(1,...data.flatMap(d=>[d.total,d.valid,d.max,d.nationalMax??d.national??0]))*1.1,
-  Y=v=>mt+ph*(1-v/max);
- let s=svgStart(W,H);
- for(let j=0;j<=4;j++){const v=max*j/4;
-  s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="#e2e8f0"/>'+
-  '<text x="'+(ml-4)+'" y="'+(Y(v)+3)+'" text-anchor="end">'+intFmt(v)+"</text>";}
- const whisker=(x,lo,hi,title)=>{
-  if(lo==null||hi==null)return"";
-  return'<path d="M'+x+" "+Y(lo)+"V"+Y(hi)+" M"+(x-4)+" "+Y(lo)+"H"+(x+4)+
-   " M"+(x-4)+" "+Y(hi)+"H"+(x+4)+'" stroke="#111827" stroke-width="1.5" fill="none"><title>'+title+
-   ": "+intFmt(lo)+"–"+intFmt(hi)+"</title></path>";};
- data.forEach((d,i)=>{
-  const cx=ml+slot*(i+.5),centers=[cx-1.5*bw,cx-.5*bw,cx+.5*bw,cx+1.5*bw];
-  const bars=[[d.total,"#2563eb","Alle gefilterten Fälle des Merkmals"],
-   [d.valid,"#64748b","Gültige Antworten"],
-   [d.den,"#dc2626","Gefilterte Grundgesamtheit"],
-   [d.national??0,"#f59e0b","Ungefilterte Export-Summe"]];
-  bars.forEach((b,k)=>{const h=ph*b[0]/max;
-   s+='<rect x="'+(centers[k]-bw/2)+'" y="'+Y(b[0])+'" width="'+bw+'" height="'+h+'" fill="'+b[1]+'"><title>'+
-   d.year+" · "+b[2]+": "+intFmt(b[0])+"</title></rect>";});
-  s+=whisker(centers[2],d.min,d.max,d.year+" · gefilterte GG Min–Max");
-  s+=whisker(centers[3],d.nationalMin,d.nationalMax,d.year+" · Export-Summe Min–Max");
-  s+='<text x="'+cx+'" y="'+(H-10)+'" text-anchor="middle">'+d.year+"</text>";});
- s+='<text transform="translate(12 '+(mt+ph/2)+') rotate(-90)" text-anchor="middle">Anzahl</text></svg>';
- $("totals").innerHTML=s;
- $("totalsTitle").textContent="Jahressummen – "+variable().label+
-  (state.shareBins.size?" (Klassenfilter aktiv)":"");}
+      function drawTrend(id,stats,band,overlays){
+          const W=460,H=250,ml=44,mr=8,mt=22,mb=34,pw=W-ml-mr,ph=H-mt-mb;
+          const vals=stats.flatMap(x=>[x.q1,x.med,x.q3,x.mean]).filter(Number.isFinite).concat(
+              (overlays||[]).flatMap(o=>o.vals.map(v=>v.v).filter(Number.isFinite)));
+          const ym=Math.max(.1,Math.min(1.2,Math.ceil(Math.max(0,...vals)*10)/10));
+          const X=i=>ml+(stats.length<2?pw/2:pw*i/(stats.length-1)),Y=v=>mt+ph*(1-v/ym);
+          let s=svgStart(W,H);
+          for(let j=0;j<=4;j++){const v=ym*j/4;
+                                s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="#e2e8f0"/>'+
+                                '<text x="'+(ml-4)+'" y="'+(Y(v)+3)+'" text-anchor="end">'+Math.round(v*100)+"%</text>";}
+          for(let i=0;i<stats.length-1;i++){const a=stats[i],b=stats[i+1];
+                                            if([a.q1,a.q3,b.q1,b.q3].some(v=>v==null))continue;
+                                            s+='<polygon fill="'+band+'" opacity=".16" points="'+X(i)+","+Y(a.q3)+" "+X(i+1)+","+Y(b.q3)+
+                                            " "+X(i+1)+","+Y(b.q1)+" "+X(i)+","+Y(a.q1)+'"/>';}
+          stats.forEach((a,i)=>s+='<text x="'+X(i)+'" y="'+(H-11)+'" text-anchor="middle">'+a.year+"</text>");
+          const series=[["med","Median","#0f766e",""],["mean","Mittelwert","#c2410c","5 3"]];
+          series.forEach(([key,label,c,dash])=>{
+              let path="",pen=false;
+              stats.forEach((a,i)=>{if(!Number.isFinite(a[key])){pen=false;return;}
+                                    path+=(pen?"L":"M")+X(i)+" "+Y(a[key])+" ";pen=true;});
+              s+='<path d="'+path+'" fill="none" stroke="'+c+'" stroke-width="2"'+(dash?' stroke-dasharray="'+dash+'"':"")+"/>";
+              stats.forEach((a,i)=>{if(Number.isFinite(a[key]))s+='<circle cx="'+X(i)+'" cy="'+Y(a[key])+
+                                    '" r="2.5" fill="'+c+'"><title>'+a.year+" "+label+": "+pct(a[key])+"</title></circle>";});});
+          (overlays||[]).forEach(o=>{
+              let path="",pen=false;
+              o.vals.forEach((d,i)=>{if(!Number.isFinite(d.v)){pen=false;return;}
+                                     path+=(pen?"L":"M")+X(i)+" "+Y(d.v)+" ";pen=true;});
+              s+='<path d="'+path+'" fill="none" stroke="'+o.color+'" stroke-width="2.5"/>';
+              o.vals.forEach((d,i)=>{if(Number.isFinite(d.v))s+='<circle cx="'+X(i)+'" cy="'+Y(d.v)+
+                                     '" r="2.5" fill="'+o.color+'"><title>'+d.year+" · "+esc(o.label)+": "+pct(d.v)+"</title></circle>";});});
+          s+="</svg>";$(id).innerHTML=s;}
+      function renderTotals(){
+          const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
+          const data=years.map(year=>{
+              const gs=yearlyGroups(year).filter(isActive); // Histogrammfilter wirkt
+              return{year,
+                     num:gs.reduce((s,g)=>s+g.num,0),        // Fälle der Auswahl (Ausprägung)
+                     valid:gs.reduce((s,g)=>s+g.valid,0),    // gültige Antworten
+                     den:gs.reduce((s,g)=>s+g.den,0),        // Grundgesamtheit
+                     min:gs.reduce((s,g)=>s+g.denMin,0),
+                     max:gs.reduce((s,g)=>s+g.denMax,0)};});
+          const W=500,H=250,ml=55,mr=8,mt=18,mb=35,pw=W-ml-mr,ph=H-mt-mb,
+                slot=pw/Math.max(1,data.length),bw=Math.min(11,slot*.13);
+          const max=Math.max(1,...data.flatMap(d=>[d.num,d.valid,d.max]))*1.1,
+                Y=v=>mt+ph*(1-v/max);
+          let s=svgStart(W,H);
+          for(let j=0;j<=4;j++){const v=max*j/4;
+                                s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="#e2e8f0"/>'+
+                                '<text x="'+(ml-4)+'" y="'+(Y(v)+3)+'" text-anchor="end">'+intFmt(v)+"</text>";}
+          const whisker=(x,lo,hi,title)=>{
+              if(lo==null||hi==null)return"";
+              return'<path d="M'+x+" "+Y(lo)+"V"+Y(hi)+" M"+(x-4)+" "+Y(lo)+"H"+(x+4)+
+                  " M"+(x-4)+" "+Y(hi)+"H"+(x+4)+'" stroke="#111827" stroke-width="1.5" fill="none"><title>'+title+
+                  ": "+intFmt(lo)+"–"+intFmt(hi)+"</title></path>";};
+          data.forEach((d,i)=>{
+              const cx=ml+slot*(i+.5),centers=[cx-bw,cx,cx+bw];
+              const bars=[[d.num,"#2563eb","Fälle der Auswahl (Ausprägung)"],
+                          [d.valid,"#dc2626","Gültige Antworten"],
+                          [d.den,"#f59e0b","Grundgesamtheit"]];
+              bars.forEach((b,k)=>{const h=ph*b[0]/max;
+                                   s+='<rect x="'+(centers[k]-bw/2)+'" y="'+Y(b[0])+'" width="'+bw+'" height="'+h+'" fill="'+b[1]+'"><title>'+
+                                   d.year+" · "+b[2]+": "+intFmt(b[0])+"</title></rect>";});
+              s+=whisker(centers[2],d.min,d.max,d.year+" · Grundgesamtheit Min–Max");
+              s+='<text x="'+cx+'" y="'+(H-10)+'" text-anchor="middle">'+d.year+"</text>";});
+          s+='<text transform="translate(12 '+(mt+ph/2)+') rotate(-90)" text-anchor="middle">Anzahl</text></svg>';
+          $("totals").innerHTML=s;
+          $("totalsTitle").textContent="Jahressummen – "+variable().label+
+              (state.shareBins.size?" (Klassenfilter aktiv)":"");}
 
-function renderTable(){
- const q=$("tableSearch").value.trim().toLowerCase();
- // Histogrammklassen-Auswahl filtert die Tabelle IMMER (wie Karte/Verlauf);
- // "Tabelle auf Auswahl beschraenken" reduziert zusaetzlich auf markierte
- // Gruppen.
- let list=groups.filter(isActive);
- if($("onlySel").checked&&state.selectedGroups.size>0)
-  list=list.filter(g=>state.selectedGroups.has(g.key));
- if(q)list=list.filter(g=>(g.label+" "+g.key).toLowerCase().includes(q));
- list=[...list];
- list.sort((a,b)=>{const x=a[state.sortKey],y=b[state.sortKey];
-  if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return-1;
-  return state.sortDir*(typeof x==="string"?x.localeCompare(y,"de"):x-y);});
+      function renderTable(){
+          const q=$("tableSearch").value.trim().toLowerCase();
+          // Histogrammklassen-Auswahl filtert die Tabelle IMMER (wie Karte/Verlauf);
+          // "Tabelle auf Auswahl beschraenken" reduziert zusaetzlich auf markierte
+          // Gruppen.
+          let list=groups.filter(isActive);
+          if($("onlySel").checked&&state.selectedGroups.size>0)
+              list=list.filter(g=>state.selectedGroups.has(g.key));
+          if(q)list=list.filter(g=>(g.label+" "+g.key).toLowerCase().includes(q));
+          list=[...list];
+          list.sort((a,b)=>{const x=a[state.sortKey],y=b[state.sortKey];
+                            if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return-1;
+                            return state.sortDir*(typeof x==="string"?x.localeCompare(y,"de"):x-y);});
 
- const totals=list.reduce((acc,g)=>({
-  nSchools:acc.nSchools+g.nSchools,num:acc.num+g.num,valid:acc.valid+g.valid,
-  covNum:acc.covNum+g.covNum,den:acc.den+g.den,denMin:acc.denMin+g.denMin,denMax:acc.denMax+g.denMax}),
-  {nSchools:0,num:0,valid:0,covNum:0,den:0,denMin:0,denMax:0});
- const totalShare=totals.valid>0?totals.num/totals.valid:null;
- const totalCov=totals.den>0?totals.covNum/totals.den:null;
- const totalCovLow=totals.denMax>0?totals.covNum/totals.denMax:null;
- const totalCovHigh=totals.denMin>0?totals.covNum/totals.denMin:null;
+          const totals=list.reduce((acc,g)=>({
+              nSchools:acc.nSchools+g.nSchools,num:acc.num+g.num,valid:acc.valid+g.valid,
+              covNum:acc.covNum+g.covNum,den:acc.den+g.den,denMin:acc.denMin+g.denMin,denMax:acc.denMax+g.denMax}),
+                                   {nSchools:0,num:0,valid:0,covNum:0,den:0,denMin:0,denMax:0});
+          const totalShare=totals.valid>0?totals.num/totals.valid:null;
+          const totalCov=totals.den>0?totals.covNum/totals.den:null;
+          const totalCovLow=totals.denMax>0?totals.covNum/totals.denMax:null;
+          const totalCovHigh=totals.denMin>0?totals.covNum/totals.denMin:null;
 
- const cols=[["label","Gruppe"],["nSchools","Schulen"],["num","Fälle der Auswahl"],
-  ["valid","Gültige Antworten"],["value","Ausprägungsanteil"],
-  ["den","Grundgesamtheit"],["coverage","Abdeckung"],["coverageLow","Abdeckung min"],["coverageHigh","Abdeckung max"]];
- let h="<thead><tr>"+cols.map(c=>'<th data-key="'+c[0]+'" title="'+esc(
-  c[0]==="num"?"Zähler: Fälle mit der gewählten Ausprägung":
-  c[0]==="coverageLow"?"Erhobene Fälle ÷ größte plausible Grundgesamtheit":
-  c[0]==="coverageHigh"?"Erhobene Fälle ÷ kleinste plausible Grundgesamtheit":"")+'">'+c[1]+
-  (state.sortKey===c[0]?(state.sortDir>0?" ▲":" ▼"):"")+"</th>").join("")+"</tr></thead>";
- h+='<tbody><tr class="sumrow"><td>Summe ('+list.length+" Gruppen"+
-  (q?", Suche: „"+esc(q)+"“":"")+")</td>"+
-  "<td>"+intFmt(totals.nSchools)+"</td><td>"+intFmt(totals.num)+"</td><td>"+intFmt(totals.valid)+
-  "</td><td>"+pct(totalShare)+"</td><td>"+intFmt(totals.den)+"</td><td>"+pct(totalCov)+
-  "</td><td>"+pct(totalCovLow)+"</td><td>"+pct(totalCovHigh)+"</td></tr>";
- list.slice(0,500).forEach(g=>{
-  const marked=state.selectedGroups.has(g.key);
-  h+='<tr data-key="'+esc(g.key)+'" class="'+(marked?"row-sel":"")+'"'+(marked?' style="outline:2px solid #7c3aed"':"")+
-   '><td>'+esc(g.label)+"</td><td>"+intFmt(g.nSchools)+"</td><td>"+intFmt(g.num)+
-  "</td><td>"+intFmt(g.valid)+"</td><td>"+pct(g.value)+"</td><td>"+intFmt(g.den)+"</td><td>"+
-  pct(g.coverage)+"</td><td>"+pct(g.coverageLow)+"</td><td>"+pct(g.coverageHigh)+"</td></tr>";});
- h+="</tbody>";
- if(!list.length)h+='<tfoot><tr><td colspan="9">Keine passende Gruppe gefunden.</td></tr></tfoot>';
- $("table").innerHTML=h;
- $("table").querySelectorAll("th").forEach(th=>th.onclick=()=>{
-  const k=th.dataset.key;
-  if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=k==="label"?1:-1;}
-  renderTable();});
- $("table").querySelectorAll("tbody tr[data-key]").forEach(tr=>tr.onclick=()=>{
-  const k=tr.dataset.key;
-  state.selectedGroups.has(k)?state.selectedGroups.delete(k):state.selectedGroups.add(k);
-  refresh();});}
-function renderStatus(){
- $("status").textContent="Wellen "+state.from+"–"+state.to+" · Gruppen "+groups.length+
-  " · verwendete Schul-Wellen "+intFmt(aggInfo.used)+
-  (state.coverageMin!=null||state.coverageMax!=null?" · Abdeckungsbereich aktiv":"")+
-  (state.shareBins.size?" · "+state.shareBins.size+" Anteilsklasse(n) als Filter":"")+
-  (state.selectedGroups.size?" · "+state.selectedGroups.size+" Gruppe(n) als Overlay":"");}
-function setYearLabels(){$("fromLabel").textContent=state.from;$("toLabel").textContent=state.to;}
-function setCoverage(){
- const a=$("coverageMin").value.trim(),b=$("coverageMax").value.trim();
- state.coverageMin=a===""?null:Math.max(0,Math.min(1,Number(a)/100));
- state.coverageMax=b===""?null:Math.max(0,Math.min(1,Number(b)/100));
- if(state.coverageMin!=null&&state.coverageMax!=null&&state.coverageMin>state.coverageMax){
-  state.coverageMax=state.coverageMin;$("coverageMax").value=$("coverageMin").value;}
- refresh();}
-async function init(){
- try{
-  const res=await fetch("coverage_school_wave.json",{cache:"no-store"});
-  if(!res.ok)throw Error("HTTP "+res.status);
-  DATA=await res.json();
-  const cfg=DATA.config||{},d=cfg.defaults||{};
-  VARS=arr(cfg.variables).map(v=>({...v,
-   values:arr(v.values).map(x=>({...x,field:x.field||"n_"+v.id+"_"+x.id})),
-   coverage_fields:arr(v.coverage_fields)}));
-  VARS=VARS.filter((v,i,a)=>a.findIndex(x=>x.id===v.id)===i).filter(v=>v.values.length);
-  if(!VARS.length)throw Error("Keine Merkmale in config.variables.");
-  state.variable=VARS.some(v=>v.id===d.variable)?d.variable:VARS[0].id;
-  state.value=d.value||VARS[0].values[0].id;
-  const waves=[...new Set(DATA.rows.map(r=>Number(r.wave)).filter(Number.isFinite))].sort((a,b)=>a-b);
-  if(!waves.length)throw Error("Keine Wellen in JSON.");
-  ["fromYear","toYear"].forEach(id=>{$(id).min=waves[0];$(id).max=waves.at(-1);$(id).step=1;});
-  state.from=Math.max(waves[0],Math.min(waves.at(-1),Number(d.from)||waves[0]));
-  state.to=Math.max(state.from,Math.min(waves.at(-1),Number(d.to)||waves.at(-1)));
-  $("fromYear").value=state.from;$("toYear").value=state.to;setYearLabels();
-  state.level=d.level||"standort";state.unit=d.unit==="period"?"period":"wave";
-  state.filterLogic=d.filter_logic==="or"?"or":"and";$("unit").value=state.unit;
-  arr(cfg.levels).forEach(l=>{if(l?.id&&l?.field&&DATA.rows.some(r=>l.field in r))CUSTOM.set(l.id,l);});
-  const lev=BUILTIN_LEVELS.concat([...CUSTOM.values()].map(x=>({id:x.id,label:x.label||x.id})));
-  $("level").innerHTML=lev.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.label)+"</option>").join("");
-  if(!lev.some(x=>x.id===state.level))state.level="standort";$("level").value=state.level;
-  state.filters=arr(cfg.filters).filter(f=>f?.field&&DATA.rows.some(r=>f.field in r))
-   .map(f=>({field:f.field,label:f.label||f.field,values:[],negate:false}));
-  shareMarks=marksFromText(arr(d.hist_marks).join(","));if(!shareMarks.length)shareMarks=[20,50,80];
-  coverageMarks=shareMarks.slice();
-  $("histMarks").value=shareMarks.join(", ");
-  $("coverageMarks").value=coverageMarks.join(", ");
-  $("excludeLB").disabled=!DATA.rows.some(r=>"den_source"in r);
-  $("grad").style.background="linear-gradient(to right,"+COLORS.join(",")+")";
-  renderSelectors();renderFilters();
-  map=L.map("map");
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-   {attribution:"&copy; OpenStreetMap-Mitwirkende",maxZoom:18}).addTo(map);
-  map.setView([50.9,11],8);layer=L.layerGroup().addTo(map);
-  $("variable").onchange=e=>{state.variable=e.target.value;state.value=null;
-   state.shareBins.clear();state.selectedGroups.clear();renderSelectors();refresh();};
-  $("value").onchange=e=>{state.value=e.target.value;state.shareBins.clear();refresh();};
-  $("level").onchange=e=>{state.level=e.target.value;state.selectedGroups.clear();refresh(true);};
-  $("unit").onchange=e=>{state.unit=e.target.value;refresh();};
-  $("filterLogic").onchange=e=>{state.filterLogic=e.target.value;renderFilters();refresh(true);};
-  $("resetFilters").onclick=()=>{state.filters.forEach(f=>{f.values=[];f.negate=false;});renderFilters();refresh(true);};
-  $("excludeLB").onchange=e=>{state.excludeLB=e.target.checked;refresh();};
-  $("minSchools").onchange=e=>{state.minSchools=Math.max(1,Number(e.target.value)||1);refresh();};
-  $("onlySel").onchange=renderTable;
-  $("tableSearch").oninput=renderTable;
-  $("histMarks").oninput=e=>{shareMarks=marksFromText(e.target.value);renderShare();};
-  $("coverageMarks").oninput=e=>{coverageMarks=marksFromText(e.target.value);renderCoverageHist();};
-  $("shareMode").onchange=renderShare;
-  $("coverageMode").onchange=renderCoverageHist;
-  $("resetSel").onclick=()=>{clearSelection();
-   state.coverageMin=state.coverageMax=null;
-   $("coverageMin").value=$("coverageMax").value="";refresh();};
-  $("coverageMin").onchange=setCoverage;$("coverageMax").onchange=setCoverage;
-  $("clearCoverage").onclick=()=>{state.coverageMin=state.coverageMax=null;
-   $("coverageMin").value=$("coverageMax").value="";refresh();};
-  $("allYears").onclick=()=>{state.from=waves[0];state.to=waves.at(-1);
-   $("fromYear").value=state.from;$("toYear").value=state.to;setYearLabels();refresh();};
-  $("fromYear").oninput=e=>{state.from=Number(e.target.value);
-   if(state.from>state.to){state.to=state.from;$("toYear").value=state.to;}
-   setYearLabels();refresh();};
-  $("toYear").oninput=e=>{state.to=Number(e.target.value);
-   if(state.to<state.from){state.from=state.to;$("fromYear").value=state.from;}
-   setYearLabels();refresh();};
-  window.addEventListener("resize",()=>map.invalidateSize());
-  refresh();map.invalidateSize();
- }catch(err){
-  $("banner").style.display="block";
-  $("banner").textContent="Datenfehler: "+err.message+
-   " Prüfe, ob coverage_school_wave.json im selben Ordner wie die HTML-Datei liegt.";
-  $("status").textContent="Keine Daten verfügbar.";}}
-init();
-</script>
-</body>
+          const cols=[["label","Gruppe"],["nSchools","Schulen"],["num","Fälle der Auswahl"],
+                      ["valid","Gültige Antworten"],["value","Ausprägungsanteil"],
+                      ["den","Grundgesamtheit"],["coverage","Abdeckung"],["coverageLow","Abdeckung min"],["coverageHigh","Abdeckung max"]];
+          let h="<thead><tr>"+cols.map(c=>'<th data-key="'+c[0]+'" title="'+esc(
+              c[0]==="num"?"Zähler: Fälle mit der gewählten Ausprägung":
+                  c[0]==="coverageLow"?"Erhobene Fälle ÷ größte plausible Grundgesamtheit":
+                  c[0]==="coverageHigh"?"Erhobene Fälle ÷ kleinste plausible Grundgesamtheit":"")+'">'+c[1]+
+                                       (state.sortKey===c[0]?(state.sortDir>0?" ▲":" ▼"):"")+"</th>").join("")+"</tr></thead>";
+          h+='<tbody><tr class="sumrow"><td>Summe ('+list.length+" Gruppen"+
+              (q?", Suche: „"+esc(q)+"“":"")+")</td>"+
+              "<td>"+intFmt(totals.nSchools)+"</td><td>"+intFmt(totals.num)+"</td><td>"+intFmt(totals.valid)+
+              "</td><td>"+pct(totalShare)+"</td><td>"+intFmt(totals.den)+"</td><td>"+pct(totalCov)+
+              "</td><td>"+pct(totalCovLow)+"</td><td>"+pct(totalCovHigh)+"</td></tr>";
+          list.slice(0,500).forEach(g=>{
+              const marked=state.selectedGroups.has(g.key);
+              h+='<tr data-key="'+esc(g.key)+'" class="'+(marked?"row-sel":"")+'"'+(marked?' style="outline:2px solid #7c3aed"':"")+
+                  '><td>'+esc(g.label)+"</td><td>"+intFmt(g.nSchools)+"</td><td>"+intFmt(g.num)+
+                  "</td><td>"+intFmt(g.valid)+"</td><td>"+pct(g.value)+"</td><td>"+intFmt(g.den)+"</td><td>"+
+                  pct(g.coverage)+"</td><td>"+pct(g.coverageLow)+"</td><td>"+pct(g.coverageHigh)+"</td></tr>";});
+          h+="</tbody>";
+          if(!list.length)h+='<tfoot><tr><td colspan="9">Keine passende Gruppe gefunden.</td></tr></tfoot>';
+          $("table").innerHTML=h;
+          $("table").querySelectorAll("th").forEach(th=>th.onclick=()=>{
+              const k=th.dataset.key;
+              if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=k==="label"?1:-1;}
+              renderTable();});
+          $("table").querySelectorAll("tbody tr[data-key]").forEach(tr=>tr.onclick=()=>{
+              const k=tr.dataset.key;
+              state.selectedGroups.has(k)?state.selectedGroups.delete(k):state.selectedGroups.add(k);
+              refresh();});}
+      function renderStatus(){
+          $("status").textContent="Wellen "+state.from+"–"+state.to+" · Gruppen "+groups.length+
+              " · verwendete Schul-Wellen "+intFmt(aggInfo.used)+
+              (state.coverageMin!=null||state.coverageMax!=null?" · Abdeckungsbereich aktiv":"")+
+              (state.shareBins.size?" · "+state.shareBins.size+" Anteilsklasse(n) als Filter":"")+
+              (state.selectedGroups.size?" · "+state.selectedGroups.size+" Gruppe(n) als Overlay":"");}
+      function setYearLabels(){$("fromLabel").textContent=state.from;$("toLabel").textContent=state.to;}
+      function setCoverage(){
+          const a=$("coverageMin").value.trim(),b=$("coverageMax").value.trim();
+          state.coverageMin=a===""?null:Math.max(0,Math.min(1,Number(a)/100));
+          state.coverageMax=b===""?null:Math.max(0,Math.min(1,Number(b)/100));
+          if(state.coverageMin!=null&&state.coverageMax!=null&&state.coverageMin>state.coverageMax){
+              state.coverageMax=state.coverageMin;$("coverageMax").value=$("coverageMin").value;}
+          refresh();}
+      async function init(){
+          try{
+              const res=await fetch("coverage_school_wave.json",{cache:"no-store"});
+              if(!res.ok)throw Error("HTTP "+res.status);
+              DATA=await res.json();
+              const cfg=DATA.config||{},d=cfg.defaults||{};
+              VARS=arr(cfg.variables).map(v=>({...v,
+                                               values:arr(v.values).map(x=>({...x,field:x.field||"n_"+v.id+"_"+x.id})),
+                                               coverage_fields:arr(v.coverage_fields)}));
+              VARS=VARS.filter((v,i,a)=>a.findIndex(x=>x.id===v.id)===i).filter(v=>v.values.length);
+              if(!VARS.length)throw Error("Keine Merkmale in config.variables.");
+              state.variable=VARS.some(v=>v.id===d.variable)?d.variable:VARS[0].id;
+              state.value=d.value||VARS[0].values[0].id;
+              const waves=[...new Set(DATA.rows.map(r=>Number(r.wave)).filter(Number.isFinite))].sort((a,b)=>a-b);
+              if(!waves.length)throw Error("Keine Wellen in JSON.");
+              ["fromYear","toYear"].forEach(id=>{$(id).min=waves[0];$(id).max=waves.at(-1);$(id).step=1;});
+              state.from=Math.max(waves[0],Math.min(waves.at(-1),Number(d.from)||waves[0]));
+              state.to=Math.max(state.from,Math.min(waves.at(-1),Number(d.to)||waves.at(-1)));
+              $("fromYear").value=state.from;$("toYear").value=state.to;setYearLabels();
+              state.level=d.level||"standort";state.unit=d.unit==="period"?"period":"wave";
+              state.filterLogic=d.filter_logic==="or"?"or":"and";$("unit").value=state.unit;
+              arr(cfg.levels).forEach(l=>{if(l?.id&&l?.field&&DATA.rows.some(r=>l.field in r))CUSTOM.set(l.id,l);});
+              const lev=BUILTIN_LEVELS.concat([...CUSTOM.values()].map(x=>({id:x.id,label:x.label||x.id})));
+              $("level").innerHTML=lev.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.label)+"</option>").join("");
+              if(!lev.some(x=>x.id===state.level))state.level="standort";$("level").value=state.level;
+              state.filters=arr(cfg.filters).filter(f=>f?.field&&DATA.rows.some(r=>f.field in r))
+                  .map(f=>({field:f.field,label:f.label||f.field,values:[],negate:false}));
+              shareMarks=marksFromText(arr(d.hist_marks).join(","));if(!shareMarks.length)shareMarks=[20,50,80];
+              coverageMarks=shareMarks.slice();
+              $("histMarks").value=shareMarks.join(", ");
+              $("coverageMarks").value=coverageMarks.join(", ");
+              $("excludeLB").disabled=!DATA.rows.some(r=>"den_source"in r);
+              $("grad").style.background="linear-gradient(to right,"+COLORS.join(",")+")";
+              renderSelectors();renderFilters();
+              map=L.map("map");
+              L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                          {attribution:"&copy; OpenStreetMap-Mitwirkende",maxZoom:18}).addTo(map);
+              map.setView([50.9,11],8);layer=L.layerGroup().addTo(map);
+              $("variable").onchange=e=>{state.variable=e.target.value;state.value=null;
+                                         state.shareBins.clear();state.selectedGroups.clear();renderSelectors();refresh();};
+              $("value").onchange=e=>{state.value=e.target.value;state.shareBins.clear();refresh();};
+              $("level").onchange=e=>{state.level=e.target.value;state.selectedGroups.clear();refresh(true);};
+              $("unit").onchange=e=>{state.unit=e.target.value;refresh();};
+              state.coverageMin=0.01;$("coverageMin").value=1;
+              $("filterLogic").onchange=e=>{state.filterLogic=e.target.value;renderFilters();refresh(true);};
+              $("resetFilters").onclick=()=>{state.filters.forEach(f=>{f.values=[];f.negate=false;});renderFilters();refresh(true);};
+              $("excludeLB").onchange=e=>{state.excludeLB=e.target.checked;refresh();};
+              $("minSchools").onchange=e=>{state.minSchools=Math.max(1,Number(e.target.value)||1);refresh();};
+              $("onlySel").onchange=renderTable;
+              $("tableSearch").oninput=renderTable;
+              $("histMarks").oninput=e=>{shareMarks=marksFromText(e.target.value);renderShare();};
+              $("coverageMarks").oninput=e=>{coverageMarks=marksFromText(e.target.value);renderCoverageHist();};
+              $("shareMode").onchange=renderShare;
+              $("coverageMode").onchange=renderCoverageHist;
+              $("mapMode").onchange=e=>{state.mapColor=e.target.value;
+                                        $("legendLabel").textContent=state.mapColor==="share"?"100 % Ausprägungsanteil":"100 % Abdeckung";
+                                        renderMap();};
+              $("resetSel").onclick=()=>{clearSelection();
+                                         state.coverageMin=state.coverageMax=null;
+                                         $("coverageMin").value=$("coverageMax").value="";refresh();};
+              $("coverageMin").onchange=setCoverage;$("coverageMax").onchange=setCoverage;
+              $("clearCoverage").onclick=()=>{state.coverageMin=state.coverageMax=null;
+                                              $("coverageMin").value=$("coverageMax").value="";refresh();};
+              $("allYears").onclick=()=>{state.from=waves[0];state.to=waves.at(-1);
+                                         $("fromYear").value=state.from;$("toYear").value=state.to;setYearLabels();refresh();};
+              $("fromYear").oninput=e=>{state.from=Number(e.target.value);
+                                        if(state.from>state.to){state.to=state.from;$("toYear").value=state.to;}
+                                        setYearLabels();refresh();};
+              $("toYear").oninput=e=>{state.to=Number(e.target.value);
+                                      if(state.to<state.from){state.from=state.to;$("fromYear").value=state.from;}
+                                      setYearLabels();refresh();};
+              window.addEventListener("resize",()=>map.invalidateSize());
+              refresh();map.invalidateSize();
+          }catch(err){
+              $("banner").style.display="block";
+              $("banner").textContent="Datenfehler: "+err.message+
+                  " Prüfe, ob coverage_school_wave.json im selben Ordner wie die HTML-Datei liegt.";
+              $("status").textContent="Keine Daten verfügbar.";}}
+      init();
+      </script>
+  </body>
 </html>
