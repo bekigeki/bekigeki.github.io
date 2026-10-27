@@ -80,7 +80,7 @@ tr.row-dim td{color:#94a3b8}
 </head>
 <body>
 <header>
-<h1 id="pageTitle">Merkmalsanteile und Abdeckungsgrad</h1>
+<h1 id="pageTitle">Merkmalsanteil und Abdeckungsgrad</h1>
 <p id="pageSub">
 Ausprägungsanteil = Fälle der Auswahl ÷ gültige Antworten.
 Abdeckungsgrad = erhobene Fälle des Merkmals ÷ angesetzte Grundgesamtheit.
@@ -92,7 +92,7 @@ Abdeckungsgrad = erhobene Fälle des Merkmals ÷ angesetzte Grundgesamtheit.
 <h3>Abdeckungsgrad</h3>
 <p>Die Abdeckung gehört zum Merkmal, nicht zur gewählten Ausprägung: erhobene Fälle (z. B. Sportverein: Ja + Nein; Körpergröße: nur „vorhanden“) geteilt durch die angesetzte Grundgesamtheit. Abdeckung min = ÷ größte, Abdeckung max = ÷ kleinste plausible Grundgesamtheit; die Spanne ist kein Konfidenzintervall.</p>
 <h3>Auswahl und Overlays</h3>
-<p>Das Ausprägungshistogramm erlaubt Mehrfachauswahl der Klassen als Filter. Das Abdeckungshistogramm hat keinen eigenen Mehrfachfilter: Klick auf einen Balken setzt den bestehenden Abdeckungsbereich (min/max dieser Klasse), erneuter Klick löscht ihn. In der Tabelle (und auf der Karte) lassen sich mehrere Gruppen markieren. Diese Auswahl filtert <b>nicht</b>: Median, Mittelwert, Quartilbänder, Jahressummen und Karte werden stets auf allen übrigen gefilterten Gruppen berechnet. Die gewählten Gruppen erscheinen nur als zusätzliche Overlay-Linien in den beiden Verläufen.</p>
+<p>Im Ausprägungshistogramm wählt ein Klick eine Klasse aus bzw. ab, Klick auf weitere Klassen erweitert die Auswahl, Ziehen wählt einen Bereich (Strg/⌘ addiert). Diese Auswahl filtert Karte, beide Verläufe, Jahressummen und Tabelle. Das Abdeckungshistogramm kennt keine Mehrfachauswahl: Klick setzt/löscht den Abdeckungsbereich. In Tabelle und Karte lassen sich mehrere Gruppen markieren — diese Markierung filtert nicht, sondern hebt die Gruppen auf der Karte deutlich hervor und zeigt sie als farbige Overlay-Linien in beiden Verläufen.</p>
 <h3>Histogramm-Modi</h3>
 <p>Häufigkeit, kumuliert ≤ Klassengrenze (steigend) und absteigend ≥ Klassengrenze (hohe Balken links). Kumulative Modi haben eine Prozent-y-Achse.</p>
 <h3>Jahressummen und Summenzeile</h3>
@@ -165,7 +165,7 @@ Abdeckungsgrad = erhobene Fälle des Merkmals ÷ angesetzte Grundgesamtheit.
 </select></div>
 <div class="markrow"><label for="histMarks">Perzentile (%)</label><input id="histMarks" type="text" placeholder="20, 50, 80"></div>
 <div id="markInfo" class="note"></div>
-<div class="note">Klick: Klasse wählen/abwählen · Ziehen: Bereich · mehrfache Klassen möglich.</div></div>
+<div class="note">Klick: Klasse wählen/abwählen · Ziehen: Bereich · Strg/⌘ beim Ziehen: hinzufügen.</div></div>
 
 <div class="panel p-trend"><h2>Ausprägungsanteil im Verlauf</h2>
 <div id="trend" class="chart"></div>
@@ -214,7 +214,11 @@ const state={from:0,to:0,variable:null,value:null,numFields:[],
  level:"standort",unit:"wave",minSchools:1,excludeLB:false,filters:[],filterLogic:"and",
  shareBins:new Set(),selectedGroups:new Set(),
  coverageMin:null,coverageMax:null,sortKey:"value",sortDir:-1};
+
+// Drag-Zustand für Histogramm-Ziehauswahl; justDragged verhindert, dass
+// das click-Event nach dem Ziehen dieselbe Klasse erneut toggelt.
 let dragState=null;
+let justDragged=false;
 
 function arr(x){return Array.isArray(x)?x:(x==null?[]:[x]);}
 function esc(x){return String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -288,9 +292,6 @@ function aggregate(rows,from=state.from,to=state.to){
   return g;}).filter(g=>g.nSchools>=state.minSchools);
  return{groups:out,used,dropped};}
 
-// Filter-Aktivitaet nur ueber Histogrammklassen des Ausprägungsanteils.
-// Gewaehlte Tabellengruppen (selectedGroups) filtern NICHT: sie sind nur
-// Overlays in den Verlaeufen.
 function isActive(g){
  if(state.shareBins.size===0)return true;
  return g.bin!=null&&state.shareBins.has(g.bin);}
@@ -330,8 +331,8 @@ function renderFilters(){
   state.filters[Number(el.dataset.mode)].negate=el.value==="not";renderFilters();refresh(true);}));}
 function svgStart(w,h){return'<svg viewBox="0 0 '+w+" "+h+'" preserveAspectRatio="xMidYMid meet">';}
 
-// Histogramm. interactive=true: Mehrfachauswahl (nur Auspraegungshistogramm).
-// interactive=false: Klick setzt/loescht den Bereichsfilter (Abdeckung).
+// Histogramm. isCoverage=false: Mehrfachauswahl mit sauberer Trennung von
+// Klick und Ziehen (justDragged unterdrueckt das nachfolgende click-Event).
 function drawHistogram(el,counts,opts){
  const W=opts.W,H=opts.H,ml=opts.ml,mr=opts.mr,mt=opts.mt,mb=opts.mb;
  const pw=W-ml-mr,ph=H-mt-mb,bw=pw/N_BINS,mode=opts.mode;
@@ -348,7 +349,6 @@ function drawHistogram(el,counts,opts){
   s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+y+'" y2="'+y+'" stroke="#e2e8f0"/>'+
    '<text x="'+(ml-3)+'" y="'+(y+3)+'" text-anchor="end">'+
    (isPct?Math.round(v*100)+"%":Math.round(v))+"</text>";}
- // Beim Abdeckungshistogramm markiert "im Bereich" die gewaehlte Filterklasse.
  const binInFilter=i=>{
   if(!opts.isCoverage)return opts.selectedBins.has(i);
   return state.coverageMin!=null&&state.coverageMax!=null&&
@@ -359,7 +359,7 @@ function drawHistogram(el,counts,opts){
   s+='<rect class="bar-sel" data-bin="'+i+'" x="'+(x+1)+'" y="'+y+'" width="'+(bw-2)+'" height="'+h+
    '" fill="'+color((i+.5)/N_BINS)+'" stroke="'+(sel?"#c2410c":"#475569")+
    '" stroke-width="'+(sel?2.5:1)+'"><title>'+i*5+"–"+(i+1)*5+"%: "+
-   counts[i]+" "+opts.unitName+(sel?" (im Filter)":"")+"</title></rect>";
+   counts[i]+" "+opts.unitName+(sel?(opts.isCoverage?" (im Bereich)":" (ausgewählt)"):"")+"</title></rect>";
   if(!isPct&&counts[i])s+='<text x="'+(x+bw/2)+'" y="'+(y-2)+'" text-anchor="middle">'+counts[i]+"</text>";
   if(isPct&&i%4===0)s+='<text x="'+(x+bw/2)+'" y="'+(y-2)+'" text-anchor="middle">'+pct(v)+"</text>";
   s+='<text x="'+(x+bw/2)+'" y="'+(H-mb+13)+'" text-anchor="middle">'+i*5+"%</text>";}
@@ -381,39 +381,46 @@ function drawHistogram(el,counts,opts){
   b.setAttribute("stroke",on?"#c2410c":"#475569");b.setAttribute("stroke-width",on?2.5:1);});
 
  if(!opts.isCoverage){
-  // Auspraegungshistogramm: Mehrfachauswahl per Klick/Ziehen.
+  // --- Auspraegungshistogramm: Klick toggelt, Ziehen waehlt Bereich ---
   bars.forEach(b=>{
    const bin=()=>Number(b.dataset.bin);
+
    b.addEventListener("mousedown",ev=>{
     ev.preventDefault();
     const i=bin();
-    dragState={set:state.shareBins,start:i,end:i,base:new Set(ev.ctrlKey||ev.metaKey?state.shareBins:[])};
-    dragState.set.clear();dragState.set.add(i);restyle();});
+    // Vorschau: Kopie der Basis (Strg/⌘ fuegt zur bestehenden Auswahl hinzu).
+    dragState={start:i,end:i,base:new Set(ev.ctrlKey||ev.metaKey?state.shareBins:[]),moved:false};
+   });
+
    b.addEventListener("mouseenter",()=>{
-    if(!dragState||dragState.set!==state.shareBins)return;
+    if(!dragState)return;
     const i=bin();
-    dragState.set.clear();dragState.base.forEach(k=>dragState.set.add(k));
-    for(let k=Math.min(dragState.start,i);k<=Math.max(dragState.start,i);k++)dragState.set.add(k);
-    dragState.moved=true;restyle();});
+    if(i!==dragState.end){dragState.end=i;dragState.moved=true;}
+   });
+
    b.addEventListener("click",ev=>{
-    if(dragState&&dragState.moved)return;
+    // Nach einem Ziehvorgang nicht erneut toggeln.
+    if(justDragged){justDragged=false;return;}
     if(ev.shiftKey)return;
     const i=bin();
     state.shareBins.has(i)?state.shareBins.delete(i):state.shareBins.add(i);
-    refresh();});
+    refresh();
+   });
   });
+
+  // mousemove auf dem Element (auch zwischen Balken) aktualisiert Vorschau.
   el.addEventListener("mousemove",ev=>{
    if(!dragState)return;
    const target=ev.target.closest?ev.target.closest(".bar-sel"):null;
-   if(target){const i=Number(target.dataset.bin);
-    if(i!==dragState.end){dragState.end=i;dragState.moved=true;
-     dragState.set.clear();dragState.base.forEach(k=>dragState.set.add(k));
-     for(let k=Math.min(dragState.start,i);k<=Math.max(dragState.start,i);k++)dragState.set.add(k);
-     restyle();}}
+   if(!target)return;
+   const i=Number(target.dataset.bin);
+   if(i!==dragState.end){dragState.end=i;dragState.moved=true;}
   });
+
+  el.addEventListener("mouseleave",()=>{if(dragState)dragState.moved=true;});
+
  }else{
-  // Abdeckungshistogramm: KEINE Mehrfachauswahl. Klick setzt/loescht den
-  // bestehenden Bereichsfilter (min/max der Klasse).
+  // --- Abdeckungshistogramm: Klick = Bereichsfilter setzen/loeschen ---
   bars.forEach(b=>b.addEventListener("click",()=>{
    const i=Number(b.dataset.bin),lo=i/N_BINS,hi=(i+1)/N_BINS;
    const same=state.coverageMin===lo&&state.coverageMax===hi;
@@ -422,121 +429,152 @@ function drawHistogram(el,counts,opts){
    refresh();}));
  }
 }
+
+// Globales mouseup: beendet das Ziehen und uebernimmt die Auswahl.
 document.addEventListener("mouseup",()=>{
  if(!dragState)return;
- const moved=dragState.moved;dragState=null;
- if(moved)refresh();
+ const d=dragState;dragState=null;
+
+ // Auswahl = Basis + zusammenhaengender Bereich [min(start,end), max(start,end)].
+ const next=new Set(d.base);
+ for(let k=Math.min(d.start,d.end);k<=Math.max(d.start,d.end);k++)next.add(k);
+
+ if(d.moved){
+  // Ziehvorgang: Auswahl uebernehmen; click-Event unterdruecken.
+  state.shareBins.clear();
+  next.forEach(k=>state.shareBins.add(k));
+  justDragged=true;
+  refresh();
+ }else{
+  // Kein Ziehen: reiner Mausklick; das click-Event uebernimmt das Toggeln.
+  // Nur Strg/⌘-Klick ohne Ziehen wird hier direkt behandelt.
+  // (nichts zu tun; click-Handler toggelt.)
+ }
 });
 function renderMap(){
- layer.clearLayers();const pts=[];
- groups.slice().sort((a,b)=>b.den-a.den).forEach(g=>{
-  if(g.lat==null||g.lon==null)return;
-  const active=isActive(g),marked=state.selectedGroups.has(g.key);
-  const m=L.circleMarker([g.lat,g.lon],{radius:marked?Math.max(5,Math.min(25,2+.34*Math.sqrt(g.den)))+3:Math.max(5,Math.min(25,2+.34*Math.sqrt(g.den))),
-   color:marked?"#000":"#334155",weight:marked?3:1,
-   fillColor:color(g.coverage),
-   fillOpacity:hasSelection()?(active?.95:.12):.85});
-  m.bindTooltip("<b>"+esc(g.label)+"</b><br>Abdeckung des Merkmals: "+pct(g.coverage)+
-   "<br>Abdeckung min–max: "+pct(g.coverageLow)+"–"+pct(g.coverageHigh)+
-   "<br>Ausprägungsanteil: "+pct(g.value)+"<br>Gültige Antworten: "+intFmt(g.valid)+
-   "<br>Grundgesamtheit: "+intFmt(g.den)+" ("+intFmt(g.denMin)+"–"+intFmt(g.denMax)+")");
-  // Karte: Gruppe markieren -- nur Overlay, kein Filter.
-  m.on("click",()=>{
-   state.selectedGroups.has(g.key)?state.selectedGroups.delete(g.key):state.selectedGroups.add(g.key);
-   refresh();});
-  m.addTo(layer);pts.push([g.lat,g.lon]);});
- if(!fitted&&pts.length){map.fitBounds(pts,{padding:[25,25],maxZoom:11});fitted=true;}
- $("mapTitle").textContent="Karte – Abdeckung: "+variable().label;}
-function renderShare(){
- const counts=Array(N_BINS).fill(0);
- groups.forEach(g=>{if(g.bin!=null)counts[g.bin]++;});
- const sorted=groups.map(g=>g.value).filter(Number.isFinite).sort((a,b)=>a-b);
- drawHistogram($("hist"),counts,{W:460,H:250,ml:40,mr:8,mt:26,mb:35,
-  mode:$("shareMode").value,unitName:"Gruppen",selectedBins:state.shareBins,
-  isCoverage:false,marks:shareMarks,sorted,xLabel:"Ausprägungsanteil"});
- $("markInfo").textContent=shareMarks.map(p=>p===50?"Median":"P"+p).join(" · ")+
-  (state.shareBins.size?" · gewählte Klassen: "+state.shareBins.size:"");}
-function renderCoverageHist(){
- const rows=DATA.rows.filter(r=>
-  Number(r.wave)>=state.from&&Number(r.wave)<=state.to&&passesFilters(r)&&
-  !(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source))&&coverageAllowed(r));
- const by=new Map();
- rows.forEach(r=>{
-  const d=Number(r.den);if(!Number.isFinite(d)||d<=0)return;
-  const key=state.unit==="wave"?String(r.school_key)+"|"+r.wave:String(r.school_key);
-  if(!by.has(key))by.set(key,{schoolKey:String(r.school_key),covNum:0,den:0});
-  const x=by.get(key);x.covNum+=coverageNumerator(r);x.den+=d;});
- const items=[...by.entries()].map(([key,x])=>({key,schoolKey:x.schoolKey,value:x.den>0?x.covNum/x.den:null}))
-  .filter(x=>Number.isFinite(x.value));
- const counts=Array(N_BINS).fill(0);
- items.forEach(x=>counts[Math.min(N_BINS-1,Math.floor(Math.max(0,Math.min(1,x.value))*N_BINS))]++);
- const sorted=items.map(x=>x.value).sort((a,b)=>a-b);
- drawHistogram($("coverageHist"),counts,{W:900,H:250,ml:44,mr:8,mt:30,mb:36,
-  mode:$("coverageMode").value,unitName:"Schulen",
-  isCoverage:true, // keine Mehrfachauswahl; Klick = Bereichsfilter
-  marks:coverageMarks,sorted,xLabel:"Abdeckung des Merkmals"});
- $("coverageTitle").textContent="Abdeckung: "+variable().label+(state.unit==="wave"?" × Welle":"")+" ("+items.length+")";
- $("coverageMarkInfo").textContent=coverageMarks.map(p=>{
-  const v=quantile(sorted,p/100);return(p===50?"Median":"P"+p)+": "+pct(v);}).join(" · ");}
-function yearlyGroups(y){return aggregate(DATA.rows,y,y).groups;}
+layer.clearLayers();const pts=[];
+groups.slice().sort((a,b)=>b.den-a.den).forEach(g=>{
+if(g.lat==null||g.lon==null)return;
+const active=isActive(g);                     // Histogrammklassen-Filter
+const marked=state.selectedGroups.has(g.key);  // Overlay-Markierung
+// Kleinere Punkte: engerer Radius und kleineres Maximum.
+const baseRad=Math.max(4,Math.min(16,1.2+.22*Math.sqrt(Math.max(0,g.den))));
+const anyMark=state.selectedGroups.size>0;
 
-// Ueberlagerte Gruppen: Werte der markierten Gruppen je Jahr (Overlay-Linien).
-function overlaySeries(getValue){
- if(state.selectedGroups.size===0)return[];
- return [...state.selectedGroups].map((key,idx)=>{
-  const label=groups.find(g=>g.key===key)?.label||key;
-  const vals=[];
-  for(let y=state.from;y<=state.to;y++){
-   const g=yearlyGroups(y).find(x=>x.key===key);
-   vals.push({year:y,v:g!=null?getValue(g):null});}
-  return{key,label,color:OVERLAY_COLORS[idx%OVERLAY_COLORS.length],vals};});}
+const m=L.circleMarker([g.lat,g.lon],{
+radius:marked?baseRad+2.5:baseRad,
+color:marked?"#7c3aed":"#334155",
+weight:marked?3:1,
+fillColor:color(g.coverage),
+// Markiert: solide (deckend). Unmarkiert: transparent, sobald
+// irgendeine Gruppe markiert ist; ausserdem noch transparenter,
+// wenn der Histogrammfilter nicht erfuellt ist.
+fillOpacity:anyMark?(marked?1:(active?.12:.05)):(active?.7:.15),
+opacity:anyMark&&!marked?.25:1
+});
 
-function renderTrend(){
- const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
- // Median/Mittel/Quartile immer auf ALLEN gefilterten Gruppen (ohne
- // Tabellen-Markierung): ausgewaehlte Gruppen sind nur Overlays.
- const stats=years.map(year=>{
-  const gs=yearlyGroups(year);
-  const a=gs.map(g=>g.value).filter(Number.isFinite).sort((x,y)=>x-y);
-  return{year,q1:quantile(a,.25),med:quantile(a,.5),q3:quantile(a,.75),
-   mean:a.length?a.reduce((x,y)=>x+y,0)/a.length:null};});
- const overlays=overlaySeries(g=>g.value);
- drawTrend("trend",stats,"#0f766e",overlays);
- $("trendLegend").textContent="Median · Mittelwert · Band: 25.–75. Perzentil aller gefilterten Gruppen"+
-  (overlays.length?" · farbige Linien: markierte Gruppen (Overlay)":"")+".";}
-function renderCoverageTrend(){
- const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
- const stats=years.map(year=>{
-  const rows=DATA.rows.filter(r=>Number(r.wave)===year&&passesFilters(r)&&
-   !(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source))&&coverageAllowed(r));
-  const by=new Map();
-  rows.forEach(r=>{
-   // Anteilsklassen-Auswahl bleibt als Filter wirksam.
-   if(state.shareBins.size>0){
-    const g=groups.find(x=>x.schoolSet.has(String(r.school_key)));
-    if(!g||g.bin==null||!state.shareBins.has(g.bin))return;}
-   const d=Number(r.den);if(!Number.isFinite(d)||d<=0)return;
-   const k=String(r.school_key);
-   if(!by.has(k))by.set(k,{covNum:0,den:0});
-   const x=by.get(k);x.covNum+=coverageNumerator(r);x.den+=d;});
-  const a=[...by.values()].map(x=>x.den>0?x.covNum/x.den:null).filter(Number.isFinite).sort((x,y)=>x-y);
-  return{year,q1:quantile(a,.25),med:quantile(a,.5),q3:quantile(a,.75),
-   mean:a.length?a.reduce((x,y)=>x+y,0)/a.length:null};});
- // Overlay: schulweise Abdeckung der markierten Gruppen je Jahr.
- const overlays=[];
- let idx=0;
- for(const key of state.selectedGroups){
-  const label=groups.find(g=>g.key===key)?.label||key;
-  const vals=[];
-  for(let y=state.from;y<=state.to;y++){
-   const g=yearlyGroups(y).find(x=>x.key===key);
-   vals.push({year:y,v:g!=null?g.coverage:null});}
-  overlays.push({key,label,color:OVERLAY_COLORS[idx++%OVERLAY_COLORS.length],vals});}
- drawTrend("coverageTrend",stats,"#d97706",overlays);
- $("coverageTrendNote").textContent="Abdeckung des Merkmals je Schule: Median, Mittelwert, 25.–75. Perzentil"+
-  (overlays.length?" · farbige Linien: markierte Gruppen (Overlay)":"")+".";}
+m.bindTooltip("<b>"+esc(g.label)+"</b>"+
+(marked?' <span style="color:#7c3aed">● markiert</span>':"")+
+"<br>Abdeckung des Merkmals: "+pct(g.coverage)+
+"<br>Abdeckung min–max: "+pct(g.coverageLow)+"–"+pct(g.coverageHigh)+
+"<br>Ausprägungsanteil: "+pct(g.value)+"<br>Gültige Antworten: "+intFmt(g.valid)+
+"<br>Grundgesamtheit: "+intFmt(g.den)+" ("+intFmt(g.denMin)+"–"+intFmt(g.denMax)+")");
 
-function drawTrend(id,stats,band,overlays){
+m.on("click",()=>{
+state.selectedGroups.has(g.key)?state.selectedGroups.delete(g.key):state.selectedGroups.add(g.key);
+refresh();});
+m.addTo(layer);pts.push([g.lat,g.lon]);});
+
+if(!fitted&&pts.length){map.fitBounds(pts,{padding:[25,25],maxZoom:11});fitted=true;}
+$("mapTitle").textContent="Karte – Abdeckung: "+variable().label+
+(state.selectedGroups.size?" ("+state.selectedGroups.size+" markiert)":"");}
+
+                      
+                      function renderShare(){
+                      const counts=Array(N_BINS).fill(0);
+                      groups.forEach(g=>{if(g.bin!=null)counts[g.bin]++;});
+                      const sorted=groups.map(g=>g.value).filter(Number.isFinite).sort((a,b)=>a-b);
+                      drawHistogram($("hist"),counts,{W:460,H:250,ml:40,mr:8,mt:26,mb:35,
+                      mode:$("shareMode").value,unitName:"Gruppen",selectedBins:state.shareBins,
+                      isCoverage:false,marks:shareMarks,sorted,xLabel:"Ausprägungsanteil"});
+                      $("markInfo").textContent=shareMarks.map(p=>p===50?"Median":"P"+p).join(" · ")+
+                      (state.shareBins.size?" · gewählte Klassen: "+state.shareBins.size:"");}
+                      function renderCoverageHist(){
+                      const rows=DATA.rows.filter(r=>
+                      Number(r.wave)>=state.from&&Number(r.wave)<=state.to&&passesFilters(r)&&
+                                                                  !(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source))&&coverageAllowed(r));
+                                                                  const by=new Map();
+                                                                  rows.forEach(r=>{
+                        const d=Number(r.den);if(!Number.isFinite(d)||d<=0)return;
+                                                                         const key=state.unit==="wave"?String(r.school_key)+"|"+r.wave:String(r.school_key);
+                                                                         if(!by.has(key))by.set(key,{schoolKey:String(r.school_key),covNum:0,den:0});
+                                                                         const x=by.get(key);x.covNum+=coverageNumerator(r);x.den+=d;});
+                                                                         const items=[...by.entries()].map(([key,x])=>({key,schoolKey:x.schoolKey,value:x.den>0?x.covNum/x.den:null}))
+                          .filter(x=>Number.isFinite(x.value));
+                          const counts=Array(N_BINS).fill(0);
+                          items.forEach(x=>counts[Math.min(N_BINS-1,Math.floor(Math.max(0,Math.min(1,x.value))*N_BINS))]++);
+                          const sorted=items.map(x=>x.value).sort((a,b)=>a-b);
+                          drawHistogram($("coverageHist"),counts,{W:900,H:250,ml:44,mr:8,mt:30,mb:36,
+                          mode:$("coverageMode").value,unitName:"Schulen",
+                          isCoverage:true,marks:coverageMarks,sorted,xLabel:"Abdeckung des Merkmals"});
+                          $("coverageTitle").textContent="Abdeckung: "+variable().label+(state.unit==="wave"?" × Welle":"")+" ("+items.length+")";
+                          $("coverageMarkInfo").textContent=coverageMarks.map(p=>{
+                          const v=quantile(sorted,p/100);return(p===50?"Median":"P"+p)+": "+pct(v);}).join(" · ");}
+                          function yearlyGroups(y){return aggregate(DATA.rows,y,y).groups;}
+
+                          function renderTrend(){
+                          const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
+                                                                 // Median/Mittel/Quartile auf allen gefilterten Gruppen; markierte Gruppen
+                                                                 // sind nur Overlays. Anteilsklassen-Auswahl filtert (isActive).
+                                                                 const stats=years.map(year=>{
+                            const gs=yearlyGroups(year).filter(isActive);
+                            const a=gs.map(g=>g.value).filter(Number.isFinite).sort((x,y)=>x-y);
+                            return{year,q1:quantile(a,.25),med:quantile(a,.5),q3:quantile(a,.75),
+                            mean:a.length?a.reduce((x,y)=>x+y,0)/a.length:null};});
+                            const overlays=[];
+                            let idx=0;
+                            for(const key of state.selectedGroups){
+                            const label=groups.find(g=>g.key===key)?.label||key;
+                            const vals=[];
+                            for(let y=state.from;y<=state.to;y++){
+                                                    const g=yearlyGroups(y).find(x=>x.key===key);
+                              vals.push({year:y,v:g!=null?g.value:null});}
+                              overlays.push({key,label,color:OVERLAY_COLORS[idx++%OVERLAY_COLORS.length],vals});}
+                              drawTrend("trend",stats,"#0f766e",overlays);
+                              $("trendLegend").textContent="Median · Mittelwert · Band: 25.–75. Perzentil der gefilterten Gruppen"+
+                              (overlays.length?" · farbige Linien: markierte Gruppen (Overlay)":"")+".";}
+                              function renderCoverageTrend(){
+                              const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
+                                                                     const stats=years.map(year=>{
+                                const rows=DATA.rows.filter(r=>Number(r.wave)===year&&passesFilters(r)&&
+                                !(state.excludeLB&&LOWER_BOUND_SOURCES.has(r.den_source))&&coverageAllowed(r));
+                                const by=new Map();
+                                rows.forEach(r=>{
+                                // Anteilsklassen-Auswahl bleibt als Filter wirksam.
+                                if(state.shareBins.size>0){
+                                const g=groups.find(x=>x.schoolSet.has(String(r.school_key)));
+                                if(!g||g.bin==null||!state.shareBins.has(g.bin))return;}
+                                const d=Number(r.den);if(!Number.isFinite(d)||d<=0)return;
+                                                                                 const k=String(r.school_key);
+                                                                                 if(!by.has(k))by.set(k,{covNum:0,den:0});
+                                                                                 const x=by.get(k);x.covNum+=coverageNumerator(r);x.den+=d;});
+                                                                                 const a=[...by.values()].map(x=>x.den>0?x.covNum/x.den:null).filter(Number.isFinite).sort((x,y)=>x-y);
+                                  return{year,q1:quantile(a,.25),med:quantile(a,.5),q3:quantile(a,.75),
+                                  mean:a.length?a.reduce((x,y)=>x+y,0)/a.length:null};});
+                                  const overlays=[];
+                                  let idx=0;
+                                  for(const key of state.selectedGroups){
+                                  const label=groups.find(g=>g.key===key)?.label||key;
+                                  const vals=[];
+                                  for(let y=state.from;y<=state.to;y++){
+                                                          const g=yearlyGroups(y).find(x=>x.key===key);
+                                    vals.push({year:y,v:g!=null?g.coverage:null});}
+                                    overlays.push({key,label,color:OVERLAY_COLORS[idx++%OVERLAY_COLORS.length],vals});}
+                                    drawTrend("coverageTrend",stats,"#d97706",overlays);
+                                    $("coverageTrendNote").textContent="Abdeckung des Merkmals je Schule: Median, Mittelwert, 25.–75. Perzentil"+
+                                    (overlays.length?" · farbige Linien: markierte Gruppen (Overlay)":"")+".";}
+
+                                    function drawTrend(id,stats,band,overlays){
  const W=460,H=250,ml=44,mr=8,mt=22,mb=34,pw=W-ml-mr,ph=H-mt-mb;
  const vals=stats.flatMap(x=>[x.q1,x.med,x.q3,x.mean]).filter(Number.isFinite).concat(
   (overlays||[]).flatMap(o=>o.vals.map(v=>v.v).filter(Number.isFinite)));
@@ -559,7 +597,6 @@ function drawTrend(id,stats,band,overlays){
   s+='<path d="'+path+'" fill="none" stroke="'+c+'" stroke-width="2"'+(dash?' stroke-dasharray="'+dash+'"':"")+"/>";
   stats.forEach((a,i)=>{if(Number.isFinite(a[key]))s+='<circle cx="'+X(i)+'" cy="'+Y(a[key])+
    '" r="2.5" fill="'+c+'"><title>'+a.year+" "+label+": "+pct(a[key])+"</title></circle>";});});
- // Overlays: eine Linie je markierter Gruppe; beeinflussen Bänder nicht.
  (overlays||[]).forEach(o=>{
   let path="",pen=false;
   o.vals.forEach((d,i)=>{if(!Number.isFinite(d.v)){pen=false;return;}
@@ -571,9 +608,7 @@ function drawTrend(id,stats,band,overlays){
 function renderTotals(){
  const years=[];for(let y=state.from;y<=state.to;y++)years.push(y);
  const data=years.map(year=>{
-  // Summen ueber alle gefilterten Gruppen; Tabellen-Markierung bleibt
-  // ohne Einfluss (nur Overlay).
-  const gs=yearlyGroups(year);
+  const gs=yearlyGroups(year).filter(isActive); // Histogrammfilter wirkt
   const rowsOfYear=DATA.rows.filter(r=>Number(r.wave)===year);
   const uniq=field=>{const v=[...new Set(rowsOfYear.map(r=>Number(r[field])).filter(Number.isFinite))];
    return v.length===1?v[0]:null;};
@@ -609,13 +644,15 @@ function renderTotals(){
   s+='<text x="'+cx+'" y="'+(H-10)+'" text-anchor="middle">'+d.year+"</text>";});
  s+='<text transform="translate(12 '+(mt+ph/2)+') rotate(-90)" text-anchor="middle">Anzahl</text></svg>';
  $("totals").innerHTML=s;
- $("totalsTitle").textContent="Jahressummen – "+variable().label;}
+ $("totalsTitle").textContent="Jahressummen – "+variable().label+
+  (state.shareBins.size?" (Klassenfilter aktiv)":"");}
 
 function renderTable(){
  const q=$("tableSearch").value.trim().toLowerCase();
- let list=groups;
- // "Tabelle auf Auswahl beschraenken" reduziert NUR die Tabellenanzeige
- // auf die markierten Gruppen; alle anderen Ansichten bleiben unveraendert.
+ // Histogrammklassen-Auswahl filtert die Tabelle IMMER (wie Karte/Verlauf);
+ // "Tabelle auf Auswahl beschraenken" reduziert zusaetzlich auf markierte
+ // Gruppen.
+ let list=groups.filter(isActive);
  if($("onlySel").checked&&state.selectedGroups.size>0)
   list=list.filter(g=>state.selectedGroups.has(g.key));
  if(q)list=list.filter(g=>(g.label+" "+g.key).toLowerCase().includes(q));
@@ -648,8 +685,8 @@ function renderTable(){
   "</td><td>"+pct(totalCovLow)+"</td><td>"+pct(totalCovHigh)+"</td></tr>";
  list.slice(0,500).forEach(g=>{
   const marked=state.selectedGroups.has(g.key);
-  h+='<tr data-key="'+esc(g.key)+'" class="'+(marked?"row-sel":"")+'"><td>'+esc(g.label)+
-  "</td><td>"+intFmt(g.nSchools)+"</td><td>"+intFmt(g.num)+
+  h+='<tr data-key="'+esc(g.key)+'" class="'+(marked?"row-sel":"")+'"'+(marked?' style="outline:2px solid #7c3aed"':"")+
+   '><td>'+esc(g.label)+"</td><td>"+intFmt(g.nSchools)+"</td><td>"+intFmt(g.num)+
   "</td><td>"+intFmt(g.valid)+"</td><td>"+pct(g.value)+"</td><td>"+intFmt(g.den)+"</td><td>"+
   pct(g.coverage)+"</td><td>"+pct(g.coverageLow)+"</td><td>"+pct(g.coverageHigh)+"</td></tr>";});
  h+="</tbody>";
@@ -659,7 +696,6 @@ function renderTable(){
   const k=th.dataset.key;
   if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=k==="label"?1:-1;}
   renderTable();});
- // Mehrfachauswahl: Klick toggelt die Markierung (nur Overlay).
  $("table").querySelectorAll("tbody tr[data-key]").forEach(tr=>tr.onclick=()=>{
   const k=tr.dataset.key;
   state.selectedGroups.has(k)?state.selectedGroups.delete(k):state.selectedGroups.add(k);
