@@ -768,7 +768,7 @@
               $("value").onchange=e=>{state.value=e.target.value;state.shareBins.clear();refresh();};
               $("level").onchange=e=>{state.level=e.target.value;state.selectedGroups.clear();refresh(true);};
               $("unit").onchange=e=>{state.unit=e.target.value;refresh();};
-              state.coverageMin=0.01;$("coverageMin").value=1;
+              state.coverageMin=0.01;$("coverageMin").value=0;
               $("filterLogic").onchange=e=>{state.filterLogic=e.target.value;renderFilters();refresh(true);};
               $("resetFilters").onclick=()=>{state.filters.forEach(f=>{f.values=[];f.negate=false;});renderFilters();refresh(true);};
               $("excludeLB").onchange=e=>{state.excludeLB=e.target.checked;refresh();};
