@@ -79,7 +79,7 @@
       <div class="kpi"><b id="kChk">–</b><span>davon Schulen mit Rückfragen</span></div>
       <div class="kpi"><b id="kFiles">–</b><span>Dateien erfasst</span></div>
       <div class="kpi"><b id="kFilesChk">–</b><span>davon Dateien mit Rückfragen</span></div>
-      <div class="kpi"><b id="kKids">–</b><span>auswertbare Fälle</span></div>
+      <div class="kpi"><b id="kKids">–</b><span>auswertbare Kinder</span></div>
     </div>
 
     <label for="level">Gliederungsebene</label>
@@ -99,7 +99,7 @@
     <select id="statusFilter">
       <option value="all">Alle</option>
       <option value="pending">Noch nicht erfasst</option>
-      <option value="done">Erfasst</option>
+      <option value="done">Keine Rückfragen</option>
       <option value="check">Rückfragen notwendig</option>
     </select>
 
@@ -116,8 +116,10 @@
         <li><b>Erfasste Dateien:</b> verschiedene Dateinamen je Schule, summiert.</li>
         <li><b>Dateien mit Rückfragen:</b> verschiedene Dateinamen im Status „to_check“.</li>
         <li><b>Zeitverlauf:</b> Einreichedatum = Datum im Dateinamen. Testdatum = häufigstes <code>Testdate</code> je Datei. Gezählt werden Dateien.</li>
-        <li><b>Auswertbare Fälle:</b> Geschlecht bekannt, Alter bekannt (Jahr und Monat) und mindestens ein Test.</li>
+        <li><b>Auswertbare Kinder:</b> Geschlecht bekannt, Alter bekannt (Jahr und Monat) und mindestens ein Test.</li>
+        <li><b>Offen:</b> Gleiche Datei in zwei Ordnern zählt bisher als zwei Dateien.</li>
         <li><b>Offen:</b> Eine Schule mit gemischtem Status gilt als „Rückfragen notwendig“, bis alle Dateien erledigt sind.</li>
+        <li><b>Offen:</b> Ordner „inbox/ignore“ und „inbox/.tests“ sind ausgeschlossen.</li>
       </ul>
     </details>
   </aside>
@@ -153,7 +155,7 @@
 <script>
 const STATUS = {
   pending: { label:'Noch nicht erfasst',   color:'#9ca3af' },
-  done:    { label:'aktuell keine Rückfragen',               color:'#2e7d32' },
+  done:    { label:'Keine Rückfragen',     color:'#0f766e' },
   check:   { label:'Rückfragen notwendig', color:'#f59e0b' }
 };
 const ORDER = ['done','check','pending'];
@@ -163,6 +165,7 @@ const LEVELS = {
   land:     { label:'Land',     f: r => 'Thüringen' }
 };
 const SORT_KEYS = ['label','n','rec','check','pending','quote','files','filesChk','kidsAll','kids'];
+
 function statusKey(s) {
   if (s == null || String(s).trim() === '' || /nicht|pending/i.test(s)) return 'pending';
   if (/to_check/i.test(s)) return 'check';
@@ -172,6 +175,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
 function fmtInt(v) { return v == null || !isFinite(v) ? '–' : Math.round(v).toLocaleString('de-DE'); }
 function fmtPct(v) { return v == null || !isFinite(v) ? '–' : (100 * v).toFixed(1).replace('.', ',') + ' %'; }
 function filesOf(r) { return r.dateien != null ? r.dateien : (r.einreichungen || 0); }
+function isDate(d) { return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(Date.parse(d)); }
 function dayDiff(a, b) { return Math.round((Date.parse(b) - Date.parse(a)) / 86400000); }
 function addDays(d, n) { return new Date(Date.parse(d) + n * 86400000).toISOString().slice(0, 10); }
 
@@ -253,8 +257,8 @@ function renderMap() {
       '<br>' + esc(r.schulamt) + '<br>Status: <b>' + s.label + '</b>' +
       (r._s !== 'pending' ? '<br>Dateien: ' + fmtInt(filesOf(r)) + ' (mit Rückfragen: ' + fmtInt(r.dateien_pruefen || 0) + ')' +
         (r.einreiche_datum ? '<br>Einreichedatum: ' + esc(r.einreiche_datum) : '') +
-       '<br>Fälle erfasst: ' + fmtInt(r.kinder_erfasst) + '<br>Fälle auswertbar: ' + fmtInt(r.kinder_auswertbar) : ''));
-      m.on('click', () => toggleSelect(LEVELS[state.level].f(r)));
+        '<br>Kinder erfasst: ' + fmtInt(r.kinder_erfasst) + '<br>Kinder auswertbar: ' + fmtInt(r.kinder_auswertbar) : ''));
+    m.on('click', () => toggleSelect(LEVELS[state.level].f(r)));
     m.addTo(layer); pts.push([r.lat, r.lon]);
   }
   if (!mapFitted && pts.length) { map.fitBounds(pts, { padding:[30,30], maxZoom:11 }); mapFitted = true; }
@@ -304,10 +308,12 @@ function renderTime() {
     return state.statusFilter === 'all' || statusKey(f.status) === state.statusFilter;
   });
   $('timeTitle').textContent = 'Zeitverlauf – Dateien nach Einreichedatum und Testdatum' + (sel != null ? ' (' + sel + ')' : '');
-  const sub = files.map(f => f.einreichung).filter(Boolean), tst = files.map(f => f.testdatum).filter(Boolean);
+  const sub = files.map(f => f.einreichung).filter(isDate),
+        tst = files.map(f => f.testdatum).filter(isDate);
+  const skipped = files.length * 2 - sub.length - tst.length;
   const all = sub.concat(tst).sort();
   if (!all.length) {
-    $('time').innerHTML = '<p style="font-size:12px;color:#64748b">Keine Dateien mit Datum (Feld <code>dateien_liste</code> fehlt oder ist leer).</p>';
+    $('time').innerHTML = '<p style="font-size:12px;color:#64748b">Keine Dateien mit gültigem Datum (Feld <code>dateien_liste</code> fehlt oder ist leer).</p>';
     $('timeLegend').innerHTML = ''; return;
   }
   const d0 = all[0], d1 = all[all.length - 1], n = dayDiff(d0, d1) + 1;
@@ -345,17 +351,18 @@ function renderTime() {
   }
   $('time').innerHTML = svg + '</svg>';
   $('timeLegend').innerHTML = series.map(s => '<span><i style="background:' + s.color + '"></i>' + s.name + ' (' + fmtInt(s.total) + ' Dateien)</span>').join('') +
-    '<span style="color:#64748b">' + (cum ? 'kumulative Anzahl Dateien' : 'Dateien pro Tag') + ', ' + d0 + ' bis ' + d1 + '</span>';
+    '<span style="color:#64748b">' + (cum ? 'kumulative Anzahl Dateien' : 'Dateien pro Tag') + ', ' + d0 + ' bis ' + d1 + '</span>' +
+    (skipped > 0 ? '<span style="color:#b45309">' + skipped + ' Datumsangabe(n) ohne gültiges Datum übersprungen</span>' : '');
 }
 
 function renderTable() {
   $('tableTitle').textContent = 'Tabelle – ' + LEVELS[state.level].label;
   const cols = [
-    ['label','Gruppe',''], ['n','Schulen erwartet',''], ['rec','Schulen erfasst','Fertig + Rückfragen notwendig'],
+    ['label','Gruppe',''], ['n','Schulen erwartet',''], ['rec','Schulen erfasst','Keine Rückfragen + Rückfragen notwendig'],
     ['check','Rückfragen notwendig','Schulen mit mindestens einer Datei im Status to_check'], ['pending','Noch nicht erfasst',''],
     ['quote','Anteil erfasst','Schulen erfasst ÷ erwartet'],
     ['files','Dateien erfasst','Verschiedene Dateinamen'], ['filesChk','Dateien mit Rückfragen','Dateien im Status to_check'],
-    ['kidsAll','Fälle erfasst',''], ['kids','Fälle auswertbar','Geschlecht + Alter bekannt, mind. 1 Test']
+    ['kidsAll','Kinder erfasst',''], ['kids','Kinder auswertbar','Geschlecht + Alter bekannt, mind. 1 Test']
   ];
   let rows = groups.slice();
   if ($('onlySel').checked && state.selected != null) rows = rows.filter(g => g.key === state.selected);
@@ -391,7 +398,17 @@ function renderStatus() {
     '<br>Stand der Daten: ' + esc(DATA.stand || '–');
   $('pageSub').textContent = 'Erwartet: alle Schulen der Primarstufe · Erfasst: mindestens eine Datei · Gliederungsebene: ' + LEVELS[state.level].label;
 }
-function refresh() { renderKpis(); renderMap(); renderBars(); renderTime(); renderTable(); renderStatus(); }
+
+// each panel renders on its own: one failing panel must not blank the others
+function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); showError(fn.name + ': ' + e.message); } }
+function showError(msg) {
+  const b = $('banner'); b.style.display = 'block';
+  b.innerHTML = (b.dataset.err ? b.innerHTML + '<br>' : '') + 'Fehler in ' + esc(msg);
+  b.dataset.err = '1';
+}
+function refresh() {
+  [renderKpis, renderMap, renderBars, renderTime, renderTable, renderStatus].forEach(safe);
+}
 function recompute(fit) { groups = aggregate(); state.selected = null; if (fit) mapFitted = false; refresh(); }
 function toggleSelect(key) {
   state.selected = state.selected === key ? null : key;
@@ -430,15 +447,15 @@ async function init() {
   layer = L.layerGroup().addTo(map);
   window.addEventListener('resize', () => map.invalidateSize());
   $('level').addEventListener('change', e => { state.level = e.target.value; recompute(false); });
-  $('mode').addEventListener('change', e => { state.mode = e.target.value; renderBars(); });
-  $('statusFilter').addEventListener('change', e => { state.statusFilter = e.target.value; renderMap(); renderTime(); });
-  $('timeMode').addEventListener('change', e => { state.timeMode = e.target.value; renderTime(); });
-  $('onlySel').addEventListener('change', renderTable);
-  $('tableSearch').addEventListener('input', renderTable);
+  $('mode').addEventListener('change', e => { state.mode = e.target.value; safe(renderBars); });
+  $('statusFilter').addEventListener('change', e => { state.statusFilter = e.target.value; safe(renderMap); safe(renderTime); });
+  $('timeMode').addEventListener('change', e => { state.timeMode = e.target.value; safe(renderTime); });
+  $('onlySel').addEventListener('change', () => safe(renderTable));
+  $('tableSearch').addEventListener('input', () => safe(renderTable));
   $('resetSel').addEventListener('click', () => { state.selected = null; refresh(); });
   map.invalidateSize();
   recompute(true);
-  setTimeout(() => { map.invalidateSize(); mapFitted = false; renderMap(); }, 200);
+  setTimeout(() => { map.invalidateSize(); mapFitted = false; safe(renderMap); }, 200);
 }
 init();
 </script>
