@@ -6,7 +6,7 @@
 <title>Rücklauf BeKiGeKi – Schulen</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-  :root { --accent:#c2410c; --muted:#64748b; --line:#e2e8f0; --rowH:420px; }
+  :root { --accent:#c2410c; --muted:#64748b; --line:#e2e8f0; --rowH:600px; --timeH:230px; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:#0f172a; background:#f8fafc; }
   header { padding:12px 18px; background:#fff; border-bottom:1px solid var(--line); }
@@ -23,27 +23,31 @@
   .checkbox label { margin:0 !important; font-weight:400 !important; }
   .kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
   .kpi { background:#f1f5f9; border-radius:6px; padding:8px 10px; }
-  .kpi b { display:block; font-size:19px; }
+  .kpi b { display:block; font-size:17px; }
   .kpi span { font-size:11px; color:var(--muted); }
   .status { font-size:11px; color:var(--muted); margin-top:10px; line-height:1.4; }
   .note { font-size:10.5px; color:var(--muted); margin-top:10px; line-height:1.4; }
   .note code { background:#f1f5f9; padding:0 3px; border-radius:3px; }
-  .main { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:var(--rowH) 310px auto; gap:12px; }
+  .main { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:var(--rowH) var(--timeH) auto; gap:12px; }
   .p-map { grid-column:1; grid-row:1; display:flex; flex-direction:column; min-height:0; }
   .p-bars { grid-column:2; grid-row:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
-  .p-time { grid-column:1 / span 2; grid-row:2; min-height:0; overflow:hidden; }
+  .p-time { grid-column:1; grid-row:2; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+  .p-wd { grid-column:2; grid-row:2; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
   .p-table { grid-column:1 / span 2; grid-row:3; }
+  .half { flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
+  .half + .half { border-top:1px solid var(--line); margin-top:8px; padding-top:8px; }
+  .scroll { flex:1; min-height:0; overflow:auto; }
   #map { flex:1; min-height:0; border-radius:6px; }
-  #bars { flex:1; min-height:0; overflow:auto; }
-  #time svg { width:100%; height:230px; display:block; }
-  h2 { font-size:13px; margin:0 0 8px; flex:none; }
+  #time, #wd { flex:1; min-height:0; }
+  #time svg, #wd svg { width:100%; height:100%; display:block; }
+  h2 { font-size:13px; margin:0 0 6px; flex:none; }
   svg text { font-size:11px; fill:#334155; }
   .bargrp { cursor:pointer; }
   .bargrp:hover .bg { fill:#f1f5f9; }
-  .legend { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:11px; margin-top:6px; flex:none; }
+  .legend { display:flex; flex-wrap:wrap; gap:2px 14px; font-size:11px; margin-top:4px; flex:none; }
   .legend span { display:inline-flex; align-items:center; gap:5px; }
   .legend i { width:12px; height:12px; border-radius:3px; display:inline-block; }
-  .tablehead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+  .tablehead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; flex:none; }
   .tablehead h2 { margin:0; }
   .tablehead input[type=search] { width:260px; max-width:50%; padding:5px 8px; font-size:12px; border:1px solid var(--line); border-radius:6px; }
   .tablewrap { max-height:380px; overflow:auto; }
@@ -58,15 +62,18 @@
   @media (max-width:1000px) {
     .layout { grid-template-columns:1fr; }
     .main { grid-template-columns:1fr; grid-template-rows:auto; }
-    .p-map, .p-bars, .p-table, .p-time { grid-column:1; grid-row:auto; }
+    .p-map, .p-bars, .p-table, .p-time, .p-wd { grid-column:1; grid-row:auto; }
     #map { flex:none; height:420px; }
-    #bars { max-height:420px; }
+    .p-bars { overflow:visible; }
+    .half { flex:none; }
+    .scroll { max-height:340px; }
+    #time, #wd { height:180px; flex:none; }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1>Rücklauf der Schulen</h1>
+  <h1>Rücklauf BeKiGeKi Erhebungswelle 2025/26</h1>
   <p id="pageSub"></p>
 </header>
 <div class="banner" id="banner"></div>
@@ -76,16 +83,19 @@
     <div class="kpis">
       <div class="kpi"><b id="kExp">–</b><span>Schulen erwartet</span></div>
       <div class="kpi"><b id="kRec">–</b><span>Schulen erfasst</span></div>
-      <div class="kpi"><b id="kChk">–</b><span>davon Schulen mit Rückfragen</span></div>
+      <div class="kpi"><b id="kChk">–</b><span>davon Schulen in Prüfung</span></div>
       <div class="kpi"><b id="kFiles">–</b><span>Dateien erfasst</span></div>
-      <div class="kpi"><b id="kFilesChk">–</b><span>davon Dateien mit Rückfragen</span></div>
-      <div class="kpi"><b id="kKids">–</b><span>auswertbare Kinder</span></div>
+      <div class="kpi"><b id="kFilesChk">–</b><span>davon Dateien in Prüfung</span></div>
+      <div class="kpi"><b id="kKids">–</b><span>auswertbare Fälle</span></div>
+      <div class="kpi"><b id="kKidsExp">–</b><span id="kKidsExpLbl">Fälle erwartet</span></div>
+      <div class="kpi"><b id="kCov">–</b><span>Abdeckung (Fälle)</span></div>
     </div>
 
     <label for="level">Gliederungsebene</label>
     <select id="level">
-      <option value="schulamt">Schulamt</option>
+      <option value="schule">Schule</option>
       <option value="kreis">Kreis</option>
+      <option value="schulamt">Schulamt</option>
       <option value="land">Land</option>
     </select>
 
@@ -95,12 +105,12 @@
       <option value="share">Anteil an erwarteten Schulen (%)</option>
     </select>
 
-    <label for="statusFilter">Status (Karte, Zeitverlauf)</label>
+    <label for="statusFilter">Status (Karte, Zeitverlauf, Wochentage)</label>
     <select id="statusFilter">
       <option value="all">Alle</option>
       <option value="pending">Noch nicht erfasst</option>
-      <option value="done">Keine Rückfragen</option>
-      <option value="check">Rückfragen notwendig</option>
+      <option value="done">Prüfung durchlaufen</option>
+      <option value="check">in Prüfung</option>
     </select>
 
     <div class="checkbox"><input type="checkbox" id="onlySel"><label for="onlySel">Tabelle auf Auswahl beschränken</label></div>
@@ -109,17 +119,17 @@
     <div class="status" id="status"></div>
 
     <details class="note" open>
-      <summary style="cursor:pointer;font-weight:600;color:var(--accent)">Was wird gezählt? / Offene Fragen</summary>
+      <summary style="cursor:pointer;font-weight:600;color:var(--accent)">Was wird gezählt?</summary>
       <ul style="margin:4px 0 4px 16px;padding:0">
-        <li><b>Erfasste Schulen:</b> Schulnummern mit mindestens einer Datei. Jede Schule zählt einmal.</li>
-        <li><b>Rückfragen notwendig:</b> Schulen, von denen mindestens eine Datei im Status „to_check“ liegt. Teilmenge der erfassten Schulen, dort mitgezählt.</li>
+        <li><b>Erfasste Schulen:</b> Schulnummern mit mindestens einer eingegangenen Datei.</li>
+        <li><b>in Prüfung:</b> Eine Schule gilt als „in Prüfung“, sobald mindestens eine ihrer eingegangenen Dateien die Vorabprüfung noch nicht durchlief oder Rückfragen notwendig sind.</li>
+        <li><b>Prüfung durchlaufen:</b> Schulen, deren eingegangene Dateien alle eine Vorabprüfung erfolgreich durchliefen.</li>
         <li><b>Erfasste Dateien:</b> verschiedene Dateinamen je Schule, summiert.</li>
-        <li><b>Dateien mit Rückfragen:</b> verschiedene Dateinamen im Status „to_check“.</li>
-        <li><b>Zeitverlauf:</b> Einreichedatum = Datum im Dateinamen. Testdatum = häufigstes <code>Testdate</code> je Datei. Gezählt werden Dateien.</li>
-        <li><b>Auswertbare Kinder:</b> Geschlecht bekannt, Alter bekannt (Jahr und Monat) und mindestens ein Test.</li>
-        <li><b>Offen:</b> Gleiche Datei in zwei Ordnern zählt bisher als zwei Dateien.</li>
-        <li><b>Offen:</b> Eine Schule mit gemischtem Status gilt als „Rückfragen notwendig“, bis alle Dateien erledigt sind.</li>
-        <li><b>Offen:</b> Ordner „inbox/ignore“ und „inbox/.tests“ sind ausgeschlossen.</li>
+        <li><b>Fälle erwartet:</b> Schülerzahl je Schule laut Vorabstatistik 0V3<span id="vorabNote"></span>.</li>
+        <li><b>Abdeckung:</b> erfasste Fälle ÷ erwartete Fälle, nur für Schulen mit bekannter Erwartung. Werte über 100 % sind möglich.</li>
+        <li><b>Zeitverlauf:</b> Einreichedatum = E-Mail-Posteingangsdatum.</li>
+        <li><b>Fälle je Wochentag:</b> erfasste Fälle nach Wochentag des Testdatums.</li>
+        <li><b>Auswertbare Fälle:</b> Geschlecht bekannt, Alter bekannt (Jahr und Monat) und mindestens 1 Motorik-Testwert.</li>
       </ul>
     </details>
   </aside>
@@ -131,15 +141,27 @@
       <div class="legend" id="mapLegend"></div>
     </div>
     <div class="panel p-bars">
-      <h2 id="barTitle">Rücklauf</h2>
-      <div id="bars"></div>
-      <div class="legend" id="barLegend"></div>
+      <div class="half">
+        <h2 id="barTitle">Rücklauf</h2>
+        <div id="bars" class="scroll"></div>
+        <div class="legend" id="barLegend"></div>
+      </div>
+      <div class="half">
+        <h2 id="covTitle">Abdeckung</h2>
+        <div id="cover" class="scroll"></div>
+        <div class="legend" id="covLegend"></div>
+      </div>
     </div>
     <div class="panel p-time">
       <div class="tablehead"><h2 id="timeTitle">Zeitverlauf</h2>
-        <select id="timeMode" style="padding:4px;font-size:12px"><option value="cum">kumulativ</option><option value="day">pro Tag</option></select></div>
+        <select id="timeMode" style="padding:3px;font-size:12px"><option value="cum">kumulativ</option><option value="day">pro Tag</option></select></div>
       <div id="time"></div>
       <div class="legend" id="timeLegend"></div>
+    </div>
+    <div class="panel p-wd">
+      <h2 id="wdTitle">Fälle je Wochentag</h2>
+      <div id="wd"></div>
+      <div class="legend" id="wdLegend"></div>
     </div>
     <div class="panel p-table">
       <div class="tablehead">
@@ -154,54 +176,66 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const STATUS = {
-  pending: { label:'Noch nicht erfasst',   color:'#9ca3af' },
-  done:    { label:'Keine Rückfragen',     color:'#0f766e' },
-  check:   { label:'Rückfragen notwendig', color:'#f59e0b' }
+  pending: { label:'Noch nicht erfasst',  color:'#9ca3af' },
+  done:    { label:'Prüfung durchlaufen', color:'#0f766e' },
+  check:   { label:'in Prüfung',          color:'#f59e0b' }
 };
 const ORDER = ['done','check','pending'];
+const COV_COLOR = '#2563eb';
+const WD_NAMES = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const LEVELS = {
-  schulamt: { label:'Schulamt', f: r => r.schulamt || 'unbekannt' },
-  kreis:    { label:'Kreis',    f: r => r.kreis || 'unbekannt' },
-  land:     { label:'Land',     f: r => 'Thüringen' }
+  schulamt: { label:'Schulamt', key: r => r.schulamt || 'unbekannt',  name: r => r.schulamt || 'unbekannt' },
+  kreis:    { label:'Kreis',    key: r => r.kreis || 'unbekannt',     name: r => r.kreis || 'unbekannt' },
+  land:     { label:'Land',     key: r => 'Thüringen',                name: r => 'Thüringen' },
+  schule:   { label:'Schule',   key: r => String(r.school_key),       name: r => (r.school_name || r.school_key) + ' (' + r.school_key + ')' }
 };
-const SORT_KEYS = ['label','n','rec','check','pending','quote','files','filesChk','kidsAll','kids'];
+const SORT_KEYS = ['label','n','rec','check','pending','quote','files','filesChk','kidsAll','exp','cov','kids'];
 
-function statusKey(s) {
-  if (s == null || String(s).trim() === '' || /nicht|pending/i.test(s)) return 'pending';
-  if (/to_check/i.test(s)) return 'check';
-  return 'done';
+// Datei gilt nur dann als "Prüfung durchlaufen", wenn ihr Status genau "done" ist.
+function fileStatus(s) { return String(s == null ? '' : s).trim() === 'done' ? 'done' : 'check'; }
+function rowStatus(s) {
+  if (s == null || String(s).trim() === '') return 'pending';
+  const parts = String(s).split(',').map(x => x.trim()).filter(Boolean);
+  return parts.length && parts.every(p => p === 'done') ? 'done' : 'check';
 }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtInt(v) { return v == null || !isFinite(v) ? '–' : Math.round(v).toLocaleString('de-DE'); }
 function fmtPct(v) { return v == null || !isFinite(v) ? '–' : (100 * v).toFixed(1).replace('.', ',') + ' %'; }
-function filesOf(r) { return r.dateien != null ? r.dateien : (r.einreichungen || 0); }
 function isDate(d) { return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(Date.parse(d)); }
+function fmtDe(d) { return isDate(d) ? d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4) : ''; }
 function dayDiff(a, b) { return Math.round((Date.parse(b) - Date.parse(a)) / 86400000); }
 function addDays(d, n) { return new Date(Date.parse(d) + n * 86400000).toISOString().slice(0, 10); }
+function weekday(d) { return (new Date(d + 'T12:00:00').getDay() + 6) % 7; }
+function short(s, n) { return s.length > n ? s.slice(0, n - 1) + '…' : s; }
 
 function makeDemo() {
   const sa = [['Ostthüringen',50.95,12.2],['Westthüringen',50.9,10.4],['Mittelthüringen',51.0,11.1],['Nordthüringen',51.4,10.5],['Südthüringen',50.5,10.9]];
-  const rows = [], dl = []; let seed = 7;
+  const rows = [], dl = [], tt = []; let seed = 7;
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   sa.forEach(a => { for (let k = 0; k < 4; k++) for (let i = 0; i < 12; i++) {
-    const u = rnd(), st = u < 0.55 ? null : (u < 0.9 ? 'done' : 'done, to_check');
-    const nf = st ? 1 + Math.floor(rnd()*3) : 0;
-    const key = String(10000 + rows.length);
+    const u = rnd(), has = u >= 0.55, chk = u >= 0.9;
+    const nf = has ? 1 + Math.floor(rnd()*3) : 0;
+    const key = String(10000 + rows.length), exp = 20 + Math.floor(rnd()*50);
+    const kids = has ? Math.round(exp * (0.6 + rnd()*0.5)) : 0;
     rows.push({ school_key:key, school_name:'Grundschule ' + a[0] + ' ' + (k+1) + '.' + (i+1),
-      ort:'Ort ' + (k+1), kreis:'Kreis ' + a[0].slice(0,3) + (k+1), schulamt:a[0], status:st,
-      einreichungen: st ? nf : null, dateien:nf, dateien_pruefen: st === 'done, to_check' ? 1 : 0,
-      kinder_erfasst: st ? 20 + Math.floor(rnd()*40) : 0, kinder_auswertbar: st ? 15 + Math.floor(rnd()*30) : 0,
+      ort:'Ort ' + (k+1), kreis:'Kreis ' + a[0].slice(0,3) + (k+1), schulamt:a[0], status: has ? (chk ? 'to_check' : 'done') : null,
+      einreichungen: has ? nf : null, dateien:nf, dateien_pruefen: chk ? 1 : 0,
+      erwartete_faelle: rnd() < 0.95 ? exp : null,
+      kinder_erfasst: kids, kinder_auswertbar: Math.round(kids * 0.93),
       lat:a[1] + (rnd()-0.5)*0.6, lon:a[2] + (rnd()-0.5)*0.8 });
     for (let j = 0; j < nf; j++) dl.push({ school_key:key, datei:key + '_' + j + '.xlsx',
-      status: (st === 'done, to_check' && j === 0) ? 'to_check' : 'done',
+      status: (chk && j === 0) ? 'to_check' : 'done',
       einreichung:'2026-10-' + String(1 + Math.floor(rnd()*13)).padStart(2,'0'),
       testdatum:'2026-09-' + String(10 + Math.floor(rnd()*20)).padStart(2,'0') });
+    let left = kids;
+    while (left > 0) { const c = Math.min(left, 5 + Math.floor(rnd()*20)); left -= c;
+      tt.push({ school_key:key, testdatum:'2026-09-' + String(10 + Math.floor(rnd()*20)).padStart(2,'0'), faelle:c }); }
   }});
-  return { demo:true, rows, dateien_liste:dl, config:{ defaults:{ time_mode:'day' } } };
+  return { demo:true, vorab_stand:'2026-10-25', rows, dateien_liste:dl, testtage:tt, config:{ defaults:{ time_mode:'day' } } };
 }
 
 const $ = id => document.getElementById(id);
-let DATA, ROWS = [], FILES = [], SCHOOL = {}, map, layer, groups = [], mapFitted = false;
+let DATA, ROWS = [], FILES = [], SCHOOL = {}, map, layer, groups = [], mapFitted = false, VORAB = '';
 const state = { level:'schulamt', mode:'count', statusFilter:'all', selected:null, sortKey:'quote', sortDir:-1, timeMode:'day' };
 
 async function loadData() {
@@ -214,32 +248,75 @@ async function loadData() {
   } catch (e) { return makeDemo(); }
 }
 
+function deriveCounts() {
+  const perSchool = new Map();
+  const haveList = Array.isArray(DATA.dateien_liste) && DATA.dateien_liste.length > 0;
+  FILES = [];
+  if (haveList) {
+    const seen = new Map();
+    for (const f of DATA.dateien_liste) {
+      const k = f.school_key + '||' + f.datei, st = fileStatus(f.status);
+      if (!seen.has(k)) seen.set(k, Object.assign({}, f, { _s: st }));
+      else if (st === 'check') seen.get(k)._s = 'check';
+    }
+    FILES = [...seen.values()];
+    for (const f of FILES) {
+      let c = perSchool.get(f.school_key);
+      if (!c) { c = { files:0, chk:0 }; perSchool.set(f.school_key, c); }
+      c.files++; if (f._s === 'check') c.chk++;
+    }
+  }
+  for (const r of ROWS) {
+    if (haveList) {
+      const c = perSchool.get(r.school_key) || { files:0, chk:0 };
+      r._files = c.files; r._chk = c.chk;
+      r._s = c.files === 0 ? 'pending' : (c.chk > 0 ? 'check' : 'done');
+    } else {
+      r._files = r.dateien != null ? r.dateien : (r.einreichungen || 0);
+      r._chk = r.dateien_pruefen || 0;
+      r._s = rowStatus(r.status);
+    }
+    const e = Number(r.erwartete_faelle);
+    r._exp = r.erwartete_faelle != null && isFinite(e) && e > 0 ? e : null;
+    r._kids = r.kinder_erfasst || 0;
+  }
+}
+
 function aggregate() {
   const L = LEVELS[state.level], m = new Map();
   for (const r of ROWS) {
-    const k = L.f(r);
+    const k = L.key(r);
     let g = m.get(k);
-    if (!g) { g = { key:k, label:k, n:0, pending:0, done:0, check:0, files:0, filesChk:0, kids:0, kidsAll:0, latS:0, lonS:0, c:0 }; m.set(k, g); }
+    if (!g) { g = { key:k, label:L.name(r), n:0, pending:0, done:0, check:0, files:0, filesChk:0, kids:0, kidsAll:0,
+                    exp:0, kidsExp:0, noExp:0, latS:0, lonS:0, c:0 }; m.set(k, g); }
     g.n++; g[r._s]++;
-    g.files += filesOf(r); g.filesChk += r.dateien_pruefen || 0;
-    g.kids += r.kinder_auswertbar || 0; g.kidsAll += r.kinder_erfasst || 0;
+    g.files += r._files; g.filesChk += r._chk;
+    g.kids += r.kinder_auswertbar || 0; g.kidsAll += r._kids;
+    if (r._exp != null) { g.exp += r._exp; g.kidsExp += r._kids; } else g.noExp++;
     if (r.lat != null && r.lon != null) { g.latS += r.lat; g.lonS += r.lon; g.c++; }
   }
   return [...m.values()].map(g => Object.assign(g, {
     rec: g.done + g.check, quote: g.n ? (g.done + g.check) / g.n : null,
+    cov: g.exp > 0 ? g.kidsExp / g.exp : null,
     lat: g.c ? g.latS / g.c : null, lon: g.c ? g.lonS / g.c : null }));
 }
-function rowActive(r) { return state.selected == null || LEVELS[state.level].f(r) === state.selected; }
+function rowActive(r) { return state.selected == null || LEVELS[state.level].key(r) === state.selected; }
 function statusPass(r) { return state.statusFilter === 'all' || r._s === state.statusFilter; }
+function selLabel() { const g = groups.find(x => x.key === state.selected); return g ? g.label : state.selected; }
 
 function renderKpis() {
   const exp = ROWS.length, rec = ROWS.filter(r => r._s !== 'pending').length;
   $('kExp').textContent = fmtInt(exp);
-  $('kRec').textContent = fmtInt(rec) + ' (' + fmtPct(exp ? rec / exp : null) + ')';
-  $('kChk').textContent = fmtInt(ROWS.filter(r => r._s === 'check').length);
-  $('kFiles').textContent = fmtInt(ROWS.reduce((s, r) => s + filesOf(r), 0));
-  $('kFilesChk').textContent = fmtInt(ROWS.reduce((s, r) => s + (r.dateien_pruefen || 0), 0));
+    $('kRec').textContent = fmtInt(rec) + ' (' + fmtPct(exp ? rec / exp : null) + ')';
+    $('kChk').textContent = fmtInt(ROWS.filter(r => r._s === 'check').length);
+    $('kFiles').textContent = fmtInt(ROWS.reduce((s, r) => s + r._files, 0));
+    $('kFilesChk').textContent = fmtInt(ROWS.reduce((s, r) => s + r._chk, 0));
   $('kKids').textContent = fmtInt(ROWS.reduce((s, r) => s + (r.kinder_auswertbar || 0), 0));
+  const known = ROWS.filter(r => r._exp != null);
+  const e = known.reduce((s, r) => s + r._exp, 0), k = known.reduce((s, r) => s + r._kids, 0);
+  $('kKidsExp').textContent = fmtInt(e);
+  $('kKidsExpLbl').textContent = 'Fälle erwartet' + (VORAB ? ' (Vorabstatistik 0V3' + VORAB + ')' : '');
+  $('kCov').textContent = e > 0 ? fmtPct(k / e) : '–';
 }
 
 function renderMap() {
@@ -255,25 +332,32 @@ function renderMap() {
       fillColor:s.color, fillOpacity: sel ? (act ? 0.95 : 0.1) : 0.85, opacity: sel && !act ? 0.2 : 1 });
     m.bindTooltip('<b>' + esc(r.school_name) + '</b> (' + esc(r.school_key) + ')<br>' + esc(r.ort) + ', ' + esc(r.kreis) +
       '<br>' + esc(r.schulamt) + '<br>Status: <b>' + s.label + '</b>' +
-      (r._s !== 'pending' ? '<br>Dateien: ' + fmtInt(filesOf(r)) + ' (mit Rückfragen: ' + fmtInt(r.dateien_pruefen || 0) + ')' +
+      '<br>Fälle erwartet: ' + fmtInt(r._exp) +
+      (r._s !== 'pending' ? '<br>Dateien: ' + fmtInt(r._files) + ' (in Prüfung: ' + fmtInt(r._chk) + ')' +
         (r.einreiche_datum ? '<br>Einreichedatum: ' + esc(r.einreiche_datum) : '') +
-        '<br>Kinder erfasst: ' + fmtInt(r.kinder_erfasst) + '<br>Kinder auswertbar: ' + fmtInt(r.kinder_auswertbar) : ''));
-    m.on('click', () => toggleSelect(LEVELS[state.level].f(r)));
+        '<br>Fälle erfasst: ' + fmtInt(r._kids) + (r._exp != null ? ' (Abdeckung ' + fmtPct(r._kids / r._exp) + ')' : '') +
+        '<br>Fälle auswertbar: ' + fmtInt(r.kinder_auswertbar) : ''));
+    m.on('click', () => toggleSelect(LEVELS[state.level].key(r)));
     m.addTo(layer); pts.push([r.lat, r.lon]);
   }
   if (!mapFitted && pts.length) { map.fitBounds(pts, { padding:[30,30], maxZoom:11 }); mapFitted = true; }
   $('mapLegend').innerHTML = ORDER.map(k => '<span><i style="background:' + STATUS[k].color + '"></i>' + STATUS[k].label + '</span>').join('');
 }
 
+const BW = { W:600, ml:170, mr:150, rowH:26, mt:8, mb:26 };
+function sortedGroups() { return groups.slice().sort((a, b) => (b.quote || 0) - (a.quote || 0) || (b.cov || 0) - (a.cov || 0) || b.n - a.n); }
+function rowLabel(g, y) {
+  return '<text x="' + (BW.ml - 6) + '" y="' + (y + 17) + '" text-anchor="end"><title>' + esc(g.label) + '</title>' + esc(short(g.label, 30)) + '</text>';
+}
+
 function renderBars() {
   const share = state.mode === 'share';
   $('barTitle').textContent = 'Rücklauf nach ' + LEVELS[state.level].label + (share ? ' (Anteil an erwarteten Schulen)' : ' (Anzahl Schulen)');
-  const data = groups.slice().sort((a, b) => (b.quote || 0) - (a.quote || 0) || b.n - a.n);
-  const W = 540, ml = 130, mr = 150, rowH = 26, mt = 8, mb = 26;
-  const H = mt + data.length * rowH + mb, pw = W - ml - mr;
+  const data = sortedGroups();
+  const { W, ml, mr, rowH, mt, mb } = BW, H = mt + data.length * rowH + mb, pw = W - ml - mr;
   const maxN = Math.max(1, ...data.map(g => g.n));
   const x = v => ml + pw * v;
-  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="min-width:440px">';
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="min-width:460px;height:auto">';
   [0, .25, .5, .75, 1].forEach(t => {
     const lab = share ? Math.round(t * 100) + ' %' : fmtInt(t * maxN);
     svg += '<line x1="' + x(t) + '" x2="' + x(t) + '" y1="' + mt + '" y2="' + (H - mb) + '" stroke="#e2e8f0"/>' +
@@ -281,8 +365,7 @@ function renderBars() {
   });
   data.forEach((g, i) => {
     const y = mt + i * rowH, tot = share ? g.n : maxN;
-    svg += '<g class="bargrp" data-key="' + esc(g.key) + '"><rect class="bg" x="0" y="' + y + '" width="' + W + '" height="' + rowH + '" fill="' + (state.selected === g.key ? '#ffedd5' : 'transparent') + '"/>';
-    svg += '<text x="' + (ml - 6) + '" y="' + (y + 17) + '" text-anchor="end">' + esc(g.label.length > 22 ? g.label.slice(0, 21) + '…' : g.label) + '</text>';
+    svg += '<g class="bargrp" data-key="' + esc(g.key) + '"><rect class="bg" x="0" y="' + y + '" width="' + W + '" height="' + rowH + '" fill="' + (state.selected === g.key ? '#ffedd5' : 'transparent') + '"/>' + rowLabel(g, y);
     let cum = 0;
     ORDER.forEach(k => {
       const w = pw * g[k] / tot;
@@ -291,58 +374,90 @@ function renderBars() {
       cum += w;
     });
     svg += '<text x="' + (ml + pw + 6) + '" y="' + (y + 12) + '">' + g.rec + '/' + g.n + ' Schulen (' + Math.round(100 * (g.quote || 0)) + ' %)</text>' +
-           '<text x="' + (ml + pw + 6) + '" y="' + (y + 23) + '" style="fill:#64748b;font-size:10px">' + fmtInt(g.files) + ' Dateien, ' + fmtInt(g.filesChk) + ' mit Rückfragen</text></g>';
+           '<text x="' + (ml + pw + 6) + '" y="' + (y + 23) + '" style="fill:#64748b;font-size:10px">' + fmtInt(g.files) + ' Dateien, ' + fmtInt(g.filesChk) + ' in Prüfung</text></g>';
   });
-  svg += '</svg>';
-  $('bars').innerHTML = svg;
+  $('bars').innerHTML = svg + '</svg>';
   $('bars').querySelectorAll('.bargrp').forEach(el => el.addEventListener('click', () => toggleSelect(el.dataset.key)));
-  $('barLegend').innerHTML = ORDER.map(k => '<span><i style="background:' + STATUS[k].color + '"></i>' + STATUS[k].label + '</span>').join('') +
-    '<span style="color:#64748b">Rechts: erfasste Schulen/erwartet; Dateien gesamt, davon mit Rückfragen</span>';
+  $('barLegend').innerHTML = ORDER.map(k => '<span><i style="background:' + STATUS[k].color + '"></i>' + STATUS[k].label + '</span>').join('');
+}
+
+function renderCover() {
+  $('covTitle').textContent = 'Abdeckung nach ' + LEVELS[state.level].label + ' (erfasste ÷ erwartete Fälle)';
+  const data = sortedGroups();
+  const { W, ml, mr, rowH, mt, mb } = BW, H = mt + data.length * rowH + mb, pw = W - ml - mr;
+  const x = v => ml + pw * Math.min(v, 1);
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="min-width:460px;height:auto">';
+  [0, .25, .5, .75, 1].forEach(t => {
+    svg += '<line x1="' + x(t) + '" x2="' + x(t) + '" y1="' + mt + '" y2="' + (H - mb) + '" stroke="' + (t === 1 ? '#94a3b8' : '#e2e8f0') + '"/>' +
+           '<text x="' + x(t) + '" y="' + (H - 10) + '" text-anchor="middle">' + Math.round(t * 100) + ' %</text>';
+  });
+  data.forEach((g, i) => {
+    const y = mt + i * rowH;
+    svg += '<g class="bargrp" data-key="' + esc(g.key) + '"><rect class="bg" x="0" y="' + y + '" width="' + W + '" height="' + rowH + '" fill="' + (state.selected === g.key ? '#ffedd5' : 'transparent') + '"/>' + rowLabel(g, y);
+    if (g.cov != null) {
+      const w = pw * Math.min(g.cov, 1);
+      svg += '<rect x="' + ml + '" y="' + (y + 4) + '" width="' + w + '" height="' + (rowH - 8) + '" fill="' + COV_COLOR + '">' +
+        '<title>' + esc(g.label) + ': ' + fmtInt(g.kidsExp) + ' von ' + fmtInt(g.exp) + ' erwarteten Fällen (' + fmtPct(g.cov) + ')</title></rect>';
+      if (g.cov > 1) svg += '<text x="' + (ml + pw - 4) + '" y="' + (y + 17) + '" text-anchor="end" style="fill:#fff;font-weight:600">&gt;100 %</text>';
+    } else {
+      svg += '<text x="' + (ml + 4) + '" y="' + (y + 17) + '" style="fill:#94a3b8">keine Erwartung vorhanden</text>';
+    }
+    svg += '<text x="' + (ml + pw + 6) + '" y="' + (y + 12) + '">' + fmtPct(g.cov) + '</text>' +
+           '<text x="' + (ml + pw + 6) + '" y="' + (y + 23) + '" style="fill:#64748b;font-size:10px">' + fmtInt(g.kidsExp) + ' / ' + fmtInt(g.exp) + ' Fälle</text></g>';
+  });
+  $('cover').innerHTML = svg + '</svg>';
+  $('cover').querySelectorAll('.bargrp').forEach(el => el.addEventListener('click', () => toggleSelect(el.dataset.key)));
+  const noExp = ROWS.filter(r => r._exp == null).length;
+  $('covLegend').innerHTML = '<span><i style="background:' + COV_COLOR + '"></i>Abdeckung (Balken bei 100 % gekappt)</span>' +
+    (VORAB ? '<span style="color:#64748b">Erwartung: Vorabstatistik 0V3, Stand ' + VORAB + '</span>' : '') +
+    (noExp ? '<span style="color:#b45309">' + noExp + ' Schule(n) ohne erwartete Fälle, nicht eingerechnet</span>' : '');
+}
+
+function schoolPass(key) {
+  const r = SCHOOL[key]; if (!r) return false;
+  if (state.selected != null && LEVELS[state.level].key(r) !== state.selected) return false;
+  return statusPass(r);
 }
 
 function renderTime() {
-  const sel = state.selected, L = LEVELS[state.level];
-  const files = FILES.filter(f => {
-    const r = SCHOOL[f.school_key]; if (!r) return false;
-    if (sel != null && L.f(r) !== sel) return false;
-    return state.statusFilter === 'all' || statusKey(f.status) === state.statusFilter;
-  });
-  $('timeTitle').textContent = 'Zeitverlauf – Dateien nach Einreichedatum und Testdatum' + (sel != null ? ' (' + sel + ')' : '');
+  const sel = state.selected;
+  const files = FILES.filter(f => schoolPass(f.school_key));
+  $('timeTitle').textContent = 'Zeitverlauf – Dateien' + (sel != null ? ' (' + selLabel() + ')' : '');
   const sub = files.map(f => f.einreichung).filter(isDate),
         tst = files.map(f => f.testdatum).filter(isDate);
   const skipped = files.length * 2 - sub.length - tst.length;
   const all = sub.concat(tst).sort();
   if (!all.length) {
-    $('time').innerHTML = '<p style="font-size:12px;color:#64748b">Keine Dateien mit gültigem Datum (Feld <code>dateien_liste</code> fehlt oder ist leer).</p>';
+    $('time').innerHTML = '<p style="font-size:12px;color:#64748b">Keine Dateien mit gültigem Datum.</p>';
     $('timeLegend').innerHTML = ''; return;
   }
   const d0 = all[0], d1 = all[all.length - 1], n = dayDiff(d0, d1) + 1;
   const cnt = arr => { const a = new Array(n).fill(0); arr.forEach(d => a[dayDiff(d0, d)]++); return a; };
   const cum = state.timeMode !== 'day';
-  const series = [['Einreichedatum (Dateiname)', sub, '#2563eb'], ['Testdatum', tst, '#ea580c']].map(s => {
+  const series = [['Einreichedatum (E-Mail-Posteingang)', sub, '#2563eb'], ['Testdatum', tst, '#ea580c']].map(s => {
     let a = cnt(s[1]); if (cum) { let c = 0; a = a.map(v => (c += v)); }
     return { name:s[0], a:a, color:s[2], total:s[1].length };
   });
-  const W = 900, H = 230, ml = 44, mr = 14, mt = 10, mb = 28, pw = W - ml - mr, ph = H - mt - mb;
+  const W = 700, H = 130, ml = 40, mr = 10, mt = 6, mb = 20, pw = W - ml - mr, ph = H - mt - mb;
   const ymax = Math.max(1, ...series.map(s => Math.max(...s.a)));
   const x = i => ml + (n === 1 ? pw / 2 : pw * i / (n - 1)), y = v => mt + ph * (1 - v / ymax);
   let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">';
-  for (let t = 0; t <= 4; t++) {
-    const v = ymax * t / 4;
+  for (let t = 0; t <= 2; t++) {
+    const v = ymax * t / 2;
     svg += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="#e2e8f0"/><text x="' + (ml - 5) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + fmtInt(v) + '</text>';
   }
-  const nt = Math.min(8, n);
+  const nt = Math.min(7, n);
   for (let t = 0; t < nt; t++) {
     const i = nt === 1 ? 0 : Math.round((n - 1) * t / (nt - 1));
     const dd = addDays(d0, i).split('-');
-    svg += '<text x="' + x(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + dd[2] + '.' + dd[1] + '.</text>';
+    svg += '<text x="' + x(i) + '" y="' + (H - 5) + '" text-anchor="middle">' + dd[2] + '.' + dd[1] + '.</text>';
   }
   series.forEach((s, si) => {
     if (cum) {
       let d = ''; s.a.forEach((v, i) => { d += (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1) + ' '; });
       svg += '<path d="' + d + '" fill="none" stroke="' + s.color + '" stroke-width="2"/>';
     } else {
-      const bw = Math.max(2, Math.min(18, pw / n / 2.4));
+      const bw = Math.max(2, Math.min(14, pw / n / 2.4));
       s.a.forEach((v, i) => { if (v) svg += '<rect x="' + (x(i) - (si === 0 ? bw : 0)) + '" y="' + y(v) + '" width="' + bw + '" height="' + (y(0) - y(v)) + '" fill="' + s.color + '"/>'; });
     }
   });
@@ -350,24 +465,65 @@ function renderTime() {
     svg += '<rect x="' + (x(i) - pw / n / 2) + '" y="' + mt + '" width="' + (pw / n) + '" height="' + ph + '" fill="transparent"><title>' + addDays(d0, i) + ': ' + series.map(s => s.name + ' ' + s.a[i]).join(', ') + '</title></rect>';
   }
   $('time').innerHTML = svg + '</svg>';
-  $('timeLegend').innerHTML = series.map(s => '<span><i style="background:' + s.color + '"></i>' + s.name + ' (' + fmtInt(s.total) + ' Dateien)</span>').join('') +
-    '<span style="color:#64748b">' + (cum ? 'kumulative Anzahl Dateien' : 'Dateien pro Tag') + ', ' + d0 + ' bis ' + d1 + '</span>' +
-    (skipped > 0 ? '<span style="color:#b45309">' + skipped + ' Datumsangabe(n) ohne gültiges Datum übersprungen</span>' : '');
+  $('timeLegend').innerHTML = series.map(s => '<span><i style="background:' + s.color + '"></i>' + s.name + ' (' + fmtInt(s.total) + ')</span>').join('') +
+    '<span style="color:#64748b">' + d0 + ' bis ' + d1 + '</span>' +
+    (skipped > 0 ? '<span style="color:#b45309">' + skipped + ' ohne gültiges Datum</span>' : '');
+}
+
+function renderWeekday() {
+  const sel = state.selected;
+  const haveTT = Array.isArray(DATA.testtage) && DATA.testtage.length > 0;
+  const counts = new Array(7).fill(0), unit = haveTT ? 'Fälle' : 'Dateien';
+  let total = 0, skipped = 0;
+  if (haveTT) {
+    for (const t of DATA.testtage) {
+      if (!schoolPass(t.school_key)) continue;
+      if (!isDate(t.testdatum)) { skipped += t.faelle || 0; continue; }
+      counts[weekday(t.testdatum)] += t.faelle || 0; total += t.faelle || 0;
+    }
+  } else {
+    for (const f of FILES) {
+      if (!schoolPass(f.school_key)) continue;
+      if (!isDate(f.testdatum)) { skipped++; continue; }
+      counts[weekday(f.testdatum)]++; total++;
+    }
+  }
+  $('wdTitle').textContent = unit + ' je Wochentag (Testdatum)' + (sel != null ? ' – ' + selLabel() : '');
+  const W = 420, H = 130, ml = 36, mr = 8, mt = 14, mb = 20, pw = W - ml - mr, ph = H - mt - mb;
+  const ymax = Math.max(1, ...counts), slot = pw / 7, bw = slot * 0.62;
+  const y = v => mt + ph * (1 - v / ymax);
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">';
+  for (let t = 0; t <= 2; t++) {
+    const v = ymax * t / 2;
+    svg += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="#e2e8f0"/><text x="' + (ml - 5) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + fmtInt(v) + '</text>';
+  }
+  counts.forEach((v, i) => {
+    const cx = ml + slot * (i + 0.5), color = i >= 5 ? '#ea580c' : '#2563eb';
+    svg += '<rect x="' + (cx - bw / 2) + '" y="' + y(v) + '" width="' + bw + '" height="' + (y(0) - y(v)) + '" fill="' + color + '"><title>' + WD_NAMES[i] + ': ' + fmtInt(v) + ' ' + unit + (total ? ' (' + fmtPct(v / total) + ')' : '') + '</title></rect>';
+    if (v > 0) svg += '<text x="' + cx + '" y="' + (y(v) - 3) + '" text-anchor="middle" style="font-size:10px">' + fmtInt(v) + '</text>';
+    svg += '<text x="' + cx + '" y="' + (H - 5) + '" text-anchor="middle">' + WD_NAMES[i] + '</text>';
+  });
+  $('wd').innerHTML = svg + '</svg>';
+  $('wdLegend').innerHTML = '<span><i style="background:#2563eb"></i>Mo–Fr</span><span><i style="background:#ea580c"></i>Sa/So</span>' +
+    '<span style="color:#64748b">' + fmtInt(total) + ' ' + unit + (haveTT ? '' : ' (kein Feld testtage in der JSON)') + '</span>' +
+    (skipped > 0 ? '<span style="color:#b45309">' + fmtInt(skipped) + ' ohne gültiges Testdatum</span>' : '');
 }
 
 function renderTable() {
   $('tableTitle').textContent = 'Tabelle – ' + LEVELS[state.level].label;
   const cols = [
-    ['label','Gruppe',''], ['n','Schulen erwartet',''], ['rec','Schulen erfasst','Keine Rückfragen + Rückfragen notwendig'],
-    ['check','Rückfragen notwendig','Schulen mit mindestens einer Datei im Status to_check'], ['pending','Noch nicht erfasst',''],
+    ['label','Gruppe',''], ['n','Schulen erwartet',''], ['rec','Schulen erfasst','Mindestens eine eingegangene Datei'],
+    ['check','Schulen in Prüfung','Mindestens eine Datei hat die Vorabprüfung noch nicht durchlaufen oder Rückfragen sind notwendig'], ['pending','Noch nicht erfasst',''],
     ['quote','Anteil erfasst','Schulen erfasst ÷ erwartet'],
-    ['files','Dateien erfasst','Verschiedene Dateinamen'], ['filesChk','Dateien mit Rückfragen','Dateien im Status to_check'],
-    ['kidsAll','Kinder erfasst',''], ['kids','Kinder auswertbar','Geschlecht + Alter bekannt, mind. 1 Test']
+    ['files','Dateien erfasst','Verschiedene Dateinamen'], ['filesChk','Dateien in Prüfung','Vorabprüfung noch nicht durchlaufen oder Rückfragen notwendig'],
+    ['kidsAll','Fälle erfasst',''], ['exp','Fälle erwartet','Schüler laut Vorabstatistik 0V3' + (VORAB ? ' (Stand ' + VORAB + ')' : '')],
+    ['cov','Abdeckung','Fälle erfasst ÷ Fälle erwartet, nur Schulen mit bekannter Erwartung'],
+    ['kids','Fälle auswertbar','Geschlecht + Alter bekannt, mindestens 1 Motorik-Testwert']
   ];
   let rows = groups.slice();
   if ($('onlySel').checked && state.selected != null) rows = rows.filter(g => g.key === state.selected);
   const q = $('tableSearch').value.trim().toLowerCase();
-  if (q) rows = rows.filter(g => g.label.toLowerCase().includes(q));
+  if (q) rows = rows.filter(g => g.label.toLowerCase().includes(q) || String(g.key).toLowerCase().includes(q));
   const k = state.sortKey;
   rows.sort((a, b) => {
     const va = a[k], vb = b[k];
@@ -380,7 +536,8 @@ function renderTable() {
     html += '<tr class="' + cls + '" data-key="' + esc(g.key) + '"><td>' + esc(g.label) + '</td><td>' + fmtInt(g.n) + '</td><td>' + fmtInt(g.rec) +
       '</td><td>' + fmtInt(g.check) + '</td><td>' + fmtInt(g.pending) + '</td><td>' + fmtPct(g.quote) +
       '</td><td>' + fmtInt(g.files) + '</td><td>' + fmtInt(g.filesChk) +
-      '</td><td>' + fmtInt(g.kidsAll) + '</td><td>' + fmtInt(g.kids) + '</td></tr>';
+      '</td><td>' + fmtInt(g.kidsAll) + '</td><td>' + (g.exp > 0 ? fmtInt(g.exp) : '–') + '</td><td>' + fmtPct(g.cov) +
+      '</td><td>' + fmtInt(g.kids) + '</td></tr>';
   }
   html += '</tbody>';
   if (!rows.length) html += '<tfoot><tr><td colspan="' + cols.length + '">Keine Gruppe gefunden</td></tr></tfoot>';
@@ -394,21 +551,19 @@ function renderTable() {
 }
 
 function renderStatus() {
-  $('status').innerHTML = 'Gruppen: ' + groups.length + (state.selected != null ? '<br>Auswahl: ' + esc(state.selected) : '') +
-    '<br>Stand der Daten: ' + esc(DATA.stand || '–');
-  $('pageSub').textContent = 'Erwartet: alle Schulen der Primarstufe · Erfasst: mindestens eine Datei · Gliederungsebene: ' + LEVELS[state.level].label;
-}
+  $('status').innerHTML = 'Gruppen: ' + groups.length + (state.selected != null ? '<br>Auswahl: ' + esc(selLabel()) : '') +
+    '<br>Stand der Daten: ' + esc(DATA.stand || '–') +
+    (VORAB ? '<br>Vorabstatistik 0V3: Stand ' + esc(VORAB) : '');
+  $('pageSub').textContent = 'Gliederungsebene: ' + LEVELS[state.level].label;
+  }
 
-// each panel renders on its own: one failing panel must not blank the others
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); showError(fn.name + ': ' + e.message); } }
 function showError(msg) {
   const b = $('banner'); b.style.display = 'block';
   b.innerHTML = (b.dataset.err ? b.innerHTML + '<br>' : '') + 'Fehler in ' + esc(msg);
   b.dataset.err = '1';
 }
-function refresh() {
-  [renderKpis, renderMap, renderBars, renderTime, renderTable, renderStatus].forEach(safe);
-}
+function refresh() { [renderKpis, renderMap, renderBars, renderCover, renderTime, renderWeekday, renderTable, renderStatus].forEach(safe); }
 function recompute(fit) { groups = aggregate(); state.selected = null; if (fit) mapFitted = false; refresh(); }
 function toggleSelect(key) {
   state.selected = state.selected === key ? null : key;
@@ -425,21 +580,24 @@ function applyConfig() {
   state.timeMode     = pick(D.time_mode,     ['cum', 'day'],                      state.timeMode);
   state.sortKey      = pick(D.sort_key,      SORT_KEYS,                           state.sortKey);
   state.sortDir      = D.sort_dir === 'asc' ? 1 : (D.sort_dir === 'desc' ? -1 : state.sortDir);
-  $('level').value        = state.level;
-  $('mode').value         = state.mode;
-  $('statusFilter').value = state.statusFilter;
-  $('timeMode').value     = state.timeMode;
+  $('level').value = state.level; $('mode').value = state.mode;
+  $('statusFilter').value = state.statusFilter; $('timeMode').value = state.timeMode;
 }
 
 async function init() {
   DATA = await loadData();
-  ROWS = DATA.rows.map(r => Object.assign({}, r, { _s: statusKey(r.status) }));
+  VORAB = fmtDe(DATA.vorab_stand);
+  $('vorabNote').textContent = VORAB ? ' (Stand ' + VORAB + ')' : '';
+  ROWS = DATA.rows.map(r => Object.assign({}, r));
   ROWS.forEach(r => { SCHOOL[r.school_key] = r; });
-  FILES = DATA.dateien_liste || [];
+  deriveCounts();
   applyConfig();
   if (DATA.demo) {
     $('banner').style.display = 'block';
     $('banner').innerHTML = 'Demo-Daten (zufällig erzeugt), weil <code>schulen_status.json</code> nicht geladen werden konnte. Starte die Seite über einen Webserver (z. B. <code>python3 -m http.server</code>) oder lege die Datei daneben.';
+  } else if (!ROWS.some(r => r.erwartete_faelle != null)) {
+    $('banner').style.display = 'block';
+    $('banner').innerHTML = 'Das Feld <code>erwartete_faelle</code> fehlt in der JSON: Abdeckung kann nicht berechnet werden.';
   }
   map = L.map('map');
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OpenStreetMap-Mitwirkende', maxZoom:18 }).addTo(map);
@@ -448,7 +606,7 @@ async function init() {
   window.addEventListener('resize', () => map.invalidateSize());
   $('level').addEventListener('change', e => { state.level = e.target.value; recompute(false); });
   $('mode').addEventListener('change', e => { state.mode = e.target.value; safe(renderBars); });
-  $('statusFilter').addEventListener('change', e => { state.statusFilter = e.target.value; safe(renderMap); safe(renderTime); });
+  $('statusFilter').addEventListener('change', e => { state.statusFilter = e.target.value; safe(renderMap); safe(renderTime); safe(renderWeekday); });
   $('timeMode').addEventListener('change', e => { state.timeMode = e.target.value; safe(renderTime); });
   $('onlySel').addEventListener('change', () => safe(renderTable));
   $('tableSearch').addEventListener('input', () => safe(renderTable));
