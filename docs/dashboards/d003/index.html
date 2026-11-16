@@ -315,8 +315,7 @@ function renderKpis() {
   const known = ROWS.filter(r => r._exp != null);
   const e = known.reduce((s, r) => s + r._exp, 0), k = known.reduce((s, r) => s + r._kids, 0);
   $('kKidsExp').textContent = fmtInt(e);
-    $('kKidsExpLbl').textContent = 'Fälle erwartet' + (VORAB ? ' (Vorabstatistik 0V3
-' + VORAB + ')' : '');
+  $('kKidsExpLbl').textContent = 'Fälle erwartet' + (VORAB ? ' (Vorabstatistik 0V3' + VORAB + ')' : '');
   $('kCov').textContent = e > 0 ? fmtPct(k / e) : '–';
 }
 
