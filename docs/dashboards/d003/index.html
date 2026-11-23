@@ -6,7 +6,7 @@
 <title>Rücklauf BeKiGeKi – Schulen</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-  :root { --accent:#c2410c; --muted:#64748b; --line:#e28f0; --rowH:450px; --timeH:200px; }
+  :root { --accent:#c2410c; --muted:#64748b; --line:#e28f0; --rowH:410px; --timeH:200px; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:#0f172a; background:#f8fafc; }
   header { padding:12px 18px; background:#fff; border-bottom:1px solid var(--line); }
@@ -594,38 +594,46 @@ function applyConfig() {
   $('statusFilter').value = state.statusFilter; $('timeMode').value = state.timeMode;
 }
 
-async function init() {
-  DATA = await loadData();
-  VORAB = fmtDe(DATA.vorab_stand);
-  $('vorabNote').textContent = VORAB ? ' (Stand ' + VORAB + ')' : '';
-  ROWS = DATA.rows.map(r => Object.assign({}, r));
-  ROWS.forEach(r => { SCHOOL[r.school_key] = r; });
-  deriveCounts();
-  applyConfig();
-  if (DATA.demo) {
-    $('banner').style.display = 'block';
-    $('banner').innerHTML = 'Demo-Daten (zufällig erzeugt), weil <code>schulen_status.json</code> nicht geladen werden konnte. Starte die Seite über einen Webserver (z. B. <code>python3 -m http.server</code>) oder lege die Datei daneben.';
-  } else if (!ROWS.some(r => r.erwartete_faelle != null)) {
-    $('banner').style.display = 'block';
-    $('banner').innerHTML = 'Das Feld <code>erwartete_faelle</code> fehlt in der JSON: Abdeckung kann nicht berechnet werden.';
-  }
+  const addBorders = (file, style, z) => fetch(file).then(r => r.json()).then(g => {
+      const pane = 'p' + z; map.createPane(pane); map.getPane(pane).style.zIndex = z;
+      L.geoJSON(g, { pane, interactive:false, style }).addTo(map);
+  }).catch(e => console.warn('Grenzen nicht geladen:', file, e));
+
+  async function init() {
+      DATA = await loadData();
+      VORAB = fmtDe(DATA.vorab_stand);
+      $('vorabNote').textContent = VORAB ? ' (Stand ' + VORAB + ')' : '';
+      ROWS = DATA.rows.map(r => Object.assign({}, r));
+      ROWS.forEach(r => { SCHOOL[r.school_key] = r; });
+      deriveCounts();
+      applyConfig();
+      if (DATA.demo) {
+          $('banner').style.display = 'block';
+          $('banner').innerHTML = 'Demo-Daten (zufällig erzeugt), weil <code>schulen_status.json</code> nicht geladen werden konnte. Starte die Seite über einen Webserver (z. B. <code>python3 -m http.server</code>) oder lege die Datei daneben.';
+      } else if (!ROWS.some(r => r.erwartete_faelle != null)) {
+          $('banner').style.display = 'block';
+          $('banner').innerHTML = 'Das Feld <code>erwartete_faelle</code> fehlt in der JSON: Abdeckung kann nicht berechnet werden.';
+      }
   map = L.map('map');
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OpenStreetMap-Mitwirkende', maxZoom:18 }).addTo(map);
-  map.setView([50.9, 11.0], 8);
-  layer = L.layerGroup().addTo(map);
-  window.addEventListener('resize', () => map.invalidateSize());
-  $('level').addEventListener('change', e => { state.level = e.target.value; recompute(false); });
-  $('mode').addEventListener('change', e => { state.mode = e.target.value; safe(renderBars); });
-  $('statusFilter').addEventListener('change', e => { state.statusFilter = e.target.value; safe(renderMap); safe(renderTime); safe(renderWeekday); });
-  $('timeMode').addEventListener('change', e => { state.timeMode = e.target.value; safe(renderTime); });
-  $('onlySel').addEventListener('change', () => safe(renderTable));
-  $('tableSearch').addEventListener('input', () => safe(renderTable));
-  $('resetSel').addEventListener('click', () => { state.selected = null; refresh(); });
-  map.invalidateSize();
-  recompute(true);
-  setTimeout(() => { map.invalidateSize(); mapFitted = false; safe(renderMap); }, 200);
-}
-init();
-</script>
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OpenStreetMap-Mitwirkende', maxZoom:18 }).addTo(map);
+      map.setView([50.9, 11.0], 8);
+      layer = L.layerGroup().addTo(map);
+      addBorders('kreise.geojson',    { color:'#334155', weight:1.2, fill:true }, 360);
+      addBorders('gemeinden.geojson', { color:'#64748b', weight:0.8, opacity:0.7, fill:false }, 350);
+      window.addEventListener('resize', () => { map.invalidateSize(); safe(renderTime); safe(renderWeekday); });
+      $('level').addEventListener('change', e => { state.level = e.target.value; recompute(false); });
+      $('mode').addEventListener('change', e => { state.mode = e.target.value; safe(renderBars); });
+      $('statusFilter').addEventListener('change', e => { state.statusFilter = e.target.value; safe(renderMap); safe(renderTime); safe(renderWeekday); });
+      $('timeMode').addEventListener('change', e => { state.timeMode = e.target.value; safe(renderTime); });
+      $('onlySel').addEventListener('change', () => safe(renderTable));
+      $('tableSearch').addEventListener('input', () => safe(renderTable));
+      $('resetSel').addEventListener('click', () => { state.selected = null; refresh(); });
+      map.invalidateSize();
+      recompute(true);
+      setTimeout(() => { map.invalidateSize(); mapFitted = false; safe(renderMap); }, 200);
+  }
+  init();
+  
+  </script>
 </body>
 </html>
